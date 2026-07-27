@@ -1,0 +1,122 @@
+[
+  {
+    "dataset": "distractors_noise05",
+    "method": "autofeat",
+    "r2": 0.9975350143042843,
+    "fit_seconds": 41.582222696,
+    "n_features": 4,
+    "complexity": 2.0,
+    "recovered": true,
+    "false_feature_rate": 0.5,
+    "fdr_ok": null,
+    "formulas": [
+      "x000*x001",
+      "exp(x001)/x004",
+      "exp(x004)*exp(x005)",
+      "exp(x008)/x010"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "distractors_noise25",
+    "method": "autofeat",
+    "r2": 0.9409955395758373,
+    "fit_seconds": 43.480535188000005,
+    "n_features": 6,
+    "complexity": 2.6666666666666665,
+    "recovered": true,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x000*x001",
+      "exp(x000)*exp(x008)",
+      "1/(x000*x004)",
+      "x000**3*log(x010)",
+      "exp(x001)*log(x010)",
+      "exp(x000)*exp(x005)"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "distractors_noise50",
+    "method": "autofeat",
+    "r2": 0.7796826957924453,
+    "fit_seconds": 50.19915632300001,
+    "n_features": 8,
+    "complexity": 3.0,
+    "recovered": true,
+    "false_feature_rate": 0.75,
+    "fdr_ok": null,
+    "formulas": [
+      "x000*x001",
+      "1/(x005*x006)",
+      "log(x000)/x008",
+      "exp(x004)/x008",
+      "x004**2*x005**2",
+      "x006**3*x008**3",
+      "x010**3*exp(x008)",
+      "exp(x011)*log(x009)"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "small_n120",
+    "method": "autofeat",
+    "r2": 0.9866453471476259,
+    "fit_seconds": 9.671443010000019,
+    "n_features": 4,
+    "complexity": 2.0,
+    "recovered": true,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x000*x001",
+      "exp(x001)/x002",
+      "exp(x003)*log(x000)",
+      "log(x002)/x001"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "small_n240",
+    "method": "autofeat",
+    "r2": 0.9888893399567753,
+    "fit_seconds": 12.34362142499998,
+    "n_features": 5,
+    "complexity": 2.4,
+    "recovered": true,
+    "false_feature_rate": 0.2,
+    "fdr_ok": null,
+    "formulas": [
+      "x000*x001",
+      "exp(x005)/x002",
+      "exp(x000)*exp(x004)",
+      "exp(x001)*exp(x005)",
+      "x003**3/x001"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "diabetes",
+    "method": "autofeat",
+    "r2": 0.30316951870619446,
+    "fit_seconds": 19.189323142999967,
+    "n_features": 9,
+    "complexity": 1.6666666666666667,
+    "recovered": null,
+    "false_feature_rate": null,
+    "fdr_ok": null,
+    "formulas": [
+      "x000*x009",
+      "exp(x002)*exp(x008)",
+      "x000*x001",
+      "x001/x007",
+      "Abs(x008)/x008",
+      "Abs(x002)/x002",
+      "x003/x002",
+      "x003**3*Abs(x002)",
+      "exp(x002)*exp(x003)"
+    ],
+    "error": ""
+  }
+]

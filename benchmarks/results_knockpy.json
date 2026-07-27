@@ -1,0 +1,301 @@
+[
+  {
+    "dataset": "product",
+    "method": "knockpy",
+    "r2": 0.919909720310097,
+    "fit_seconds": 0.026806750999980977,
+    "n_features": 2,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "ratio",
+    "method": "knockpy",
+    "r2": 0.7943911855310218,
+    "fit_seconds": 0.02159841999997525,
+    "n_features": 2,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "three_way",
+    "method": "knockpy",
+    "r2": 0.747403030646207,
+    "fit_seconds": 0.02150563999998667,
+    "n_features": 4,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.25,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1",
+      "x2",
+      "x3"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "log_linear",
+    "method": "knockpy",
+    "r2": 0.9609893160607622,
+    "fit_seconds": 0.021150554000030297,
+    "n_features": 2,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.5,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "sqrt_ratio",
+    "method": "knockpy",
+    "r2": 0.7917706692195443,
+    "fit_seconds": 0.022690378999982386,
+    "n_features": 2,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "quadratic",
+    "method": "knockpy",
+    "r2": 0.9668881636200731,
+    "fit_seconds": 0.022624208000024737,
+    "n_features": 3,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.6666666666666666,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1",
+      "x3"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "inverse_square",
+    "method": "knockpy",
+    "r2": 0.5538964255738488,
+    "fit_seconds": 0.025157742000033068,
+    "n_features": 2,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "physics_kinetic",
+    "method": "knockpy",
+    "r2": 0.8193228034480649,
+    "fit_seconds": 0.021615028000042003,
+    "n_features": 2,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "sparse_10col",
+    "method": "knockpy",
+    "r2": 0.8955781108396197,
+    "fit_seconds": 0.026403766000044016,
+    "n_features": 3,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.3333333333333333,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1",
+      "x6"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "purely_linear",
+    "method": "knockpy",
+    "r2": 0.9996345188748262,
+    "fit_seconds": 0.023422428999992917,
+    "n_features": 3,
+    "complexity": 0.0,
+    "recovered": null,
+    "false_feature_rate": null,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1",
+      "x2"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "friedman1",
+    "method": "knockpy",
+    "r2": 0.6916407635503428,
+    "fit_seconds": 0.028633194999997613,
+    "n_features": 5,
+    "complexity": 0.0,
+    "recovered": null,
+    "false_feature_rate": null,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1",
+      "x2",
+      "x3",
+      "x4"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "heavy_tail_t2",
+    "method": "knockpy",
+    "r2": 0.6949687029764329,
+    "fit_seconds": 0.02274749299999712,
+    "n_features": 3,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1",
+      "x2"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "distractors_noise05",
+    "method": "knockpy",
+    "r2": 0.9216486320421121,
+    "fit_seconds": 0.03263481599998386,
+    "n_features": 2,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "distractors_noise25",
+    "method": "knockpy",
+    "r2": 0.8748908143242076,
+    "fit_seconds": 0.03458048200002395,
+    "n_features": 3,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.3333333333333333,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1",
+      "x6"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "distractors_noise50",
+    "method": "knockpy",
+    "r2": 0.739399666666891,
+    "fit_seconds": 0.03597406099999034,
+    "n_features": 2,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "threshold_step",
+    "method": "knockpy",
+    "r2": 0.6833295752944335,
+    "fit_seconds": 0.025138654999977916,
+    "n_features": 2,
+    "complexity": 0.0,
+    "recovered": null,
+    "false_feature_rate": null,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "small_n120",
+    "method": "knockpy",
+    "r2": 0.8675645477784821,
+    "fit_seconds": 0.024982588000000305,
+    "n_features": 2,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "small_n240",
+    "method": "knockpy",
+    "r2": 0.9184394776370159,
+    "fit_seconds": 0.02734792500001504,
+    "n_features": 3,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.3333333333333333,
+    "fdr_ok": null,
+    "formulas": [
+      "x0",
+      "x1",
+      "x2"
+    ],
+    "error": ""
+  }
+]

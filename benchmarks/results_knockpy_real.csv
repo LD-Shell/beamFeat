@@ -1,0 +1,7 @@
+dataset,method,r2,fit_seconds,n_features,complexity,recovered,false_feature_rate,fdr_ok,error
+diabetes,knockpy,0.37432371649794627,0.0374072599999522,4,0.0,,,,
+breast_cancer,knockpy,nan,0.0,0,0.0,,,,classification not configured in this harness
+mpg,knockpy,0.7967694564845962,0.03004221700001608,4,0.0,,,,
+diamonds,knockpy,0.8732279486598775,0.04612950500001034,5,0.0,,,,
+penguins,knockpy,0.7008740437369679,0.022698461999993924,1,0.0,,,,
+tips,knockpy,0.49509274626753164,0.019950579000010293,1,0.0,,,,

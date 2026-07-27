@@ -1,0 +1,161 @@
+[
+  {
+    "dataset": "distractors_noise05",
+    "method": "beamfeat",
+    "r2": 0.9978380327508662,
+    "fit_seconds": 0.4968143860000396,
+    "n_features": 1,
+    "complexity": 1.0,
+    "recovered": true,
+    "false_feature_rate": 0.0,
+    "fdr_ok": true,
+    "formulas": [
+      "(x0 * x1)"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "distractors_noise05",
+    "method": "openfe",
+    "r2": 0.9878330162811089,
+    "fit_seconds": 2.7406843079999703,
+    "n_features": 1,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "min(x0,x4)"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "distractors_noise25",
+    "method": "beamfeat",
+    "r2": 0.944521584910329,
+    "fit_seconds": 0.4760159869999825,
+    "n_features": 2,
+    "complexity": 1.5,
+    "recovered": true,
+    "false_feature_rate": 0.0,
+    "fdr_ok": true,
+    "formulas": [
+      "(x0 * x1)",
+      "(x0 + (x1 - x4))"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "distractors_noise25",
+    "method": "openfe",
+    "r2": 0.9211907015316961,
+    "fit_seconds": 2.2512807769999768,
+    "n_features": 1,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "min(x0,x4)"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "distractors_noise50",
+    "method": "beamfeat",
+    "r2": 0.776205984708525,
+    "fit_seconds": 0.4674123549999649,
+    "n_features": 9,
+    "complexity": 2.7777777777777777,
+    "recovered": true,
+    "false_feature_rate": 0.0,
+    "fdr_ok": true,
+    "formulas": [
+      "((x1 / x5) + (x0 * x1))",
+      "((x0 * x1) - (x1 + x10))",
+      "((x1 + x9) * (x0 * x1))",
+      "((x1 + x8) * (x0 * x1))",
+      "((x0 * x1) / (x0 + x11))",
+      "(x0 + (x1 - x5))",
+      "(x0 + (x1 - x3))",
+      "((x1 + x11) * sqrt(x0))",
+      "((x0 * x1) / (x0 + x4))"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "distractors_noise50",
+    "method": "openfe",
+    "r2": 0.7147296981982794,
+    "fit_seconds": 2.4411118149999993,
+    "n_features": 1,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "min(x0,x4)"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "small_n120",
+    "method": "beamfeat",
+    "r2": 0.9921256289834041,
+    "fit_seconds": 0.35130578899998,
+    "n_features": 1,
+    "complexity": 1.0,
+    "recovered": true,
+    "false_feature_rate": 0.0,
+    "fdr_ok": true,
+    "formulas": [
+      "(x0 * x1)"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "small_n120",
+    "method": "openfe",
+    "r2": 0.8828897302027476,
+    "fit_seconds": 2.2110375299999987,
+    "n_features": 1,
+    "complexity": 0.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "GroupByThenRank(x1,x4)"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "small_n240",
+    "method": "beamfeat",
+    "r2": 0.991393601208505,
+    "fit_seconds": 0.3289321249999375,
+    "n_features": 1,
+    "complexity": 1.0,
+    "recovered": true,
+    "false_feature_rate": 0.0,
+    "fdr_ok": true,
+    "formulas": [
+      "(x0 * x1)"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "small_n240",
+    "method": "openfe",
+    "r2": 0.9724793762115875,
+    "fit_seconds": 1.2462344180000855,
+    "n_features": 1,
+    "complexity": 1.0,
+    "recovered": false,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "(x0*x3)"
+    ],
+    "error": ""
+  }
+]
