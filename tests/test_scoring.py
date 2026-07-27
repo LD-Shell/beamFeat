@@ -312,22 +312,36 @@ class TestGradientBoostingSpecifics:
             scorer.score_batch(candidates, target), scorer.score_batch(candidates, target)
         )
 
-    def test_subsampling_reduces_work(self, rng):
-        """Subsampling must actually bound cost on large inputs."""
-        import time
+    def test_subsampling_bounds_rows_seen(self, rng, monkeypatch):
+        """Subsampling must bound the rows the model is fitted on.
+
+        Asserted by observing fit sizes directly rather than wall-clock time:
+        at these input sizes runtime is overhead-dominated and shared CI
+        runners make timing comparisons non-deterministic."""
+        from sklearn.ensemble import HistGradientBoostingRegressor
 
         n = 4000
         signal = rng.normal(size=n)
         target = 2.0 * signal + rng.normal(0, 0.3, n)
         candidates = np.column_stack([signal, rng.normal(size=n)])
 
-        def elapsed(size):
-            scorer = GradientBoostingScorer(n_folds=2, max_iter=20, max_depth=2, subsample_size=size)
-            start = time.perf_counter()
-            scorer.score_batch(candidates, target)
-            return time.perf_counter() - start
+        seen: list[int] = []
+        original_fit = HistGradientBoostingRegressor.fit
 
-        assert elapsed(300) < elapsed(None)
+        def recording_fit(self, X, y, **kwargs):
+            seen.append(len(X))
+            return original_fit(self, X, y, **kwargs)
+
+        monkeypatch.setattr(HistGradientBoostingRegressor, "fit", recording_fit)
+
+        scorer = GradientBoostingScorer(n_folds=2, max_iter=20, max_depth=2, subsample_size=300)
+        scorer.score_batch(candidates, target)
+        assert seen and max(seen) <= 300
+
+        seen.clear()
+        full = GradientBoostingScorer(n_folds=2, max_iter=20, max_depth=2, subsample_size=None)
+        full.score_batch(candidates, target)
+        assert max(seen) > 300
 
     def test_single_class_fold_handled(self, rng):
         """A rare class must not crash the stratified path."""
