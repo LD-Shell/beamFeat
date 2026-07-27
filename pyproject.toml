@@ -44,7 +44,8 @@ dynamic = ["version"]
 units = ["pint>=0.24"]
 display = ["sympy>=1.13"]
 test = ["pytest>=8", "sympy>=1.13"]
-docs = ["mkdocs-material>=9.5", "mkdocstrings[python]>=0.26"]
+docs = ["mkdocs-jupyter",
+    "mkdocs-material>=9.5", "mkdocstrings[python]>=0.26"]
 benchmarks = ["lightgbm>=4"]
 all = ["beamfeat[units,display,test]"]
 
