@@ -43,7 +43,15 @@ Both are documented in full in `PROVENANCE.md`; in brief:
    mean and slightly affects the omnibus test; it touches no `beamfeat`
    figure. Because `autofeat` does not seed its internal subsampling, a
    re-run yields a different draw rather than the same value.
-2. **The protocol favours linear consumers.** Every construction tool feeds
+2. **Dataset-overlap precision.** The report's comparability note is
+   slightly imprecise against autofeat's Table 1: diabetes also overlaps
+   (four of this study's four real datasets appear there), and the wine
+   dataset here is the red-only variant (1598×11) where autofeat evaluated
+   red and white combined (6497×12). Boston housing is included for that
+   comparability despite its removal from scikit-learn over documented
+   ethical concerns; the repository's own six-dataset real panel contains
+   no contested data.
+3. **The protocol favours linear consumers.** Every construction tool feeds
    the same ridge model, which understates `OpenFE` in its intended
    gradient-boosted setting and `featuretools` outside its relational use
    case. `beamfeat` does not win real-tabular prediction against tuned tree
