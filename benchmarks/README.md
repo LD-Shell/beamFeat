@@ -20,5 +20,5 @@ archived result file. The map:
 | `independent/` | see `independent/README.md` | the 315-fit external comparison study |
 
 `beamfeat` rows regenerate bit-identically from a fresh environment;
-competitor rows require the isolated environments the files above name (see
+compared-method rows require the isolated environments the files above name (see
 the dependency notes in `independent/PROVENANCE.md`).
