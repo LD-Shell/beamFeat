@@ -15,7 +15,9 @@ authors:
 affiliations:
   - index: 1
     name: Independent Researcher
-date: 24 July 2026
+author:
+  - "Olanrewaju M. Daramola — ORCID: 0009-0006-3327-2047 — Independent Researcher"
+date: 27 July 2026
 bibliography: paper.bib
 ---
 
@@ -190,25 +192,17 @@ estimator conformance, 95% statement coverage, continuous integration against
 version floors and current releases, executable tutorial notebooks, and every
 figure above produced by a committed script.
 
-# AI usage disclosure
-
-The software, test suite, benchmarks, documentation, and this paper were
-developed with substantial assistance from a large language model
-(Anthropic's Claude), used interactively under the author's direction for
-design, implementation, benchmarking, and drafting. Correctness of
-AI-generated content was verified empirically rather than assumed: every
-statistical claim is backed by a committed, executable test or replicate
-study (including the calibration figures above), the suite runs in
-continuous integration across dependency versions, and multiple
-AI-proposed designs — and several externally suggested fixes — were
-implemented, measured, and reverted when the measurements refuted them,
-with the surviving design decisions documented alongside the evidence. The
-author reviewed all code and text and takes responsibility for the work.
-
 # Acknowledgements
 
 The design of `beamfeat` was informed by a review of the `autofeat` source
 code [@horn2019], whose approach it builds on and departs from as described
-above. This work received no external funding.
+above. The author used Anthropic's Claude as an AI assistant, under the author's
+direction, for design, implementation, benchmarking, and drafting. Every
+statistical claim in this paper is backed by a committed, executable test
+or replicate study run in continuous integration, and design decisions —
+including AI-proposed ones that measurement refuted — are documented in the
+repository alongside their evidence. The author reviewed all code and text
+and takes sole responsibility for the work. This work received no external
+funding.
 
 # References
