@@ -52,15 +52,15 @@ The order matters; each step feeds the next.
    (coverage floor enforced), `mkdocs build`, `python -m build`,
    `twine check dist/*`.
 2. Push to GitHub and let CI pass on all jobs, including the notebook job
-   and the `draft-pdf` workflow (the compiled paper artifact is the real
-   check on the JOSS PDF).
+   and the `paper` workflow (the compiled PDF artifact is the manuscript's
+   real rendering check).
 3. Upload the checked distributions to PyPI: `twine upload dist/*`.
 4. Tag the release (`git tag v0.1.0 && git push --tags`) and create the
    GitHub release.
 5. Archive the release on Zenodo; copy the concept DOI into
    `CITATION.cff` (template at the bottom of that file) and the README's
    DOI badge.
-6. Submit to JOSS with the archive DOI. After acceptance, add the
-   `preferred-citation` block to `CITATION.cff`.
+6. If submitting the paper to a journal, cite the archive DOI; after
+   acceptance, add the `preferred-citation` block to `CITATION.cff`.
 7. Publish the conda-forge recipe: `grayskull pypi beamfeat`, then a pull
    request to `conda-forge/staged-recipes` (a skeleton is in `recipe/`).
