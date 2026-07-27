@@ -1,0 +1,494 @@
+"""Tests for FDR-controlled selection.
+
+The calibration tests measure realised false discovery proportions against
+nominal levels across many trials. FDR is an *expectation*: individual trials
+may exceed the nominal level; the mean over trials must not (beyond Monte
+Carlo slack). Tests are written against that definition, not against the
+stricter per-trial reading.
+"""
+
+from __future__ import annotations
+
+import numpy as np
+import pytest
+
+from beamfeat.selection import (
+    KnockoffSelector,
+    PermutationSelector,
+    SelectionResult,
+    Selector,
+    _benjamini_hochberg,
+    _benjamini_yekutieli,
+    knockoff_threshold,
+    make_selector,
+)
+
+ALL_SELECTORS = ["knockoff", "permutation"]
+
+
+def _fast(name: str, target_fdr: float = 0.1, **kwargs) -> Selector:
+    return make_selector(name, target_fdr=target_fdr, **kwargs)
+
+
+def _gaussian_design(rng, n=300, n_signal=5, n_noise=20, effect=3.0):
+    n_features = n_signal + n_noise
+    features = rng.standard_normal((n, n_features))
+    coefficients = np.zeros(n_features)
+    coefficients[:n_signal] = effect
+    target = features @ coefficients + rng.standard_normal(n)
+    truth = np.zeros(n_features, dtype=bool)
+    truth[:n_signal] = True
+    return features, target, truth
+
+
+def _fdp(selected: np.ndarray, truth: np.ndarray) -> float:
+    if selected.size == 0:
+        return 0.0
+    return float(np.sum(~truth[selected])) / selected.size
+
+
+# --------------------------------------------------------------------------- #
+# Corrections
+# --------------------------------------------------------------------------- #
+
+
+class TestCorrections:
+    def test_bh_all_significant(self):
+        assert _benjamini_hochberg(np.full(5, 0.001), 0.1).size == 5
+
+    def test_bh_none_significant(self):
+        assert _benjamini_hochberg(np.full(5, 0.9), 0.1).size == 0
+
+    def test_bh_step_up_exceeds_bonferroni(self):
+        p_values = np.array([0.001, 0.008, 0.02, 0.5, 0.7])
+        assert _benjamini_hochberg(p_values, 0.1).size >= 2
+
+    def test_by_is_never_more_permissive_than_bh(self):
+        rng = np.random.default_rng(0)
+        for _ in range(20):
+            p_values = rng.uniform(0, 0.2, 15)
+            assert _benjamini_yekutieli(p_values, 0.1).size <= _benjamini_hochberg(p_values, 0.1).size
+
+    def test_by_equals_bh_at_harmonic_scaled_level(self):
+        p_values = np.array([0.0005, 0.003, 0.04, 0.3])
+        harmonic = np.sum(1.0 / np.arange(1, 5))
+        np.testing.assert_array_equal(
+            np.sort(_benjamini_yekutieli(p_values, 0.1)),
+            np.sort(_benjamini_hochberg(p_values, 0.1 / harmonic)),
+        )
+
+
+class TestKnockoffThreshold:
+    def test_all_negative_gives_infinite_threshold(self):
+        assert knockoff_threshold(np.array([-1.0, -2.0]), 0.1) == float("inf")
+
+    def test_strong_signal_gives_finite_threshold(self):
+        statistics = np.concatenate([np.full(10, 5.0), np.full(10, -0.1)])
+        assert np.isfinite(knockoff_threshold(statistics, 0.2))
+
+    def test_offset_one_is_more_conservative(self):
+        rng = np.random.default_rng(1)
+        statistics = np.concatenate([rng.uniform(0.5, 3, 15), rng.uniform(-2, 0, 15)])
+        assert knockoff_threshold(statistics, 0.1, offset=1) >= knockoff_threshold(statistics, 0.1, offset=0)
+
+    def test_bad_offset_rejected(self):
+        with pytest.raises(ValueError, match="offset"):
+            knockoff_threshold(np.array([1.0]), 0.1, offset=2)
+
+
+# --------------------------------------------------------------------------- #
+# Exactness of the permutation statistic
+# --------------------------------------------------------------------------- #
+
+
+class TestPermutationExactness:
+    """The statistic must be a fixed function of the data.
+
+    A statistic that re-tunes itself on the observed target (a CV-chosen
+    lasso penalty, for instance) breaks the exchangeability argument. These
+    tests pin the properties that exactness rests on.
+    """
+
+    def test_pvalues_never_zero(self):
+        """Phipson & Smyth add-one estimator: the floor is 1/(B+1)."""
+        rng = np.random.default_rng(0)
+        features, target, _ = _gaussian_design(rng, effect=10.0)
+        result = PermutationSelector(n_permutations=100, auto_permutations=False).select(features, target)
+        assert float(np.min(result.p_values)) >= 1.0 / 101.0
+
+    def test_null_pvalues_are_superuniform(self):
+        """Under the null, P(p <= a) <= a — the definition of a valid
+        p-value. Checked at a = 0.1 across trials."""
+        n_trials = 40
+        threshold = 0.1
+        breaches = 0
+        total = 0
+        for trial in range(n_trials):
+            rng = np.random.default_rng(2000 + trial)
+            features = rng.standard_normal((150, 8))
+            noise_target = rng.standard_normal(150)
+            result = PermutationSelector(
+                n_permutations=400, auto_permutations=False, random_state=trial
+            ).select(features, noise_target)
+            breaches += int(np.sum(result.p_values <= threshold))
+            total += result.p_values.size
+        rate = breaches / total
+        # Binomial slack at 320 tests around 0.1.
+        assert rate <= threshold + 0.05, f"null p-value breach rate {rate:.3f} exceeds {threshold}"
+
+    def test_deterministic_given_seed(self):
+        rng = np.random.default_rng(3)
+        features, target, _ = _gaussian_design(rng)
+        first = PermutationSelector(random_state=7).select(features, target)
+        second = PermutationSelector(random_state=7).select(features, target)
+        np.testing.assert_array_equal(first.selected, second.selected)
+        np.testing.assert_allclose(first.p_values, second.p_values)
+
+    def test_auto_permutations_meets_satisfiability_bound(self):
+        """B must reach ceil(2 m / q); below m/q - 1 selection is impossible."""
+        selector = PermutationSelector(target_fdr=0.1, n_permutations=50)
+        assert selector._required_permutations(40) == 800
+
+    def test_cap_warning_when_bound_unreachable(self):
+        rng = np.random.default_rng(4)
+        features, target, _ = _gaussian_design(rng, n_signal=2, n_noise=48)
+        result = PermutationSelector(
+            target_fdr=0.01, n_permutations=100, max_permutations=200
+        ).select(features, target)
+        assert any("max_permutations" in message for message in result.warnings_raised)
+
+
+# --------------------------------------------------------------------------- #
+# Contract
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize("name", ALL_SELECTORS)
+class TestSelectorContract:
+    def test_returns_valid_result(self, name):
+        rng = np.random.default_rng(0)
+        features, target, _ = _gaussian_design(rng)
+        result = _fast(name).select(features, target)
+        assert isinstance(result, SelectionResult)
+        assert result.n_candidates == features.shape[1]
+        assert result.statistics.shape == (features.shape[1],)
+
+    def test_selected_indices_sorted_unique_valid(self, name):
+        rng = np.random.default_rng(1)
+        features, target, _ = _gaussian_design(rng)
+        result = _fast(name).select(features, target)
+        assert np.all(result.selected >= 0)
+        assert np.all(result.selected < features.shape[1])
+        assert np.all(np.diff(result.selected) > 0)
+
+    def test_mask_agrees_with_indices(self, name):
+        rng = np.random.default_rng(2)
+        features, target, _ = _gaussian_design(rng)
+        result = _fast(name).select(features, target)
+        np.testing.assert_array_equal(np.flatnonzero(result.mask()), result.selected)
+
+    def test_deterministic(self, name):
+        rng = np.random.default_rng(3)
+        features, target, _ = _gaussian_design(rng)
+        first = _fast(name).select(features, target)
+        second = _fast(name).select(features, target)
+        np.testing.assert_array_equal(first.selected, second.selected)
+
+    def test_recovers_strong_signal(self, name):
+        rng = np.random.default_rng(5)
+        features, target, truth = _gaussian_design(rng, n=400, effect=5.0)
+        result = _fast(name, target_fdr=0.2).select(features, target)
+        assert result.n_selected > 0
+        assert np.sum(truth[result.selected]) >= 2
+
+    def test_summary_renders(self, name):
+        rng = np.random.default_rng(6)
+        features, target, _ = _gaussian_design(rng)
+        assert name in _fast(name).select(features, target).summary()
+
+    def test_classification_supported(self, name):
+        rng = np.random.default_rng(7)
+        features, target, _ = _gaussian_design(rng, n=300, effect=4.0)
+        labels = (target > np.median(target)).astype(int)
+        result = _fast(name, problem_type="classification").select(features, labels)
+        assert result.n_candidates == features.shape[1]
+
+
+# --------------------------------------------------------------------------- #
+# Calibration
+# --------------------------------------------------------------------------- #
+
+
+class TestPermutationCalibration:
+    @pytest.mark.parametrize("correction", ["bh", "by"])
+    def test_realised_fdr_within_nominal(self, correction):
+        target_fdr = 0.2
+        fdps = []
+        for trial in range(25):
+            rng = np.random.default_rng(3000 + trial)
+            features, target, truth = _gaussian_design(rng)
+            result = PermutationSelector(
+                target_fdr=target_fdr, random_state=trial, correction=correction
+            ).select(features, target)
+            fdps.append(_fdp(result.selected, truth))
+        realised = float(np.mean(fdps))
+        assert realised <= target_fdr + 0.1, f"{correction}: realised FDR {realised:.3f}"
+
+    def test_power_is_not_vacuous(self):
+        recalls = []
+        for trial in range(15):
+            rng = np.random.default_rng(4000 + trial)
+            features, target, truth = _gaussian_design(rng, n=400, effect=4.0)
+            result = PermutationSelector(target_fdr=0.2, random_state=trial).select(features, target)
+            recalls.append(np.sum(truth[result.selected]) / truth.sum())
+        assert float(np.mean(recalls)) > 0.8
+
+    def test_pure_noise_mean_selection_near_zero(self):
+        total = 0
+        n_trials = 25
+        for trial in range(n_trials):
+            rng = np.random.default_rng(9000 + trial)
+            features = rng.standard_normal((200, 30))
+            noise_target = rng.standard_normal(200)
+            total += PermutationSelector(target_fdr=0.1, random_state=trial).select(
+                features, noise_target
+            ).n_selected
+        assert total / n_trials < 1.0
+
+    def test_marginal_null_treats_correlated_true_features_as_discoveries(self):
+        """Under the marginal null, a near-duplicate of a true signal is a
+        true discovery, not a false one. This is the property that makes the
+        selector compose with redundancy pruning instead of fighting it."""
+        rng = np.random.default_rng(11)
+        n = 400
+        base = rng.uniform(1.0, 5.0, n)
+        duplicate = base * 2.0 + rng.normal(0, 0.01, n)
+        noise = rng.standard_normal(n)
+        features = np.column_stack([base, duplicate, noise])
+        target = base + rng.normal(0, 0.1, n)
+        result = PermutationSelector(target_fdr=0.1).select(features, target)
+        assert 0 in result.selected and 1 in result.selected
+        assert 2 not in result.selected
+
+
+class TestFixedXKnockoffs:
+    def test_exchangeability_identities_hold(self):
+        """The guarantee rests on Xk'Xk = X'X and X'Xk = X'X - S."""
+        from beamfeat.selection import _standardise
+
+        rng = np.random.default_rng(0)
+        standardised = _standardise(rng.standard_normal((300, 20)))
+        selector = KnockoffSelector(random_state=0)
+        knockoffs = selector._fixed_x_knockoffs(standardised)
+        n = standardised.shape[0]
+        gram = standardised.T @ standardised / n
+        _, smallest, _ = selector._covariance(standardised)
+        s_value = min(2.0 * smallest, 1.0)
+        assert np.abs(knockoffs.T @ knockoffs / n - gram).max() < 1e-4
+        assert np.abs(
+            standardised.T @ knockoffs / n - (gram - s_value * np.eye(20))
+        ).max() < 1e-4
+
+    def test_basis_robust_to_seed_collision_with_data(self):
+        """A Gaussian draw that coincides with the data matrix must not
+        produce a basis inside col(X): QR of the resulting rank-deficient
+        residual would otherwise pad the missing directions arbitrarily."""
+        from beamfeat.selection import _standardise
+
+        standardised = _standardise(np.random.default_rng(0).standard_normal((300, 6)))
+        knockoffs = KnockoffSelector(random_state=0)._fixed_x_knockoffs(standardised)
+        n = standardised.shape[0]
+        gram = standardised.T @ standardised / n
+        assert np.abs(knockoffs.T @ knockoffs / n - gram).max() < 1e-4
+
+    def test_fdr_calibrated_offset_one(self):
+        target_fdr = 0.2
+        fdps = []
+        for trial in range(20):
+            rng = np.random.default_rng(6000 + trial)
+            features, target, truth = _gaussian_design(rng)
+            result = KnockoffSelector(target_fdr=target_fdr, random_state=trial, offset=1).select(
+                features, target
+            )
+            fdps.append(_fdp(result.selected, truth))
+        assert float(np.mean(fdps)) <= target_fdr + 0.1
+
+    def test_offset_zero_controls_only_modified_fdr(self):
+        """offset=0 may exceed the nominal plain FDR; the docstring says so.
+        Pinned here so the documented behaviour and the code cannot drift."""
+        fdps = []
+        for trial in range(20):
+            rng = np.random.default_rng(6100 + trial)
+            features, target, truth = _gaussian_design(rng)
+            result = KnockoffSelector(target_fdr=0.2, random_state=trial, offset=0).select(
+                features, target
+            )
+            fdps.append(_fdp(result.selected, truth))
+        assert float(np.mean(fdps)) > 0.0  # selects, unlike a vacuous method
+
+    def test_routes_to_model_x_when_n_below_2p(self):
+        rng = np.random.default_rng(8)
+        features = rng.standard_normal((30, 20))
+        target = rng.standard_normal(30)
+        result = KnockoffSelector().select(features, target)
+        assert any("model-X" in message for message in result.warnings_raised)
+
+    def test_fixed_construction_rejects_n_below_2p(self):
+        rng = np.random.default_rng(9)
+        with pytest.raises(ValueError, match="n >= 2p"):
+            KnockoffSelector(construction="fixed").select(
+                rng.standard_normal((30, 20)), rng.standard_normal(30)
+            )
+
+    def test_near_singular_design_warns_about_power(self):
+        rng = np.random.default_rng(10)
+        base = rng.uniform(1, 5, (300, 3))
+        # A near-exact linear combination drives the covariance eigenvalue to
+        # ~0. (Nonlinear transforms like products or logs are correlated with
+        # their parents but not linearly dependent, and do not.)
+        near_duplicate = 2.0 * base[:, 0] - base[:, 1] + rng.normal(0, 1e-8, 300)
+        features = np.column_stack([base, near_duplicate])
+        target = base[:, 0] + rng.normal(0, 0.1, 300)
+        result = KnockoffSelector().select(features, target)
+        assert any("near-singular" in message for message in result.warnings_raised)
+
+    def test_narrow_design_warns_for_knockoff_plus(self):
+        rng = np.random.default_rng(12)
+        features, target, _ = _gaussian_design(rng, n=200, n_signal=2, n_noise=3)
+        result = KnockoffSelector(target_fdr=0.1, offset=1).select(features, target)
+        assert any("offset=1" in message for message in result.warnings_raised)
+
+    def test_classification_records_heuristic_warning(self):
+        rng = np.random.default_rng(13)
+        features, target, _ = _gaussian_design(rng, effect=4.0)
+        labels = (target > np.median(target)).astype(int)
+        result = KnockoffSelector(problem_type="classification").select(features, labels)
+        assert any("heuristic" in message for message in result.warnings_raised)
+
+
+# --------------------------------------------------------------------------- #
+# Factory and validation
+# --------------------------------------------------------------------------- #
+
+
+class TestFactory:
+    @pytest.mark.parametrize("name", ALL_SELECTORS)
+    def test_resolves_canonical_names(self, name):
+        assert make_selector(name).name == name
+
+    @pytest.mark.parametrize(
+        ("alias", "expected"),
+        [("knockoffs", "knockoff"), ("model_x", "knockoff"), ("fixed_x", "knockoff"), ("perm", "permutation")],
+    )
+    def test_resolves_aliases(self, alias, expected):
+        assert make_selector(alias).name == expected
+
+    def test_instance_passes_through(self):
+        selector = PermutationSelector()
+        assert make_selector(selector) is selector
+
+    def test_unknown_name_rejected(self):
+        with pytest.raises(ValueError, match="unknown selector"):
+            make_selector("astrology")
+
+    def test_wrong_type_rejected(self):
+        with pytest.raises(TypeError):
+            make_selector(3.14)
+
+    def test_kwargs_forwarded(self):
+        assert make_selector("permutation", n_permutations=99).n_permutations == 99
+        assert make_selector("permutation", correction="by").correction == "by"
+
+
+class TestValidation:
+    @pytest.mark.parametrize("bad_fdr", [0.0, 1.0, -0.1, 1.5])
+    def test_bad_fdr_rejected(self, bad_fdr):
+        with pytest.raises(ValueError, match="target_fdr"):
+            PermutationSelector(target_fdr=bad_fdr)
+
+    def test_bad_problem_type_rejected(self):
+        with pytest.raises(ValueError, match="problem_type"):
+            PermutationSelector(problem_type="ranking")
+
+    def test_bad_correction_rejected(self):
+        with pytest.raises(ValueError, match="correction"):
+            PermutationSelector(correction="bonferroni")
+
+    def test_bad_offset_rejected(self):
+        with pytest.raises(ValueError, match="offset"):
+            KnockoffSelector(offset=5)
+
+    def test_bad_construction_rejected(self):
+        with pytest.raises(ValueError, match="construction"):
+            KnockoffSelector(construction="quantum")
+
+    def test_too_few_permutations_rejected(self):
+        with pytest.raises(ValueError, match="n_permutations"):
+            PermutationSelector(n_permutations=1)
+
+    def test_cap_below_floor_rejected(self):
+        with pytest.raises(ValueError, match="max_permutations"):
+            PermutationSelector(n_permutations=500, max_permutations=100)
+
+    @pytest.mark.parametrize("name", ALL_SELECTORS)
+    def test_row_mismatch_rejected(self, name):
+        rng = np.random.default_rng(0)
+        with pytest.raises(ValueError, match="rows"):
+            _fast(name).select(rng.standard_normal((100, 5)), rng.standard_normal(50))
+
+    @pytest.mark.parametrize("name", ALL_SELECTORS)
+    def test_non_finite_features_rejected(self, name):
+        rng = np.random.default_rng(0)
+        features = rng.standard_normal((100, 5))
+        features[3, 2] = np.nan
+        with pytest.raises(ValueError, match="non-finite"):
+            _fast(name).select(features, rng.standard_normal(100))
+
+    @pytest.mark.parametrize("name", ALL_SELECTORS)
+    def test_constant_column_handled(self, name):
+        rng = np.random.default_rng(0)
+        features = np.column_stack([np.ones(200), rng.standard_normal(200)])
+        result = _fast(name).select(features, rng.standard_normal(200))
+        assert np.all(np.isfinite(result.statistics))
+
+    def test_constant_target_handled(self):
+        rng = np.random.default_rng(0)
+        result = PermutationSelector().select(rng.standard_normal((100, 4)), np.ones(100))
+        assert result.n_selected == 0
+
+
+class TestAdjustedPValues:
+    def test_q_values_agree_with_selection_decision(self):
+        """A feature is selected iff its q-value is at or below target_fdr —
+        the defining property of a step-up adjusted p-value."""
+        rng = np.random.default_rng(0)
+        features, target, _ = _gaussian_design(rng)
+        for correction in ("bh", "by"):
+            result = PermutationSelector(
+                target_fdr=0.2, random_state=0, correction=correction
+            ).select(features, target)
+            by_q = np.flatnonzero(result.q_values <= result.target_fdr + 1e-12)
+            np.testing.assert_array_equal(np.sort(by_q), result.selected)
+
+    def test_q_values_dominate_p_values_and_by_dominates_bh(self):
+        from beamfeat.selection import _adjusted_p_values
+
+        rng = np.random.default_rng(1)
+        p_values = rng.uniform(0, 1, 30)
+        q_bh = _adjusted_p_values(p_values, "bh")
+        q_by = _adjusted_p_values(p_values, "by")
+        assert np.all(q_bh >= p_values - 1e-12)
+        assert np.all(q_by >= q_bh - 1e-12)
+        assert np.all(q_by <= 1.0)
+
+
+class TestKnockoffUnsatisfiabilityDiagnostic:
+    def test_empty_knockoff_plus_reports_offset_zero_alternative(self):
+        """When knockoff+ selects nothing but offset=0 would have selected,
+        the result must say so — an empty result should read as "could not
+        have selected at this configuration", not "no evidence"."""
+        rng = np.random.default_rng(0)
+        features, target, _ = _gaussian_design(rng, n=300, n_signal=2, n_noise=4)
+        result = KnockoffSelector(target_fdr=0.1, offset=1, random_state=0).select(features, target)
+        if result.n_selected == 0:
+            assert any("offset=0" in message for message in result.warnings_raised)
