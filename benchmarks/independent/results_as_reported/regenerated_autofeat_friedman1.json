@@ -1,0 +1,65 @@
+[
+ {
+  "dataset": "friedman1",
+  "method": "autofeat",
+  "split": 0,
+  "r2": -77.85550565645389,
+  "seconds": 60.79633108099999,
+  "n_new": 26,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "x002*log(x002)",
+   "x000**3*x001**3",
+   "x005**3*x009**3",
+   "x000*sqrt(x001)",
+   "x002**2*log(x002)",
+   "x001**3*log(x001)",
+   "log(x000)*log(x001)",
+   "1/(x003*x006)"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "friedman1",
+  "method": "autofeat",
+  "split": 1,
+  "r2": 0.9441512939985002,
+  "seconds": 54.61404318300001,
+  "n_new": 16,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "x002*log(x002)",
+   "x000**3*x001**3",
+   "sqrt(x000)*x001",
+   "x002**2*log(x002)",
+   "log(x000)*log(x001)",
+   "x004**2*exp(x007)",
+   "log(x003)*log(x004)",
+   "x003*exp(x009)"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "friedman1",
+  "method": "autofeat",
+  "split": 2,
+  "r2": 0.9498031917941997,
+  "seconds": 54.930257582000024,
+  "n_new": 12,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "x002*log(x002)",
+   "sqrt(x000)*x001",
+   "x000**3*x001**3",
+   "x002**2*log(x002)",
+   "x001**3*log(x001)",
+   "x004**2*sqrt(x007)",
+   "sqrt(x000)*x003",
+   "x004**3/x000"
+  ],
+  "error": null
+ }
+]

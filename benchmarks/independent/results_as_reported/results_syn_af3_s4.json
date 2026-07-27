@@ -1,0 +1,23 @@
+[
+ {
+  "dataset": "friedman1",
+  "method": "autofeat",
+  "split": 4,
+  "r2": 0.9526827830445105,
+  "seconds": 58.69020288799993,
+  "n_new": 15,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "x002*log(x002)",
+   "x000*sqrt(x001)",
+   "x000**3*x001**3",
+   "sqrt(x000)*x001",
+   "x002**2*log(x002)",
+   "x001**2*log(x001)",
+   "sqrt(x000)*x003**2",
+   "x003**2*sqrt(x006)"
+  ],
+  "error": null
+ }
+]

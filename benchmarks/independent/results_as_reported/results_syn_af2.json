@@ -1,0 +1,87 @@
+[
+ {
+  "dataset": "sparse10:a*b",
+  "method": "autofeat",
+  "split": 0,
+  "r2": 0.9974503753760189,
+  "seconds": 38.322945436,
+  "n_new": 1,
+  "recovered": true,
+  "fdr": null,
+  "formulas": [
+   "x000*x001"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "sparse10:a*b",
+  "method": "autofeat",
+  "split": 1,
+  "r2": 0.997460156722984,
+  "seconds": 35.537774902000024,
+  "n_new": 1,
+  "recovered": true,
+  "fdr": null,
+  "formulas": [
+   "x000*x001"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "sparse10:a*b",
+  "method": "autofeat",
+  "split": 2,
+  "r2": 0.99718683439014,
+  "seconds": 35.43646191200003,
+  "n_new": 6,
+  "recovered": true,
+  "fdr": null,
+  "formulas": [
+   "x000*x001",
+   "exp(x005)*exp(x006)",
+   "exp(x005)*exp(x009)",
+   "x002**3*exp(x006)",
+   "exp(x000)*exp(x001)",
+   "exp(x003)*exp(x005)"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "sparse10:a*b",
+  "method": "autofeat",
+  "split": 3,
+  "r2": 0.9967370720564781,
+  "seconds": 36.03691097999996,
+  "n_new": 6,
+  "recovered": true,
+  "fdr": null,
+  "formulas": [
+   "x000*x001",
+   "exp(x005)*exp(x006)",
+   "exp(x009)/x001",
+   "log(x003)/x003",
+   "log(x007)/x003",
+   "x004**3*exp(x008)"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "sparse10:a*b",
+  "method": "autofeat",
+  "split": 4,
+  "r2": 0.9970303371414294,
+  "seconds": 37.42461148800004,
+  "n_new": 6,
+  "recovered": true,
+  "fdr": null,
+  "formulas": [
+   "x000*x001",
+   "x000**3*exp(x001)",
+   "exp(x005)*exp(x009)",
+   "log(x000)/x000",
+   "x006**3*exp(x005)",
+   "exp(x002)*exp(x006)"
+  ],
+  "error": null
+ }
+]

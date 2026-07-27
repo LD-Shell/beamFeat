@@ -1,0 +1,211 @@
+[
+ {
+  "dataset": "concrete",
+  "method": "autofeat",
+  "split": 0,
+  "r2": 0.8592971272018192,
+  "seconds": 26.571822266000027,
+  "n_new": 71,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "x000/x007",
+   "x003**3*x004",
+   "x003**3/x000",
+   "x002**2/x007",
+   "log(x000)/x005",
+   "x000**3*x005**3",
+   "sqrt(x004)/x000",
+   "x004**2*x006**3"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "concrete",
+  "method": "autofeat",
+  "split": 1,
+  "r2": 0.8487236388472299,
+  "seconds": 22.026749962000167,
+  "n_new": 39,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "x000/x007",
+   "x000**3*x005**3",
+   "x003**2*x005**3",
+   "x000**3*x007**3",
+   "sqrt(x004)*x005**3",
+   "sqrt(x001)*log(x007)",
+   "x003**3*x004",
+   "x001*x002**2"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "concrete",
+  "method": "autofeat",
+  "split": 2,
+  "r2": 0.9037169293661664,
+  "seconds": 19.846816278000006,
+  "n_new": 43,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "x006*log(x007)",
+   "x000**3*x006**2",
+   "x000**3*x005**3",
+   "x000*sqrt(x002)",
+   "sqrt(x004)/x000",
+   "sqrt(x004)*x005**3",
+   "sqrt(x001)*log(x007)",
+   "x000**3*x001"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "concrete",
+  "method": "autofeat",
+  "split": 3,
+  "r2": 0.9054761230151301,
+  "seconds": 23.559991497000055,
+  "n_new": 56,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "x000/x007",
+   "x000**3*x005**3",
+   "x000**3*x006**3",
+   "sqrt(x004)*x005**3",
+   "sqrt(x001)*log(x007)",
+   "x004**5",
+   "x000**2*x002",
+   "x007**2/x000"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "concrete",
+  "method": "autofeat",
+  "split": 4,
+  "r2": 0.8932028267238933,
+  "seconds": 24.27164849099995,
+  "n_new": 58,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "x000**3*x005**3",
+   "sqrt(x004)*x005**3",
+   "x000/x007",
+   "x000**3*x001",
+   "x005**3/x000",
+   "x004**2/x000",
+   "x006*log(x007)",
+   "x000**2*x007**3"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "diabetes",
+  "method": "autofeat",
+  "split": 0,
+  "r2": 0.32710558333140916,
+  "seconds": 19.624304432999907,
+  "n_new": 17,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "exp(x002)*exp(x003)",
+   "exp(x002)*exp(x008)",
+   "Abs(x008)/x008",
+   "x001/x007",
+   "x000**3*x001",
+   "x000*x009",
+   "Abs(x002)/x002",
+   "exp(x005)*exp(x006)"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "diabetes",
+  "method": "autofeat",
+  "split": 1,
+  "r2": 0.07630797103878983,
+  "seconds": 19.587793003000115,
+  "n_new": 13,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "x002*x003",
+   "Abs(x008)/x008",
+   "exp(x002)*exp(x008)",
+   "x001/x006",
+   "x001/x007",
+   "x000**3*x001",
+   "x001*x005**3",
+   "Abs(x002)/x002"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "diabetes",
+  "method": "autofeat",
+  "split": 2,
+  "r2": -2.2816154831899285,
+  "seconds": 18.65954337900007,
+  "n_new": 10,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "Abs(x008)/x008",
+   "x002*Abs(x003)",
+   "exp(x002)*exp(x008)",
+   "x000**3*x001",
+   "exp(x002)*exp(x003)",
+   "x003/x002",
+   "Abs(x009)",
+   "x002*x003"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "diabetes",
+  "method": "autofeat",
+  "split": 3,
+  "r2": 0.4628818024904886,
+  "seconds": 19.147529243000008,
+  "n_new": 11,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "Abs(x008)/x008",
+   "exp(x002)*exp(x003)",
+   "exp(x002)*exp(x008)",
+   "x000**3*x001",
+   "x003/x002",
+   "x001*Abs(x009)",
+   "x006*x009**2",
+   "x005*x008**3"
+  ],
+  "error": null
+ },
+ {
+  "dataset": "diabetes",
+  "method": "autofeat",
+  "split": 4,
+  "r2": 0.48285242900679004,
+  "seconds": 20.446508412999947,
+  "n_new": 7,
+  "recovered": null,
+  "fdr": null,
+  "formulas": [
+   "Abs(x008)/x008",
+   "exp(x003)*exp(x008)",
+   "exp(x002)*exp(x003)",
+   "exp(x002)*exp(x008)",
+   "x000**3*x001",
+   "x001/x007",
+   "Abs(x003)*Abs(x009)"
+  ],
+  "error": null
+ }
+]
