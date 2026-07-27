@@ -6,6 +6,5 @@ build/
 .ruff_cache/
 site/
 .venv/
-paper/
 *.feather
 benchmarks/independent/openfe_tmp_data.feather
