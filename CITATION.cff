@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "beamfeat: beam-search feature construction with FDR-controlled selection"
+version: 0.1.0
+date-released: 2026-07-23
+license: MIT
+authors:
+  - family-names: "Daramola"
+    given-names: "Olanrewaju M."
+    orcid: "https://orcid.org/0009-0006-3327-2047"
+repository-code: "https://github.com/LD-Shell/beamfeat"
+keywords:
+  - feature engineering
+  - feature selection
+  - false discovery rate
+  - knockoffs
+# After archiving the release on Zenodo, add the concept DOI:
+# doi: 10.5281/zenodo.XXXXXXX
+# After JOSS acceptance, add:
+# preferred-citation:
+#   type: article
+#   title: "beamfeat: beam-search feature construction with false-discovery-rate controlled selection"
+#   authors:
+#     - family-names: "Daramola"
+#       given-names: "Olanrewaju M."
+#   journal: "Journal of Open Source Software"
+#   doi: <JOSS DOI>
+#   year: 2026

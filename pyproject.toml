@@ -1,0 +1,81 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "beamfeat"
+description = "Beam-search feature construction with false-discovery-rate controlled selection"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Olanrewaju M. Daramola" }]
+keywords = [
+  "feature-engineering",
+  "feature-selection",
+  "false-discovery-rate",
+  "knockoffs",
+  "symbolic-features",
+  "automl",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering",
+]
+# Floors are the oldest versions the test suite is actually run against
+# (see the `floor-versions` CI job). No upper pins: pinning `<2.0` style
+# ceilings strands users when the ecosystem moves, which is one of the
+# problems this library exists to avoid.
+dependencies = [
+  "numpy>=1.26",
+  "scikit-learn>=1.6",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+# Unit-aware search accepts any object exposing pint's Quantity interface;
+# pint is the implementation it is tested against.
+units = ["pint>=0.24"]
+display = ["sympy>=1.13"]
+test = ["pytest>=8", "sympy>=1.13"]
+docs = ["mkdocs-material>=9.5", "mkdocstrings[python]>=0.26"]
+benchmarks = ["lightgbm>=4"]
+all = ["beamfeat[units,display,test]"]
+
+[project.urls]
+Homepage = "https://github.com/LD-Shell/beamfeat"
+Documentation = "https://github.com/LD-Shell/beamfeat#readme"
+Issues = "https://github.com/LD-Shell/beamfeat/issues"
+
+[tool.hatch.version]
+path = "src/beamfeat/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/beamfeat"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "README.md", "LICENSE", "CITATION.cff", "pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "slow: long-running checks (sklearn check_estimator); run with `-m slow`",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py310"
+# benchmarks/independent/ is a vendored archive of an external comparison
+# study. Its code is kept byte-identical to the version that produced the
+# reported results, so it is excluded from linting rather than restyled.
+extend-exclude = ["benchmarks/independent"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]

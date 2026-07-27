@@ -1,0 +1,11 @@
+__pycache__/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+site/
+.venv/
+paper/
+*.feather
+benchmarks/independent/openfe_tmp_data.feather
