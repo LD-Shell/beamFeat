@@ -19,9 +19,11 @@ author:
   - "Olanrewaju M. Daramola, ORCID: 0009-0006-3327-2047, Independent Researcher"
 date: 27 July 2026
 bibliography: paper.bib
+link-citations: true
 header-includes:
   - \usepackage{tikz}
   - \usetikzlibrary{arrows.meta,positioning}
+  - \setlength{\LTcapwidth}{\linewidth}
 ---
 
 # Summary
