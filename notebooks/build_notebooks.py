@@ -22,7 +22,13 @@ def code(text: str) -> nbf.NotebookNode:
 
 def build(path: pathlib.Path, cells: list[nbf.NotebookNode], title: str) -> None:
     notebook = nbf.v4.new_notebook()
-    notebook.cells = cells
+    url = f"https://colab.research.google.com/github/LD-Shell/beamFeat/blob/main/notebooks/{path.name}"
+    badge = markdown(
+        f"[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)]({url})\n\n"
+        "Running in Colab? Install first: `%pip install beamfeat` "
+        "(before the PyPI release: `%pip install git+https://github.com/LD-Shell/beamFeat`)."
+    )
+    notebook.cells = [badge] + cells
     notebook.metadata = {
         "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
         "language_info": {"name": "python", "version": "3.12"},
