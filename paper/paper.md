@@ -187,7 +187,7 @@ power 1.00. On a twelve-equation physics panel under the
 symbolic-regression community's criterion ($R^2 > 0.999$ at 0.1% noise),
 `beamfeat` solves 9--10/12 (a borderline surrogate flips across numeric stacks) and recovers a stable 8/12 in *exact symbolic form*, checked by
 algebraic proportionality, a test a merely close numeric fit cannot pass,
-at 0.9 s per equation;
+at roughly one second per equation;
 each miss marks a named boundary (a depth-3 rational, a literal constant, a
 depth-4 nesting, the Gaussian's exponential).
 
@@ -200,11 +200,13 @@ its own declared dependencies):
 | formula recovery (9 recoverable) | **9/9** | 8/9 | 0/5 (stress) | 0/9 | — | — |
 | mean $R^2$, core suite | 0.9989 | 0.9974 | — | 0.8450 | 0.9798 | 0.8442 |
 | false-feature rate, stress suite | **0.000** | 0.29 (worst 0.75) | 0.000 | 0.11 (worst 0.33) | — | — |
-| mean fit time | 0.2--0.5 s | ~9 s | ~7 s | <0.1 s | <0.1 s | <0.1 s |
+| mean fit time | 0.2--0.5 s | ~9 s | ~2 s | <0.1 s | <0.1 s | <0.1 s |
 
 : Benchmark results from the repository's benchmark code: formula recovery and mean
 $R^2$ on the core suite, false-feature rate on the distractor stress suite,
-and mean fit time. []{label="headtohead"}
+and mean fit time. Times are indicative figures from a single machine;
+the cross-method ratios, measured on identical hardware, are the stable
+quantity. []{label="headtohead"}
 
 Under Student-$t(2)$ noise the exact formula is recovered at $R^2$ 0.956
 (LightGBM 0.866): the permutation test is distribution-free (it assumes nothing about the
