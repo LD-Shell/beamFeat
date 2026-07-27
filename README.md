@@ -112,8 +112,8 @@ benchmark scripts, not asserted:
 - End-to-end pipeline (search + holdout selection) at nominal FDR 0.10:
   empirical FDR 0.0000 with power 1.000 over 200 replicates, zero fallbacks;
   zero selections over 60 global-null replicates.
-- Feynman-equation panel (12 physics laws, 0.1% noise): 9/12 solved at the
-  SRBench criterion and 8/12 recovered in exact symbolic form, ~0.9 s per
+- Feynman-equation panel (12 physics laws, 0.1% noise): 9–10/12 solved (a borderline surrogate flips across numeric stacks) at the
+  SRBench criterion and a stable 8/12 in exact symbolic form, ~0.9 s per
   equation; the misses are named boundaries (a depth-3 rational, a literal
   constant, depth-4 nesting, the Gaussian's exponential).
 - Pure-noise stress: BH breached in 3/25 trials (mean FDP 0.12 vs nominal
