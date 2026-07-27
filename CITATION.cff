@@ -17,13 +17,13 @@ keywords:
   - knockoffs
 # After archiving the release on Zenodo, add the concept DOI:
 # doi: 10.5281/zenodo.XXXXXXX
-# After JOSS acceptance, add:
+# After journal acceptance of the paper, add:
 # preferred-citation:
 #   type: article
 #   title: "beamfeat: beam-search feature construction with false-discovery-rate controlled selection"
 #   authors:
 #     - family-names: "Daramola"
 #       given-names: "Olanrewaju M."
-#   journal: "Journal of Open Source Software"
-#   doi: <JOSS DOI>
+#   journal: "<journal name>"
+#   doi: <paper DOI>
 #   year: 2026
