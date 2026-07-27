@@ -196,13 +196,12 @@ figure above produced by a committed script.
 
 The design of `beamfeat` was informed by a review of the `autofeat` source
 code [@horn2019], whose approach it builds on and departs from as described
-above. The author used Anthropic's Claude as an AI assistant, under the author's
-direction, for design, implementation, benchmarking, and drafting. Every
+above. The author conceived the method, set its requirements and acceptance
+criteria, and directed all development, using Anthropic's Claude as an AI
+assistant for design, implementation, benchmarking, and drafting. Every
 statistical claim in this paper is backed by a committed, executable test
-or replicate study run in continuous integration, and design decisions —
-including AI-proposed ones that measurement refuted — are documented in the
-repository alongside their evidence. The author reviewed all code and text
-and takes sole responsibility for the work. This work received no external
-funding.
+or replicate study, and the test suite runs in continuous integration.
+The author reviewed all code and text and takes sole responsibility for
+the work. This work received no external funding.
 
 # References
