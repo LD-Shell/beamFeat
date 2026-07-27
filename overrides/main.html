@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  <meta name="author" content="Olanrewaju M. Daramola">
+  <link rel="author" href="https://orcid.org/0009-0006-3327-2047">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="beamfeat">
+  <meta property="og:title" content="{{ page.title | d(config.site_name) }} — beamfeat">
+  <meta property="og:description" content="{{ config.site_description }}">
+  <meta property="og:url" content="{{ page.canonical_url }}">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="{{ page.title | d(config.site_name) }} — beamfeat">
+  <meta name="twitter:description" content="{{ config.site_description }}">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    "name": "beamfeat",
+    "description": "{{ config.site_description }}",
+    "codeRepository": "https://github.com/LD-Shell/beamFeat",
+    "programmingLanguage": "Python",
+    "license": "https://opensource.org/licenses/MIT",
+    "author": {
+      "@type": "Person",
+      "name": "Olanrewaju M. Daramola",
+      "@id": "https://orcid.org/0009-0006-3327-2047",
+      "url": "https://orcid.org/0009-0006-3327-2047"
+    }
+  }
+  </script>
+{% endblock %}
