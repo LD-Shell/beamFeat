@@ -1,0 +1,40 @@
+site_name: beamfeat
+site_description: Beam-search feature construction with FDR-controlled selection
+repo_url: https://github.com/LD-Shell/beamfeat
+site_url: https://ld-shell.github.io/beamfeat/
+theme:
+  name: material
+  features:
+    - content.code.copy
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - toc.follow
+  palette:
+    - scheme: default
+      toggle: {icon: material/brightness-7, name: dark mode}
+    - scheme: slate
+      toggle: {icon: material/brightness-4, name: light mode}
+nav:
+  - Home: index.md
+  - User guide: guide.md
+  - Statistical guarantees: guarantees.md
+  - Migrating from autofeat: migrating-from-autofeat.md
+  - API reference: api.md
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: false
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.snippets:
+      base_path: ["."]
+      check_paths: true
+  - pymdownx.arithmatex
