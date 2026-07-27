@@ -75,7 +75,9 @@ target-version = "py310"
 # benchmarks/independent/ is a vendored archive of an external comparison
 # study. Its code is kept byte-identical to the version that produced the
 # reported results, so it is excluded from linting rather than restyled.
-extend-exclude = ["benchmarks/independent"]
+# Notebooks are executed documentation: their quality gate is nbmake
+# execution in CI, not import ordering, so ruff's notebook linting is off.
+extend-exclude = ["benchmarks/independent", "*.ipynb"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP"]
