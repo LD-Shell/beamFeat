@@ -1,0 +1,54 @@
+# conda-forge recipe skeleton.
+#
+# Submission flow (after the PyPI release exists):
+#   1. pip install grayskull && grayskull pypi beamfeat
+#      (regenerates this file with the real sha256 of the PyPI sdist)
+#   2. Fork https://github.com/conda-forge/staged-recipes, add the recipe
+#      under recipes/beamfeat/, open a PR.
+# The fields below are correct for beamfeat 0.1.0 except the placeholder
+# sha256, which MUST come from the published sdist.
+
+{% set name = "beamfeat" %}
+{% set version = "0.1.0" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: REPLACE_WITH_SDIST_SHA256
+
+build:
+  noarch: python
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 0
+
+requirements:
+  host:
+    - python {{ python_min }}
+    - hatchling >=1.25
+    - pip
+  run:
+    - python >={{ python_min }}
+    - numpy >=1.26
+    - scikit-learn >=1.6
+
+test:
+  imports:
+    - beamfeat
+    - beamfeat.selection
+  commands:
+    - pip check
+  requires:
+    - pip
+
+about:
+  home: https://github.com/LD-Shell/beamfeat
+  summary: Beam-search feature construction with FDR-controlled selection
+  license: MIT
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - LD-Shell
