@@ -101,8 +101,8 @@ through 1.9 with no upper version pins.
 
 Three trade-offs define the design. First, the selection statistic is
 *marginal* association, absolute Pearson correlation for regression and
-its correlation-ratio analogue for classification: a fixed function of
-the data, so permutation p-values are
+eta-squared (the correlation ratio for class labels) for classification:
+a fixed function of the data, so permutation p-values are
 exact, where statistics that re-tune themselves on the observed target (a
 cross-validated lasso penalty) break the exchangeability a permutation test rests on (under the null,
 the target and its shuffles are statistically interchangeable; a
@@ -112,8 +112,8 @@ $R^2$ 0.964; marginal screening admits only $\{ab, (ab)^2, d, e\}$,
 because the centred quadratic, viewed alone, is nearly independent of the
 target. The best any model restricted to those admitted features can
 reach is therefore 0.875, against the pipeline's 0.744. Part of that
-remaining gap is a search limitation that resisted several attempted
-remedies; closing it fully would require scoring candidates as a set
+remaining gap is a search limitation that persisted under wider beams,
+greater candidate diversity, and lookahead scoring; closing it fully would require scoring candidates as a set
 rather than one at a time, which reintroduces exactly the
 pick-what-fits-the-noise behaviour the design excludes. Heuristic tools
 that select jointly outperform on this structure while certifying
@@ -204,7 +204,8 @@ its own declared dependencies):
 
 : Benchmark results from the repository's benchmark code: formula recovery and mean
 $R^2$ on the core suite, false-feature rate on the distractor stress suite,
-and mean fit time. Times are indicative figures from a single machine;
+and mean fit time. Times are indicative figures from a single machine (a 1-core
+Intel Xeon Processor @ 2.80GHz Linux container, 4 GB RAM, no accelerator);
 the cross-method ratios, measured on identical hardware, are the stable
 quantity. []{label="headtohead"}
 
@@ -234,7 +235,7 @@ across runs given a seed, whereas `autofeat` seeds no internal subsampling:
 repeated runs on one identical split returned $R^2$ values from $+0.955$ to
 below $-77$, so any single `autofeat` figure, including those above, is one
 draw from a wide distribution. Further reproducibility signals: 370 automated tests
-including scikit-learn's full estimator compatibility checks; tests that
+including scikit-learn's own `check_estimator` compatibility suite; tests that
 exercise 95% of the code; automatic re-testing of every change
 (continuous integration) against both the oldest supported and the newest
 dependency versions; tutorial notebooks that execute end to end; and
