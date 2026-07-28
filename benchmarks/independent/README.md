@@ -1,6 +1,6 @@
 # Independent comparison study
 
-A 315-fit comparison of `beamfeat` against `autofeat`, `OpenFE`,
+A comparison of `beamfeat` against `autofeat`, `OpenFE`,
 `featuretools`, and raw-feature baselines (ridge, random forest, LightGBM)
 across nine datasets and five seeds, with average-rank and Friedman-test
 analysis.
@@ -10,21 +10,79 @@ analysis.
 | `REPORT.md` | the full write-up: protocol, results, statistics, conclusions |
 | `PROVENANCE.md` | what is reproducible and what is not — read before citing |
 | `beamfeat_benchmark.ipynb` | the study as a runnable notebook (`FULL_RUN = False` analyses the archived results in minutes; `True` regenerates them) |
-| `bench.py`, `aggregate.py`, `run_all.sh` | the standalone harness |
+| `bench.py`, `aggregate.py` | the datasets, method wrappers, fit loop and aggregation the notebook calls |
+| `setup_env.sh` | one-shot environment setup: pinned dependencies, `beamfeat` from this tree, JupyterLab, and a registered kernel |
 | `requirements.txt`, `patch_openfe.py` | pinned environment and the OpenFE source patch it requires |
-| `data/`, `results_as_reported/` | inputs and archived per-fit results |
+| `data/` | inputs, with MD5 checksums |
+| `results_as_reported/` | the published study, 360 per-fit records. Read-only: nothing writes here |
+| `results_fresh_run/` | anything a regeneration produces. Created on demand, not committed |
+
+## Setting up
+
+`autofeat` cannot run on a current stack: it caps `scikit-learn` below 1.8 and,
+through `numba`, `numpy` at 2.2 or lower. The study therefore needs its own
+environment, which `setup_env.sh` builds in one step.
+
+```bash
+conda create -n af315 python=3.11 -y
+conda activate af315
+bash benchmarks/independent/setup_env.sh
+```
+
+That installs the pinned dependencies, `beamfeat` from this repository as an
+editable install, and JupyterLab; registers a Jupyter kernel; and finishes by
+printing the resolved versions and running an `autofeat` smoke test. It refuses
+to install into a base or system interpreter, since the pins would downgrade a
+general-purpose environment. A plain `python -m venv` works equally well.
+
+## Two beamfeat rows
+
+`beamfeat` is the estimator as shipped, predicting through its own internal
+ridge. `beamfeat_ridge` is the same search used as a transformer feeding the
+shared `RidgeCV`, exactly as `autofeat`, `featuretools` and `OpenFE` are run.
+Comparing the two shows whether the downstream model, rather than the
+constructed features, accounts for any difference.
+
+## Two results directories
+
+Reruns are kept apart from the published study so the two can never be mixed
+or overwritten:
+
+```
+results_as_reported/    the study as published (360 fits) -- read-only
+results_fresh_run/      whatever a regeneration produces
+```
+
+`FULL_RUN = False` in the notebook reads the archive; `FULL_RUN = True` writes
+to and then reads from `results_fresh_run/`. `aggregate.py` takes the
+directory as an argument:
+
+```bash
+python aggregate.py                     # the published study (default)
+python aggregate.py results_fresh_run   # your regeneration
+```
+
+Each writes `independent_benchmark_results.csv` beside the files it read, so
+comparing a rerun against the published numbers is a diff of two CSVs. To
+recover a single missing cell rather than rerunning everything, point `bench.py`
+at one dataset:
+
+```bash
+DATASETS=friedman1 python bench.py synthetic autofeat 5 results_fresh_run/results_syn_af3.json
+```
 
 ## Headline figures
 
 Mean out-of-sample R² across the nine datasets, and the worst of the 45
-individual fits per method:
+individual fits per method (44 for `autofeat`, whose friedman1 seed 2 was
+lost to an interrupted run):
 
 | method | mean R² | worst fit | mean seconds | mean new features |
 |---|---|---|---|---|
 | random forest (raw) | 0.810 | 0.247 | 0.86 | — |
 | **beamfeat** | **0.803** | **0.355** | **0.61** | 9.2 |
 | LightGBM (raw) | 0.798 | 0.117 | 0.07 | — |
-| autofeat | 0.751 | −2.282 | 29.30 | 17.1 |
+| autofeat | −1.561 | −103.245 | 32.32 | 16.8 |
 | OpenFE + LightGBM | 0.736 | 0.360 | 4.40 | 7.3 |
 | ridge (raw) | 0.704 | 0.353 | 0.003 | — |
 | featuretools | −2.478 | −57.320 | 0.11 | 104.7 |

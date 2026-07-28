@@ -7,8 +7,10 @@ Everything below is runnable as-is; outputs shown are from real runs.
 ```bash
 pip install beamfeat            # core: numpy + scikit-learn only
 pip install "beamfeat[units]"   # + pint, for dimensional analysis
-pip install "beamfeat[all]"     # everything, including sympy display
 ```
+
+See [Installation](installation.md) for running the test suite or
+reproducing the benchmarks.
 
 ## Sixty seconds to a vetted equation
 

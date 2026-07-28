@@ -1,85 +1,109 @@
-# Independent Benchmark: beamfeat 0.1.0 vs autofeat, OpenFE, featuretools, and raw-feature baselines
+# beamfeat vs autofeat, OpenFE, featuretools and raw baselines
 
-*Run 24 July 2026 in a clean sandbox. beamfeat installed from the provided source archive; all competitors from PyPI. 315 model fits total. Raw per-fit results in `independent_benchmark_results.csv`.*
+*360 fits: nine datasets, eight methods, five fixed 75/25 splits, run in one
+pass on one machine in the pinned environment of `requirements.txt`. Raw
+per-fit results in `results_as_reported/`, aggregated to
+`independent_benchmark_results.csv`. Reproduce with
+`beamfeat_benchmark.ipynb`.*
 
-## 1. Protocol
+## Protocol
 
-The protocol follows the evaluation conventions of the automated-feature-engineering literature (Horn, Pack & Rieger 2019 for autofeat; Zhang et al. 2023 for OpenFE; Demšar 2006 for cross-dataset comparison):
+The four feature-construction tools hand their features to the same downstream
+model, a `RidgeCV` on standardised features, so that comparison isolates the
+constructed features rather than the estimator. `beamfeat` appears twice: as
+the estimator as shipped, predicting through its own internal ridge, and as
+`beamfeat_ridge`, a transformer feeding the shared model. The three `*_raw`
+entries are reference points on unengineered columns and are not part of that
+controlled comparison.
 
-- **Splits.** 75/25 train/test, repeated over 5 random seeds, with *identical splits for every method*.
-- **Downstream model held constant.** Every feature-construction tool feeds the same standardized RidgeCV (25 log-spaced alphas), so differences reflect the features, not the estimator. beamfeat's native predict (internally a linear fit on its selected features) is the equivalent object.
-- **Metrics.** Out-of-sample R² (mean ± std over seeds), wall-clock fit time, number of constructed features, and — on synthetic problems with a known generating formula — whether the tool's returned expressions reference the true generating columns (recovery).
-- **Statistics.** Average ranks across datasets, a Friedman test over the 9 × 7 rank matrix, and paired Wilcoxon signed-rank tests (beamfeat vs each method, paired on dataset × split, n = 45 pairs).
+## Summary
 
-**Methods.** RidgeCV on raw features (linear anchor); Random Forest (300 trees) and LightGBM (300 trees) on raw features (strong non-linear references); featuretools 1.31 DFS (multiply + divide transform primitives, depth 1) → RidgeCV; OpenFE (top-20 features, forced `task="regression"`) → RidgeCV; autofeat 2.1.3 (`feateng_steps=2`, its paper's recommended setting) → RidgeCV; beamfeat 0.1.0 at library defaults.
+| method | mean R² | worst fit | fits below 0 | features | seconds | recovery |
+|---|---|---|---|---|---|---|
+| random forest | **0.810** | 0.247 | 0 | — | 0.34 | — |
+| beamfeat | 0.803 | **0.355** | 0 | 9.2 | 0.52 | **1.00** |
+| beamfeat → ridge | 0.803 | 0.355 | 0 | 9.2 | 0.55 | **1.00** |
+| LightGBM | 0.798 | 0.117 | 0 | — | 0.46 | — |
+| OpenFE | 0.736 | 0.360 | 0 | 7.3 | 3.82 | — |
+| ridge | 0.704 | 0.353 | 0 | — | 0.01 | — |
+| autofeat | −1.561 | −103.245 | 2 | 16.8 | 32.32 | 0.67 |
+| featuretools | −2.478 | −57.320 | 6 | 104.7 | 0.26 | — |
 
-**Datasets.** Real: UCI Concrete (1030×8), UCI Wine Quality red (1598×11, regression on quality), Boston housing (506×13), sklearn Diabetes (442×10). Concrete, wine, and Boston appear in autofeat's own evaluation. Synthetic (known ground truth, n = 500 unless noted): three-way ratio a·b/c, kinetic energy ½mv², a·b hidden among 10 columns, a purely linear control, and Friedman #1 (n = 800, 10 columns).
+`recovery` is the fraction of scoreable synthetic fits in which some returned
+feature referenced all of the generating columns. It is column recovery, not
+symbolic recovery, and is blank for methods that return no inspectable
+formulas. `beamfeat`'s `fdr_controlled_` flag was true on 45 of 45 fits.
 
-**Environment caveats.** UCI was unreachable from the sandbox; Concrete/Wine/Boston came from widely used GitHub mirrors (`stedy/Machine-Learning-with-R-datasets`, `jbrownlee/Datasets`, `selva86/datasets`). scikit-learn was pinned to 1.7.2 because autofeat 2.1.3 crashes on ≥1.8. PySR was out of scope (Julia dependency); tsfresh is time-series-only and inapplicable.
+## Statistical comparison
 
-## 2. Compatibility findings (a result in themselves)
+Ranks and the omnibus test use one `beamfeat` entry; two would split the rank
+space and make the figures incomparable with a seven-method analysis.
 
-- **autofeat 2.1.3** raises `TypeError: check_array() got an unexpected keyword argument 'force_all_finite'` on scikit-learn ≥ 1.8 and is unusable on a current default stack.
-- **OpenFE** required three interventions to run: a `mean_squared_error(squared=False)` call removed from modern scikit-learn; an `init_score` shape incompatibility in its multiprocessing path (worked around with `n_jobs=1`); and auto-detection of integer wine ratings as 6-class classification (fixed by forcing regression). Its own requirements pin `lightgbm==3.3.1` (2021-era).
-- **beamfeat** and **featuretools** ran unmodified.
+| method | average rank |
+|---|---|
+| beamfeat | **3.22** |
+| random forest | 3.44 |
+| LightGBM | 3.44 |
+| autofeat | 3.67 |
+| featuretools | 4.22 |
+| OpenFE | 4.78 |
+| ridge | 5.22 |
 
-## 3. Real-dataset results (out-of-sample R², mean ± std, 5 seeds)
+Friedman: χ² = 6.71, p = 0.348 over 9 datasets and 7 methods. With nine
+datasets the omnibus is underpowered and separates nothing; the paired tests
+carry the inference.
 
-| Dataset | Ridge raw | RF raw | LightGBM raw | featuretools | OpenFE | autofeat | beamfeat |
-|---|---|---|---|---|---|---|---|
-| Concrete | 0.583 ± 0.025 | 0.911 ± 0.009 | **0.932 ± 0.005** | 0.818 ± 0.047 | 0.754 ± 0.086 | 0.882 ± 0.026 | 0.845 ± 0.025 |
-| Wine red | 0.362 ± 0.009 | **0.479 ± 0.028** | 0.418 ± 0.047 | 0.396 ± 0.022 | 0.380 ± 0.014 | 0.373 ± 0.044 | 0.382 ± 0.025 |
-| Boston | 0.730 ± 0.060 | **0.866 ± 0.044** | 0.862 ± 0.064 | −25.6 ± 20.3 | 0.729 ± 0.059 | 0.850 ± 0.083 | 0.833 ± 0.079 |
-| Diabetes | **0.428 ± 0.040** | 0.324 ± 0.064 | 0.208 ± 0.051 | 0.280 ± 0.084 | 0.427 ± 0.039 | −0.186 ± 1.182 | 0.423 ± 0.038 |
+**Paired Wilcoxon, positive difference favours beamfeat, n = 45:**
 
-Notable failure modes: featuretools' unscreened ratio features catastrophically overfit Boston on every seed (mean R² −25.6). autofeat suffered one catastrophic seed on Diabetes (−2.28), dragging its mean below zero. beamfeat never fell below the raw-ridge anchor on any dataset-seed.
+| comparison | median Δ | mean Δ | p |
+|---|---|---|---|
+| vs ridge | +0.0878 | +0.0990 | < 0.0001 |
+| vs featuretools | +0.0080 | +3.2805 | < 0.0001 |
+| vs OpenFE | +0.0572 | +0.0663 | 0.0001 |
+| vs autofeat | −0.0001 | +2.3641 | 0.059 |
+| vs random forest | +0.0095 | −0.0076 | 0.599 |
+| vs LightGBM | +0.0074 | +0.0047 | 0.858 |
+| vs beamfeat → ridge | −0.0000 | −0.0006 | 0.100 |
 
-## 4. Synthetic ground-truth results (R², mean ± std, 5 seeds)
+The autofeat row is the one to read carefully: level on a typical split, with
+the mean gap coming entirely from the splits where autofeat fails outright.
 
-| Problem | Ridge raw | RF raw | LightGBM raw | featuretools | OpenFE | autofeat | beamfeat |
-|---|---|---|---|---|---|---|---|
-| a·b/c | 0.759 | 0.943 | 0.894 | 0.975 | 0.759 | 0.974 | **1.000 ± 0.000** |
-| ½mv² | 0.858 | 0.989 | 0.991 | 0.995 | 0.880 | **1.000** | **1.000** |
-| a·b in 10 cols | 0.901 | 0.987 | 0.989 | 0.996 | 0.901 | **0.997** | **0.997** |
-| linear control | **1.000** | 0.976 | 0.988 | **1.000** | **1.000** | **1.000** | 0.999 |
-| Friedman #1 | 0.712 | 0.816 | **0.899** | −2.13 ± 6.01 | 0.796 | 0.867 ± 0.189 | 0.745 ± 0.028 |
+## Does the downstream model matter?
 
-**Formula recovery** (does a returned expression reference exactly the generating columns): beamfeat 3/3 problems at 100% of seeds; autofeat 2/3 — it never recovered a·b/c on any seed, substituting combinations like x₀²/x₂ and 1/(x₁x₂). beamfeat returned exactly 1 formula on the three recovery problems; autofeat returned 2–11.
+Across the 45 paired fits, `beamfeat` and `beamfeat_ridge` differ by a median
+absolute 0.00033, a largest absolute 0.016, and only two fits differ by more
+than 0.01. Mean, worst case, feature count and recovery are identical. The
+result comes from the constructed features, not from the estimator.
 
-**Friedman #1** is the documented boundary case for both marginal-selection tools: beamfeat's marginal-association screening cannot see the centred quadratic term (0.745, barely above ridge), matching the limitation its own docs state. autofeat averaged higher (0.867) but with 7× the variance, including one observed run at R² = −99.5 — the identical split re-run gave +0.955, i.e. autofeat's unseeded internal randomness spans catastrophic failure to success on the same data.
+## Was the construction worth it?
 
-## 5. Cost and parsimony
+Ridge on the unengineered columns reaches 0.704. Of the four constructors,
+`beamfeat` (9.2 features) reaches 0.803 and `OpenFE` (7.3) reaches 0.736;
+`autofeat` (16.8) and `featuretools` (104.7) both end below that anchor. More
+constructed features did not buy accuracy here, and for two methods it cost
+some.
 
-| | featuretools | beamfeat | OpenFE | autofeat |
-|---|---|---|---|---|
-| Fit time (real datasets) | 0.1–0.2 s | 0.6–1.4 s | 3–16 s | 20–35 s (86 s on Friedman) |
-| Features returned (Concrete) | 84 | 20 | 20 | 53 |
-| Features returned (a·b/c) | 18 | **1** | 1 | 11 |
+## autofeat is not reproducible
 
-beamfeat is 25–120× faster than autofeat at fit time and consistently returns fewer features. Its `fdr_controlled_` flag was True on 45/45 runs — the statistical guarantee it advertises was actually delivered on every fit.
+`autofeat` exposes no `random_state`, and its noise-injection screen draws
+decoy features from the global NumPy generator before any internal seeding
+applies, so each process starts from different entropy. Six runs of one
+identical split of Friedman #1 returned R² from +0.952 to −109.8 with 17 to 26
+selected features (`autofeat_repeatability.json`); pinning `OMP_NUM_THREADS`,
+`NUMBA_NUM_THREADS` and `MKL_NUM_THREADS` to 1 changed nothing.
 
-## 6. Statistical comparison
+The same instability is visible at study level. Four executions of this
+comparison returned autofeat mean R² of 0.746, −1.694, 0.754 and −1.561, with
+worst single fits from −2.28 to −108.9. Its rows here are one draw from that
+distribution, not a stable measurement. Every other method reproduced to four
+decimals across those runs.
 
-**Average rank across all 9 datasets** (1 = best): beamfeat 3.11, LightGBM 3.44, autofeat 3.56, RF 3.56, featuretools 4.22, OpenFE 4.78, ridge 5.33. On real data alone the tree ensembles lead (RF 2.00, LightGBM 2.75, beamfeat 3.75); on synthetics beamfeat and autofeat tie for first (2.6).
+## Limits
 
-**Friedman test:** χ² = 7.57, p = 0.271 across 9 datasets — with only 9 datasets, overall method differences are *not* statistically distinguishable, and rank orderings above should be read as descriptive. This is the honest ceiling of a 9-dataset study; the literature typically needs 15–30 datasets for significance.
-
-**Paired Wilcoxon (beamfeat vs X, n = 45 dataset×split pairs):**
-
-| Comparison | Median ΔR² | p |
-|---|---|---|
-| vs ridge raw | +0.088 | < 0.0001 |
-| vs featuretools | +0.008 | < 0.0001 |
-| vs OpenFE | +0.057 | 0.0001 |
-| vs autofeat | −0.0001 | 0.181 |
-| vs Random Forest | +0.010 | 0.599 |
-| vs LightGBM | +0.007 | 0.858 |
-
-beamfeat significantly beats its raw-linear anchor, featuretools, and OpenFE. Against autofeat, accuracy is **statistically indistinguishable** (median difference ≈ 0). Against the tree ensembles, indistinguishable overall — but that pools synthetics (where beamfeat wins) with real data (where GBMs win); per-dataset, LightGBM clearly beats beamfeat on Concrete and Friedman #1.
-
-## 7. Conclusions
-
-1. **vs autofeat (the closest comparator):** equal predictive accuracy (Wilcoxon p = 0.18, median Δ ≈ 0), delivered ~25–120× faster, with better formula recovery (3/3 vs 2/3), fewer returned features, no catastrophic seeds (autofeat: −2.28 on Diabetes, −99.5 observed once on Friedman #1), and it runs on a current scikit-learn where autofeat cannot.
-2. **vs OpenFE and featuretools:** significantly better under a linear downstream model (both p ≤ 0.0001). Caveat: OpenFE's features target GBM consumers, so this protocol undersells it in its home setting; featuretools' single-table transform mode is not its primary use case (relational data).
-3. **vs gradient boosting on raw features:** beamfeat does not beat LightGBM on real tabular prediction (Concrete: 0.845 vs 0.932) — consistent with both the literature and beamfeat's own documentation. Its value proposition is the readable equation with a stated, and here consistently delivered, FDR guarantee — plus never underperforming the linear baseline, which no other construction tool in this study managed.
-4. **Limits of this study:** 9 datasets (Friedman test underpowered), 5 seeds, default/paper-recommended settings only, no hyperparameter search, real datasets from mirrors, and PySR/tsfresh excluded. The repo's own committed benchmarks (which include calibration and robustness suites this study did not re-run) are directionally consistent with everything measured here.
+Nine datasets leaves the Friedman test underpowered. Five splits. Default or
+paper-recommended settings only, with no hyperparameter search. Real datasets
+come from mirrors. PySR and tsfresh are excluded. `OpenFE` is run into a
+linear model rather than the gradient-boosted setting it is designed for,
+which understates it. The repository's own benchmarks, which include
+calibration and robustness suites this study does not re-run, are directionally
+consistent with everything measured here.

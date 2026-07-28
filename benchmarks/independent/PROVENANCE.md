@@ -1,7 +1,7 @@
 # Provenance and limits of the independent benchmark
 
 This directory holds a comparison study of `beamfeat` against `autofeat`,
-`OpenFE`, `featuretools`, and raw-feature baselines: 315 fits over nine
+`OpenFE`, `featuretools`, and raw-feature baselines: 360 fits over nine
 datasets, seven methods, and five train/test splits, with average-rank and
 Friedman-test analysis. `beamfeat_benchmark.ipynb` reproduces the analysis
 from the committed results; `bench.py` regenerates the results themselves.
@@ -30,22 +30,45 @@ independent runs (0.726082, 0.719561, 0.789567).
 
 `autofeat` and `OpenFE` do not expose a seed for their internal
 subsampling, so their timings — and for `autofeat` its selected features and
-score — vary between runs of the same split. This is not a small effect. A
-regeneration of `autofeat` on Friedman #1 under the pinned environment
-(`results_as_reported/regenerated_autofeat_friedman1.json`) returned:
+score — vary between runs of the same split. This is not a small effect.
 
-| split | as reported | regenerated |
-|---|---|---|
-| 0 | +0.955 | **−77.86** |
-| 1 | +0.530 | +0.944 |
-| 2 | +0.952 | +0.950 |
+Six runs of Friedman #1 split 0, at the library defaults in the pinned
+environment, each a separate process (`autofeat_repeatability.json`):
+
+| run | threading | R² | selected features |
+|---|---|---|---|
+| 1 | default | +0.952 | 17 |
+| 2 | default | −100.96 | 26 |
+| 3 | default | −105.31 | 19 |
+| 4 | pinned to 1 | −109.79 | 21 |
+| 5 | pinned to 1 | +0.950 | 18 |
+| 6 | pinned to 1 | +0.939 | 20 |
+
+The same instability shows at study level: four executions of the full
+nine-dataset comparison returned autofeat mean R² of 0.746, -1.694, 0.754
+and -1.561, with worst single fits from -2.28 to -108.9. Every other method
+reproduced to four decimals across those runs.
+
+An earlier regeneration of three splits
+(`results_as_reported/regenerated_autofeat_friedman1.json`) shows the same
+pattern: +0.955 became −77.86 on split 0, and +0.530 became +0.944 on split 1.
+
+`autofeat` exposes no `random_state`. `featsel.py` seeds the per-run subsample
+with `np.random.seed(i)`, but `_add_noise_features` draws its decoy features
+from the global NumPy generator, seeded from OS entropy at process start. Those
+decoys set the bar each candidate feature has to clear, so a different draw
+changes which features survive. Calling `np.random.seed()` before fitting does
+not control it, and pinning `OMP_NUM_THREADS`, `NUMBA_NUM_THREADS` and
+`MKL_NUM_THREADS` to 1 does not either. The effect appears where selection is
+marginal; on problems with an unambiguous signal repeated processes agree
+exactly.
 
 **Consequence for reading the tables: every `autofeat` number in this study
 is one draw from a wide and partly heavy-tailed distribution, not a stable
-measurement.** Its reported mean R² of 0.751 across the nine datasets should
+measurement.** Its reported mean R² of 0.746 across the nine datasets should
 be read as such, and its catastrophic-failure rate is plausibly higher than
 a single pass suggests (the reported run already contains R² = −2.28 on a
-Diabetes split; the regeneration above adds −77.86 on Friedman #1). The same
+Diabetes split; the repeatability runs above reach −109.8 on Friedman #1). The same
 caveat applies in the other direction — a rerun may look better than what is
 reported here. Comparisons against `autofeat` therefore carry irreducible
 uncertainty that no amount of re-running on our side can remove.

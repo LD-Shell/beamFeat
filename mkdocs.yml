@@ -24,6 +24,7 @@ theme:
       toggle: {icon: material/brightness-4, name: light mode}
 nav:
   - Home: index.md
+  - Installation: installation.md
   - User guide: guide.md
   - Statistical guarantees: guarantees.md
   - Migrating from autofeat: migrating-from-autofeat.md

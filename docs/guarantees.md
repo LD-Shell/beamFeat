@@ -32,25 +32,39 @@ headroom for one null exceedance), capped at `max_permutations`.
 signal is a *true* discovery under this null; de-duplication is performed by
 the search's redundancy threshold, not the error-control procedure.
 
-**Multiplicity.** Benjamini–Yekutieli by default (valid under arbitrary
-dependence). Benjamini–Hochberg is available; it is valid under positive
-regression dependence (PRDS), and its caveat is measurable: on pure-noise
-pipelines with mutually correlated candidates, BH selected something in 3/25
-trials (mean FDP 0.12 vs nominal 0.10) where BY breached in 1/25 (mean FDP
-0.04); BY is therefore the estimator default.
+**Multiplicity.** The estimators (`BeamFeatRegressor`,
+`BeamFeatClassifier`, `BeamFeatTransformer`) default to Benjamini–Yekutieli,
+valid under arbitrary dependence; `PermutationSelector` used directly defaults
+to Benjamini–Hochberg, valid under positive regression dependence (PRDS).
+Engineered candidates share parents and are mutually correlated by
+construction, so PRDS cannot be taken for granted and the estimators take the
+conservative option. Over 100 pure-noise pipelines BH returned features in 6
+trials against BY's 1 (FDP 0.06 and 0.01,
+`benchmarks/selector_calibration.py`), both under the nominal 0.10. The
+difference is not significant at this trial count (Fisher exact p = 0.12), so
+read it as a consistency check rather than a demonstrated BH failure.
 
-**Measured calibration** (Gaussian designs, 25 features, 5 signals): realised
-FDR 0.065/0.120/0.210 at nominal 0.05/0.10/0.20 under BH; 0.020/0.033/0.065
-under BY; power 1.00 throughout.
+**Measured calibration** (Gaussian designs, 300 rows, 25 candidates, 5 signals,
+100 trials). BH controls the FDR at `q·m0/m`, here `q·20/25`, and realised
+0.046 ± 0.008, 0.084 ± 0.012 and 0.161 ± 0.016 at nominal 0.05/0.10/0.20
+against ceilings of 0.040/0.080/0.160. BY is stricter by a harmonic factor and
+realised 0.008 ± 0.004, 0.018 ± 0.005 and 0.046 ± 0.008. Power 1.00 throughout.
+`benchmarks/selector_calibration.py` derives each bound from the design and
+fails if a realised rate sits above one, so these figures cannot drift from the
+behaviour.
 
 **What the marginal null cannot see.** A feature can be jointly essential
 yet nearly marginally independent of the target — a centred quadratic
 `(c − 0.5)²` contributes almost no marginal correlation until its linear
 complement is fitted. Marginal screening correctly excludes such features
 under its null, at a measurable predictive cost on targets built from them
-(Friedman #1: the marginal null admits only four of the six oracle basis
-features, for a screening-admissible ceiling of 0.875 against the 0.964
-representation oracle; the pipeline reaches 0.744). Joint selection recovers
+(Friedman #1, over six draws: the marginal null never admits `c`, giving a
+screening-admissible ceiling of 0.874 ± 0.006 against a representation oracle
+of 0.960 ± 0.003, with the pipeline reaching 0.776 ± 0.014. Around 0.086 is
+lost to screening and 0.098 to the search. `c²` is admitted on some draws and
+not others, since `(c − 0.5)²` expands to carry a little marginal signal
+through it.)
+Joint selection recovers
 such features but certifies nothing; that trade is the design.
 
 ## Knockoff selector
@@ -74,10 +88,14 @@ rather than "no evidence"; when knockoff+ selects nothing but `offset=0`
 would have, the warning says so and names the trade-off.
 
 **Offsets.** `offset=1` (knockoff+) carries the finite-sample FDR guarantee
-and realised 0.201 at nominal 0.20; it is unsatisfiable with fewer than `1/q`
-features, and a warning fires on narrow designs. `offset=0` controls only a
-modified FDR and measurably exceeded the plain nominal level (0.289 at 0.20)
-— a regression test pins this so documentation and behaviour cannot drift.
+and realised 0.159 at nominal 0.20 over 100 trials; it is unsatisfiable with
+fewer than `1/q` features, and a warning fires on narrow designs. `offset=0`
+controls only a modified FDR and realised 0.249, above `offset=1` as expected.
+Both move across numeric stacks, since knockoff construction depends on matrix
+decompositions; treat the ordering and the nominal bound as the claim, not the
+second decimal. `benchmarks/selector_calibration.py` regenerates both. Both figures come from `benchmarks/selector_calibration.py`;
+the committed tests pin the qualitative ordering and the nominal bound rather
+than these decimals, which carry Monte Carlo error.
 
 ## Selective inference: why the estimators split their data
 

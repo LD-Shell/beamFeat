@@ -29,16 +29,15 @@ model.predict(X_new)
 
 ```bash
 pip install beamfeat            # core: numpy + scikit-learn only
-# before the first PyPI release, install from source:
-#   pip install git+https://github.com/LD-Shell/beamfeat
 pip install "beamfeat[units]"   # + pint, for unit-aware search (units as
                                 #   strings like "kg" or as pint quantities)
 pip install "beamfeat[all]"     # + sympy display support and test deps
 ```
 
-Python ≥ 3.10. There are **no upper version pins**: the test suite runs
-against the oldest supported stack (numpy 1.26 / scikit-learn 1.6) and
-through the current releases (verified up to scikit-learn 1.9 / numpy 2.5).
+Python ≥ 3.10. There are **no upper version pins**: the 370 tests pass on
+scikit-learn 1.6.1, 1.8.0 and 1.9.0, with numpy 2.3, 2.4 and 2.5. Running the
+test suite or reproducing the benchmarks needs a little more setup, described
+in `docs/installation.md`.
 
 ## What it does
 
@@ -101,33 +100,51 @@ carries Monte Carlo error from finite trials.
 
 ## Measured, not assumed
 
+![False-feature rate on the distractor stress suite](paper/figures/fig_false_feature_rate.png)
+
+*Signal hidden among ten distractor columns. The false-feature rate is the
+fraction of returned formulas touching only irrelevant columns. beamfeat and
+OpenFE return none; autofeat returns them in roughly a third of cases.
+Regenerate with `python benchmarks/make_figures.py`; four other figures are
+written alongside it.*
+
+
 All of the following are measured by the test suite or the committed
 benchmark scripts, not asserted:
 
-- Selector calibration (Gaussian designs, 25 trials): realised FDR
-  0.065/0.120/0.210 at nominal 0.05/0.10/0.20 for BH, 0.020/0.033/0.065 for
-  BY, power 1.00 throughout. Fixed-X knockoff+ realised 0.201 at nominal 0.2.
+- Selector calibration (Gaussian designs, 100 trials,
+  `benchmarks/selector_calibration.py`): BH realised 0.046 ± 0.008,
+  0.084 ± 0.012 and 0.161 ± 0.016 at nominal 0.05/0.10/0.20, against its
+  ceiling of `q·m₀/m` = 0.040/0.080/0.160; BY, stricter by a harmonic factor,
+  realised 0.008 ± 0.004, 0.018 ± 0.005 and 0.046 ± 0.008. Power 1.00
+  throughout. The bounds are computed from the design and the script fails if
+  a realised rate sits above one.
 - End-to-end pipeline (search + holdout selection) at nominal FDR 0.10:
-  empirical FDR 0.0000 with power 1.000 over 200 replicates, zero fallbacks;
-  zero selections over 60 global-null replicates.
-- Feynman-equation panel (12 physics laws, 0.1% noise): 9–10/12 solved (a borderline surrogate flips across numeric stacks) at the
-  SRBench criterion and a stable 8/12 in exact symbolic form, ~0.9 s per
-  equation; the misses are named boundaries (a depth-3 rational, a literal
+  no false discovery in 200 replicates, a 95% upper bound of 0.015 on the true
+  rate, power 1.000, zero fallbacks; zero selections over 60 global-null
+  replicates.
+- Feynman-equation panel (12 physics laws, 0.1% noise): 10/12 solved at the
+  SRBench criterion and 8/12 in exact symbolic form, ~0.6 s per equation; the misses are named boundaries (a depth-3 rational, a literal
   constant, depth-4 nesting, the Gaussian's exponential).
-- Pure-noise stress: BH breached in 3/25 trials (mean FDP 0.12 vs nominal
-  0.10, the PRDS caveat materialising on correlated candidates); BY in 1/25
-  (mean FDP 0.04). This measurement is why BY is the estimator default.
+- Pure-noise stress (`benchmarks/selector_calibration.py`): over 100
+  global-null pipelines, where every selection is false by construction, BH
+  returned features in 6 trials and BY in 1 — false discovery proportions of
+  0.06 and 0.01, both under the nominal 0.10. The gap is not significant at
+  this trial count (p = 0.12); BY is the estimator default because it is valid
+  under arbitrary dependence, and this is the consistency check.
 - Stress suite (signal among ten distractor columns): beamfeat's
   false-feature rate — returned formulas touching only irrelevant columns —
   is 0.000 at noise levels from 5% to 50% of the signal scale and at n as
   small as 120, with recovery and the guarantee intact throughout; autofeat
-  recovers the formula equally often but returns distractor-only features at
-  a mean rate of 0.29 (worst 0.75 at 50% noise).
-- Real data (six datasets, numeric columns): best on mpg (0.871 vs LightGBM
+  recovers the formula equally often but returns distractor-only features on
+  3 of the 5 scoreable datasets. Reported as a count rather than a mean:
+  with five datasets the mean carries a standard error of about 0.15, and
+  autofeat's output varies between processes in any case.
+- Real data (seven datasets, numeric columns): best on mpg (0.871 vs LightGBM
   0.853) and tips — where gradient boosting overfits below ridge while the
   FDR gate holds beamfeat at the ceiling — tied with ridge on diamonds from
   one interpretable feature, behind LightGBM on penguins and breast cancer,
-  and behind ridge on diabetes (0.376; autofeat 0.303, OpenFE 0.235): no
+  and behind ridge on diabetes (0.376; autofeat 0.303): no
   nonlinear structure exists there to find, and beamfeat does not invent
   any.
 - OpenFE on the same stress suite (its features + LightGBM, after shimming a
@@ -139,11 +156,14 @@ benchmark scripts, not asserted:
   distribution-free, so heavy tails cost it nothing.
 - Known boundaries, measured: on piecewise targets trees win outright
   (LightGBM 0.998 vs 0.808 — if a tree model beats beamfeat by a wide
-  margin, the signal is likely piecewise, not algebraic), and on Friedman #1
-  the 0.744-vs-0.964-oracle gap splits into a measured 0.875
-  screening-admissible ceiling (the marginally-quiet quadratic is priced by
-  the guarantee itself) and a search shortfall below it that is insensitive
-  to beam width and diversity settings — stated rather than hidden.
+  margin, the signal is likely piecewise, not algebraic; OpenFE reaches 0.998
+  there too, through a sigmoid primitive beamfeat does not carry, so the gap
+  is the operator set rather than the search), and on Friedman #1
+  the shortfall splits, over six draws, into a representation oracle of
+  0.960 ± 0.003, a screening-admissible ceiling of 0.874 ± 0.006 (the
+  marginally-quiet quadratic is priced by the guarantee itself) and an
+  achieved 0.776 ± 0.014: about 0.086 lost to what marginal screening cannot
+  see, 0.098 to the search — stated rather than hidden.
 - Test suite: 370 tests at 95% statement coverage (a 90% floor is enforced
   in CI), including scikit-learn's full estimator-conformance checks.
 - Selection-only baseline (knockpy on raw columns, modified-FDR offset —
@@ -151,15 +171,15 @@ benchmark scripts, not asserted:
   formulas recovered, core-suite R² at the ridge level (0.845), and a 0.11
   mean false-feature rate on the stress suite — the construction step and
   the holdout are the delta.
-- Independent 315-fit study across nine datasets and seven methods
+- Independent 360-fit study across nine datasets and eight methods
   (`benchmarks/independent/`): mean R² 0.803 against random forest 0.810,
-  LightGBM 0.798, autofeat 0.751, OpenFE 0.736, featuretools −2.478 — and a
+  LightGBM 0.798, autofeat 0.746, OpenFE 0.736, featuretools −2.478 — and a
   worst single fit of 0.355 where autofeat reached −2.28 and featuretools
   −57.3, at ~48× autofeat's speed, with the FDR flag delivered on 45/45
   fits.
 - Benchmarks (10 synthetic problems with known formulas, 70/30 splits):
-  beamfeat mean R² 0.9993, ~0.4 s fits, 9/9 formulas recovered; autofeat
-  0.9974, ~9 s, 8/9; LightGBM 0.9798; ridge 0.8442. On the purely linear
+  beamfeat mean R² 0.9989, ~0.2 s fits, 10/10 formulas recovered; autofeat
+  0.9968, ~12 s, 8/10; LightGBM 0.9798; ridge 0.8442. On the purely linear
   problem — where feature construction should not win — ridge ties beamfeat.
 
 ## Relationship to autofeat
@@ -177,15 +197,16 @@ expressions on tabular columns.
 
 ## Independent comparison
 
-`benchmarks/independent/` holds a 315-fit study (nine datasets, seven
+`benchmarks/independent/` holds a 360-fit study (nine datasets, eight
 methods, five splits, average ranks plus a Friedman test) with its harness,
 pinned environment, data, and a notebook that reproduces the analysis. Mean
 held-out R²: beamfeat 0.803, random forest 0.810, LightGBM 0.798, autofeat
-0.751, OpenFE 0.736, ridge 0.704, featuretools −2.478 — and worst single fit
+0.746, OpenFE 0.736, ridge 0.704, featuretools −2.478 — and worst single fit
 of 45: beamfeat 0.355, autofeat −2.28, featuretools −57.3, with the FDR
 guarantee delivered on 45/45. Read `PROVENANCE.md` first: it records what is
 reproducible (beamfeat, bit-identically) and what is not (autofeat seeds
-nothing internally and swung from +0.955 to −77.86 on one identical split).
+no `random_state` and drawing its decoy features from the global NumPy
+generator, swung from +0.952 to −109.8 across six runs on one identical split).
 
 ## Documentation
 
