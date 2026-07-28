@@ -1,16 +1,27 @@
 """Aggregate benchmark results and run the statistical comparison.
 
-Reads every results_*.json in the current directory, prints the tables
-reported in the study (mean +/- std R^2, fit seconds, feature counts,
-recovery rates, average ranks, Friedman test, paired Wilcoxon tests), and
-writes independent_benchmark_results.csv.
+Reads every results_*.json in a results directory, prints the tables reported
+in the study (mean +/- std R^2, fit seconds, feature counts, recovery rates,
+average ranks, Friedman test, paired Wilcoxon tests), and writes
+independent_benchmark_results.csv beside them.
+
+Usage:
+    python aggregate.py [results_dir]
+
+The directory defaults to results_as_reported (the published study). Pass
+results_fresh_run to analyse a regeneration instead.
 """
-import glob, json
+import glob, json, os, sys
 import numpy as np, pandas as pd
 from scipy import stats
 
+RESULTS_DIR = sys.argv[1] if len(sys.argv) > 1 else "results_as_reported"
+paths = sorted(glob.glob(os.path.join(RESULTS_DIR, "results_*.json")))
+if not paths:
+    raise SystemExit(f"no results_*.json under {RESULTS_DIR}/")
+print(f"source: {RESULTS_DIR}/  ({len(paths)} file(s))")
 rows = []
-for f in sorted(glob.glob("results_*.json")):
+for f in paths:
     rows += json.load(open(f))
 df = pd.DataFrame(rows)
 df = df[df.error.isna()].copy()
@@ -86,5 +97,5 @@ for m in ORDER:
     print(f"beamfeat vs {m:13s} n={len(d):2d} median diff={d.median():+.4f} "
           f"mean diff={d.mean():+.4f} p={w.pvalue:.4f}")
 
-df.to_csv("independent_benchmark_results.csv", index=False)
+df.to_csv(os.path.join(RESULTS_DIR, "independent_benchmark_results.csv"), index=False)
 print(f"\nSaved independent_benchmark_results.csv ({len(df)} runs)")

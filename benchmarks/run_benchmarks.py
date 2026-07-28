@@ -192,38 +192,43 @@ def real_datasets() -> list[Dataset]:
     # reproducible preprocessing rather than an implicit encoding choice.
     seaborn_specs = [
         ("mpg", "mpg", ["cylinders", "displacement", "horsepower", "weight", "acceleration", "model_year"], None),
+        # diamonds is capped: memory during the search grows roughly linearly
+        # with rows (about 530 MB at 2,000 and 1.7 GB at 8,000 on one core),
+        # and the full 53,940 rows exhaust a 4 GB machine. Raise or remove the
+        # cap if the run has the headroom.
         ("diamonds", "price", ["carat", "depth", "table", "x", "y", "z"], 1400),
         ("penguins", "body_mass_g", ["bill_length_mm", "bill_depth_mm", "flipper_length_mm"], None),
         ("tips", "tip", ["total_bill", "size"], None),
     ]
-    try:
-        import pandas as pd
+    import pandas as pd
 
-        base = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/{}.csv"
-        for name, target, columns, cap in seaborn_specs:
-            try:
-                frame = pd.read_csv(base.format(name))[columns + [target]].dropna()
-                if cap is not None and len(frame) > cap:
-                    frame = frame.sample(cap, random_state=0)
-                datasets.append(Dataset(
-                    name=name,
-                    X=frame[columns].to_numpy(dtype=float),
-                    y=frame[target].to_numpy(dtype=float),
-                ))
-            except Exception as exc:  # pragma: no cover - network dependent
-                print(f"  (skipping {name}: {exc})")
-    except ImportError:  # pragma: no cover - optional dependency
-        print("  (skipping seaborn-data sets: pandas unavailable)")
+    base = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/{}.csv"
+    cache_dir = pathlib.Path(__file__).resolve().parent / "data"
 
-    try:
-        housing = fetch_california_housing()
-        # Subsample for tractability; the full set is 20k rows and the point
-        # is a like-for-like comparison, not a scaling study.
-        rng = np.random.default_rng(0)
-        keep = rng.choice(housing.data.shape[0], size=2000, replace=False)
-        datasets.append(Dataset(name="california_housing", X=housing.data[keep], y=housing.target[keep]))
-    except Exception as exc:  # pragma: no cover - network dependent
-        print(f"  (skipping california_housing: {exc})")
+    for name, target, columns, cap in seaborn_specs:
+        cache = cache_dir / f"{name}.csv"
+        try:
+            frame = pd.read_csv(base.format(name))
+            cache_dir.mkdir(exist_ok=True)
+            frame.to_csv(cache, index=False)
+        except Exception:
+            if not cache.exists():
+                raise
+            print(f"  ({name}: fetch failed, using cached copy)")
+            frame = pd.read_csv(cache)
+        frame = frame[columns + [target]].dropna()
+        if cap is not None and len(frame) > cap:
+            frame = frame.sample(cap, random_state=0)
+        datasets.append(Dataset(
+            name=name,
+            X=frame[columns].to_numpy(dtype=float),
+            y=frame[target].to_numpy(dtype=float),
+        ))
+
+    # Used in full: 20,640 rows, so the figures are comparable with the
+    # published literature. scikit-learn caches the download after the first run.
+    housing = fetch_california_housing()
+    datasets.append(Dataset(name="california_housing", X=housing.data, y=housing.target))
 
     return datasets
 
