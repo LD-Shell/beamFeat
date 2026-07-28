@@ -3,17 +3,20 @@ vs raw-feature baselines (Ridge, RandomForest, LightGBM).
 
 Protocol (following Horn et al. 2019 / standard tabular practice):
 - Fixed 75/25 train/test splits, N_SPLITS seeds, identical across methods.
-- Every feature-construction tool feeds the SAME downstream model
+- The four feature-construction tools feed the SAME downstream model
   (RidgeCV on standardized features) so the comparison isolates the
-  engineered features, not the estimator.  beamfeat's own internal linear
-  fit is equivalent by design; both its native predict and
-  transform->RidgeCV are recorded.
+  engineered features, not the estimator.  beamfeat appears twice: as
+  `beamfeat`, the estimator as shipped, whose internal ridge is fixed at
+  alpha=1; and as `beamfeat_ridge`, the transformer feeding the shared
+  RidgeCV, which is the strict like-for-like row.
+- The three `*_raw` entries are reference points on unengineered features,
+  not part of that controlled comparison.
 - Metrics: out-of-sample R^2 (mean +/- std over splits), wall-clock fit
   time, number of constructed features, and (synthetic only) recovery of
   the generating formula.
 """
 from __future__ import annotations
-import json, os, pathlib, sys, time, warnings, traceback
+import json, os, pathlib, re, sys, time, warnings
 import numpy as np
 import pandas as pd
 from sklearn.datasets import load_diabetes
@@ -93,7 +96,7 @@ def run_autofeat(Xtr, ytr, Xte):
     Fte = af.transform(pd.DataFrame(Xte, columns=[f"x{i:03d}" for i in range(Xte.shape[1])]))
     new = [c for c in Ftr.columns if c not in {f"x{i:03d}" for i in range(Xtr.shape[1])}]
     m = ridge().fit(Ftr.to_numpy(float), ytr)
-    return m.predict(Fte.to_numpy(float)), {"n_new": len(new), "formulas": new[:8]}
+    return m.predict(Fte.to_numpy(float)), {"n_new": len(new), "formulas": new}
 
 def run_featuretools(Xtr, ytr, Xte):
     import featuretools as ft
@@ -126,31 +129,53 @@ def run_openfe(Xtr, ytr, Xte):
     return m.predict(Mte), {"n_new": ttr.shape[1] - Xtr.shape[1]}
 
 def run_beamfeat(Xtr, ytr, Xte):
+    """beamfeat as shipped: its own estimator, an internal ridge at alpha=1."""
     from beamfeat import BeamFeatRegressor
     m = BeamFeatRegressor(random_state=0).fit(Xtr, ytr)
-    info = {"n_new": len(m.formulas()), "formulas": m.formulas()[:8],
+    info = {"n_new": len(m.formulas()), "formulas": m.formulas(),
             "fdr": bool(getattr(m, "fdr_controlled_", False))}
     return m.predict(Xte), info
 
+def run_beamfeat_ridge(Xtr, ytr, Xte):
+    """beamfeat as a transformer into the shared RidgeCV, exactly as autofeat,
+    featuretools and OpenFE are run. This is the like-for-like row: the only
+    thing that differs from those three is which features were constructed."""
+    from beamfeat import BeamFeatTransformer
+    t = BeamFeatTransformer(random_state=0).fit(Xtr, ytr)
+    m = ridge().fit(t.transform(Xtr), ytr)
+    info = {"n_new": len(t.formulas()), "formulas": t.formulas(),
+            "fdr": bool(getattr(t, "fdr_controlled_", False))}
+    return m.predict(t.transform(Xte)), info
+
 METHODS = {"ridge_raw": run_ridge, "rf_raw": run_rf, "lgbm_raw": run_lgbm,
            "autofeat": run_autofeat, "featuretools": run_featuretools,
-           "openfe": run_openfe, "beamfeat": run_beamfeat}
+           "openfe": run_openfe, "beamfeat": run_beamfeat,
+           "beamfeat_ridge": run_beamfeat_ridge}
 
 def recovered(formulas, tokens):
-    if not tokens or not formulas: return None
-    toks = [t.replace("x", "") for t in tokens]  # x0 -> 0
+    """Did any single returned feature reference all of the generating columns?
+
+    This is column recovery, not symbolic recovery: it checks which input
+    columns a constructed feature touches, not the operators combining them.
+    For a target built from x0*x1/x2 the feature x0+x1+x2 counts, and so does
+    one that also drags in an irrelevant column. Read it as a necessary
+    condition for finding the law rather than as proof of it.
+
+    Returns None when the dataset has no known generating columns, or when the
+    method returned no inspectable formulas at all.
+    """
+    if not tokens or not formulas:
+        return None
+    wanted = {t.lstrip("x").lstrip("0") or "0" for t in tokens}
     for f in formulas:
-        f2 = f.replace("x00", "x").replace("x0", "x") if "x00" in f else f
-        names = set()
-        import re
-        for mnum in re.findall(r"x0*(\d+)", f):
-            names.add(mnum)
-        if set(toks) <= names or set(toks) == names:
+        # column indices are written x0, x1 ... by beamfeat and x000, x001 ...
+        # by autofeat; both normalise to the bare index.
+        referenced = {m.lstrip("0") or "0" for m in re.findall(r"x0*(\d+)", f)}
+        if wanted <= referenced:
             return True
     return False
 
 def main(which, methods, n_splits, out):
-    import os
     ds = get_datasets(which)
     only = os.environ.get("DATASETS")
     if only:
@@ -179,8 +204,10 @@ def main(which, methods, n_splits, out):
                                      seconds=dt, n_new=None, recovered=None, fdr=None,
                                      formulas=None, error=f"{type(e).__name__}: {e}"))
                     print(f"{name:16s} {mname:13s} s{split} ERROR {type(e).__name__}: {str(e)[:80]}", flush=True)
-        json.dump(rows, open(out, "w"), indent=1)
-    json.dump(rows, open(out, "w"), indent=1)
+        with open(out, "w") as fh:          # checkpoint after each dataset
+            json.dump(rows, fh, indent=1)
+    with open(out, "w") as fh:
+        json.dump(rows, fh, indent=1)
     print("wrote", out)
 
 if __name__ == "__main__":

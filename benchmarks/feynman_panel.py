@@ -26,6 +26,7 @@ import json
 import pathlib
 import time
 import warnings
+import zlib
 
 import numpy as np
 
@@ -169,7 +170,10 @@ def run_panel(unary_ops=None, label="default operators"):
 
     rows = []
     for name, generator, n_cols, expected_terms, note in equations():
-        rng = np.random.default_rng(hash(name) % 2**32)
+        # crc32 rather than hash(): Python randomises string hashing per
+        # process, so hash(name) would reseed the data on every run and the
+        # panel would not be reproducible.
+        rng = np.random.default_rng(zlib.crc32(name.encode()))
         low, high = (0.1, 1.0) if name in ("gaussian", "relativistic_velocity") else (1.0, 5.0)
         X = rng.uniform(low, high, (500, n_cols))
         X_test = rng.uniform(low, high, (500, n_cols))

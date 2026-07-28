@@ -14,10 +14,15 @@ multiclass classification, so the harness passes `task="regression"`
 explicitly, and uses `n_jobs=1` because OpenFE's multiprocessing path has
 a further index-alignment bug with LightGBM 4.)
 """
+import importlib.util
 import pathlib
-import openfe
 
-pkg = pathlib.Path(openfe.__file__).parent
+# find_spec locates the package without executing it, so this works even when
+# openfe's own imports (matplotlib, for instance) are unavailable.
+spec = importlib.util.find_spec("openfe")
+if spec is None or spec.origin is None:
+    raise SystemExit("openfe is not installed in this environment")
+pkg = pathlib.Path(spec.origin).parent
 for fname in ("openfe.py", "FeatureSelector.py"):
     p = pkg / fname
     src = p.read_text()
@@ -43,4 +48,8 @@ for fname in ("openfe.py", "FeatureSelector.py"):
         print(f"patched {p}")
     else:
         print(f"no changes needed in {p} (already patched?)")
-print("done")
+leftover = [f for f in ("openfe.py", "FeatureSelector.py")
+            if "squared=False" in (pkg / f).read_text()]
+if leftover:
+    raise SystemExit(f"patch did not take effect in {leftover}")
+print("done: no squared= call sites remain")
