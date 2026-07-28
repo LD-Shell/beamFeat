@@ -74,33 +74,36 @@ DATASETS=friedman1 python bench.py synthetic autofeat 5 results_fresh_run/result
 ## Headline figures
 
 Mean out-of-sample R² across the nine datasets, and the worst of the 45
-individual fits per method (44 for `autofeat`, whose friedman1 seed 2 was
-lost to an interrupted run):
+individual fits per method:
 
 | method | mean R² | worst fit | mean seconds | mean new features |
 |---|---|---|---|---|
-| random forest (raw) | 0.810 | 0.247 | 0.86 | — |
-| **beamfeat** | **0.803** | **0.355** | **0.61** | 9.2 |
-| LightGBM (raw) | 0.798 | 0.117 | 0.07 | — |
+| random forest (raw) | 0.810 | 0.247 | 0.34 | — |
+| **beamfeat** | **0.803** | **0.355** | **0.52** | 9.2 |
+| beamfeat → ridge | 0.803 | 0.355 | 0.55 | 9.2 |
+| LightGBM (raw) | 0.798 | 0.117 | 0.46 | — |
+| OpenFE | 0.736 | 0.360 | 3.82 | 7.3 |
+| ridge (raw) | 0.704 | 0.353 | 0.01 | — |
 | autofeat | −1.561 | −103.245 | 32.32 | 16.8 |
-| OpenFE + LightGBM | 0.736 | 0.360 | 4.40 | 7.3 |
-| ridge (raw) | 0.704 | 0.353 | 0.003 | — |
-| featuretools | −2.478 | −57.320 | 0.11 | 104.7 |
+| featuretools | −2.478 | −57.320 | 0.26 | 104.7 |
 
 `beamfeat` reported `fdr_controlled_ = True` on 45/45 fits, recovered the
-generating formula on every ground-truth problem, and produced no fit below
-R² 0.355. Its Friedman #1 result here, 0.745, independently reproduces the
+generating columns on every ground-truth problem, and produced no fit below
+R² 0.355. Two methods did: `autofeat` on two fits and `featuretools` on six.
+`beamfeat`'s Friedman #1 result here, 0.746, independently reproduces the
 0.744 measured by this repository's own harness.
 
 ## Caveats that travel with these numbers
 
-Both are documented in full in `PROVENANCE.md`; in brief:
+Documented in full in `PROVENANCE.md`; in brief:
 
-1. **One value was inserted by hand.** The `autofeat` Friedman #1 seed-2
-   result came from an interrupted run. It affects `autofeat`'s Friedman #1
-   mean and slightly affects the omnibus test; it touches no `beamfeat`
-   figure. Because `autofeat` does not seed its internal subsampling, a
-   re-run yields a different draw rather than the same value.
+1. **`autofeat`'s row is one draw, not a measurement.** It exposes no
+   `random_state` and draws its decoy features from the global NumPy generator
+   before any internal seeding applies, so each process starts from different
+   entropy. Four executions of this study returned mean R² of 0.746, −1.694,
+   0.754 and −1.561, with worst fits from −2.28 to −108.9; every other method
+   reproduced to four decimals across the same runs. See
+   `autofeat_repeatability.json`.
 2. **Dataset-overlap precision.** The report's comparability note is
    slightly imprecise against autofeat's Table 1: diabetes also overlaps
    (four of this study's four real datasets appear there), and the wine

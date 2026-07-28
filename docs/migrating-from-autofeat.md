@@ -89,8 +89,12 @@ predictions = model.predict(X_test)
   `beamfeat` returns *no* constructed features, warns, and sets
   `fdr_controlled_ = False` rather than returning unvetted candidates. Check
   that flag.
-- **Determinism.** `random_state` makes the whole pipeline reproducible;
-  autofeat does not seed its internal subsampling.
+- **Determinism.** `random_state` makes the whole pipeline reproducible.
+  autofeat exposes none, and cannot be made reproducible from outside: its
+  noise-injection screen draws decoy features from the global NumPy generator
+  before its own internal seeding applies, so each process starts from
+  different entropy. Six runs of one identical split returned R² from +0.952
+  to −109.8.
 - **No constants inside expressions.** Neither tool fits them; if you need
   `exp(-3.2 x)`, a symbolic regressor such as PySR is the right instrument.
 
@@ -99,7 +103,9 @@ predictions = model.predict(X_test)
 Exhaustive expansion does not need to *see* a signal marginally in order to
 generate the right basis. On targets with a strong non-monotone interaction —
 Friedman #1 is the standard example — autofeat's brute-force expansion finds
-structure that correlation-guided beam search prunes, and it scores
-substantially higher there. `beamfeat` accepts that cost as the price of a
-statistical guarantee; the trade-off is quantified in
+structure that correlation-guided beam search prunes. On four of five splits
+of Friedman #1 it reaches R² 0.94 to 0.96 where `beamfeat` reaches 0.72 to
+0.79; on the fifth it returns −103. Take the win on the typical split as real
+and the mean as unusable, which is the shape of the trade: `beamfeat` accepts
+a lower ceiling as the price of a guarantee and a floor. Quantified in
 [Statistical guarantees](guarantees.md).

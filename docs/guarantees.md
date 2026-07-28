@@ -3,8 +3,9 @@
 This page states, for each selection procedure, exactly what is guaranteed,
 under which assumptions, and what was measured. Every number here is
 reproduced by the committed test suite (`tests/test_selection.py`,
-`tests/test_estimators.py`) or benchmark scripts; trial counts are 25 unless
-stated, so values carry Monte Carlo error of roughly ±0.03–0.06.
+`tests/test_estimators.py`) or benchmark scripts. Calibration figures come
+from 100 trials and are quoted with their standard error; read them at that
+precision rather than at the last digit.
 
 ## What "FDR control at level q" means
 
@@ -60,7 +61,7 @@ complement is fitted. Marginal screening correctly excludes such features
 under its null, at a measurable predictive cost on targets built from them
 (Friedman #1, over six draws: the marginal null never admits `c`, giving a
 screening-admissible ceiling of 0.874 ± 0.006 against a representation oracle
-of 0.960 ± 0.003, with the pipeline reaching 0.776 ± 0.014. Around 0.086 is
+of 0.960 ± 0.003, with the pipeline reaching 0.776 ± 0.013. Around 0.086 is
 lost to screening and 0.098 to the search. `c²` is admitted on some draws and
 not others, since `(c − 0.5)²` expands to carry a little marginal signal
 through it.)
@@ -93,9 +94,8 @@ fewer than `1/q` features, and a warning fires on narrow designs. `offset=0`
 controls only a modified FDR and realised 0.249, above `offset=1` as expected.
 Both move across numeric stacks, since knockoff construction depends on matrix
 decompositions; treat the ordering and the nominal bound as the claim, not the
-second decimal. `benchmarks/selector_calibration.py` regenerates both. Both figures come from `benchmarks/selector_calibration.py`;
-the committed tests pin the qualitative ordering and the nominal bound rather
-than these decimals, which carry Monte Carlo error.
+second decimal. `benchmarks/selector_calibration.py` regenerates both, and the
+committed tests pin the ordering rather than the decimals.
 
 ## Selective inference: why the estimators split their data
 
@@ -105,8 +105,9 @@ optimistically biased, and the nominal FDR is not guaranteed for them. By
 default the estimators search on one half of the training rows and run
 selection on the other (`selection_holdout=0.5`), restoring the
 fixed-candidate-set premise. Measured end-to-end over
-200 replicates at nominal 0.10: empirical FDR 0.0000, power 1.000, no
-fallbacks; 60 global-null replicates selected nothing. If the holdout is disabled, the
+200 replicates at nominal 0.10: not one false discovery, a 95% upper bound of
+0.015 on the true rate, power 1.000, no fallbacks; 60 global-null replicates
+selected nothing. If the holdout is disabled, the
 estimator refuses to claim the guarantee (`fdr_controlled_ = False`).
 
 ## Parsimony within the screened set

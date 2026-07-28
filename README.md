@@ -58,8 +58,10 @@ in `docs/installation.md`.
 Numerical failures (overflow, domain errors) are recorded and excluded, never
 silently masked. Optional unit propagation — units given as pint quantities
 or as plain strings like `"kg"` or `"m / s**2"` — rejects dimensionally
-invalid expressions at construction time — on a mechanics example this pruned 62% of
-proposals before any data work.
+invalid expressions at construction time. On a kg/m/s mechanics example this
+cuts the number of candidates ever evaluated by roughly two-thirds before any
+data work; the exact fraction depends on how many distinct dimensions the
+columns carry.
 
 ## The guarantees, stated precisely
 

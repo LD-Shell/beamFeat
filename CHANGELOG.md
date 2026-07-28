@@ -14,7 +14,7 @@ API, defaults and behaviour are identical to 0.1.0.
 - `benchmarks/selector_calibration.py`: realised FDR and power for both
   multiplicity corrections, the two fixed-X knockoff offsets, and the
   global-null stress behind the Benjamini-Yekutieli default.
-- `benchmarks/make_figures.py`: six vector PDFs in `paper/figures/`, sized to
+- `benchmarks/make_figures.py`: seven vector PDFs in `paper/figures/`, sized to
   the ACS column widths, including mean held-out R² against fit time from the
   comparison study.
 - `benchmarks/independent/setup_env.sh`: builds the comparison environment,
@@ -31,15 +31,17 @@ API, defaults and behaviour are identical to 0.1.0.
 
 - Friedman #1 decomposition is reported over six draws rather than one:
   oracle 0.960 ± 0.003, screening ceiling 0.874 ± 0.006, achieved
-  0.776 ± 0.014, with about 0.086 lost to screening and 0.098 to the search.
+  0.776 ± 0.013, with about 0.086 lost to screening and 0.098 to the search.
   The previous single-draw figures came from a different split for the achieved
   value and overstated the gap. `friedman_decomposition.py` now checks the
   ordering the argument rests on rather than comparing against recorded
   numbers, and computes the ceiling on the set actually admitted: the marginal
   null never admits `c`, but admits `c²` on some draws, so the earlier
   "admits only four of the six" was true of one draw rather than in general.
-- knockpy stress false-feature rate 0.11 to 0.13: the mean is over the five
-  datasets that declare their generating columns, not all six.
+- knockpy's stress false-feature rate was averaged over six datasets where
+  only five declare their generating columns. Reported as a count of affected
+  datasets instead, since a mean over five carries a standard error of order
+  0.1; knockpy is also unseeded, so the count moves between runs.
 - Selector calibration runs 100 trials rather than 25 and reports a standard
   error. The published 25-trial figures were noisy point estimates: BH at
   nominal 0.10 read 0.120, above nominal, where 100 trials give 0.084 ± 0.012
@@ -60,11 +62,6 @@ API, defaults and behaviour are identical to 0.1.0.
   features from the global NumPy generator, so six runs of one identical split
   returned R² from +0.952 to -109.8 with 17 to 26 selected features. Thread
   pinning does not help; the previous "seeds no internal subsampling" was wrong.
-- `feynman_panel.py` seeded each equation's data with `hash(name)`, which
-  Python randomises per process, so the panel drew different data on every run
-  and returned 9/12 or 10/12 at random. Seeded with `zlib.crc32` instead; the
-  panel now reproduces exactly, solving 10/12 and recovering 8/12 in exact
-  symbolic form at roughly 0.6 s per equation.
 - Real-data panel is seven datasets; California housing uses all 20,640 rows
   rather than a 2,000-row subsample.
 - Every measured figure now comes from one machine (Dell Inspiron 16 Plus 7640,
