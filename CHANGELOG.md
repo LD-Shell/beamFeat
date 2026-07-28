@@ -4,7 +4,106 @@ Notable changes to `beamfeat`. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [0.1.0] - unreleased
+## [0.1.1] - 2026-07-28
+
+Documentation, benchmarks and packaging. No library code changed; the public
+API, defaults and behaviour are identical to 0.1.0.
+
+### Added
+
+- `benchmarks/selector_calibration.py`: realised FDR and power for both
+  multiplicity corrections, the two fixed-X knockoff offsets, and the
+  global-null stress behind the Benjamini-Yekutieli default.
+- `benchmarks/make_figures.py`: six vector PDFs in `paper/figures/`, sized to
+  the ACS column widths, including mean held-out R² against fit time from the
+  comparison study.
+- `benchmarks/independent/setup_env.sh`: builds the comparison environment,
+  registers a Jupyter kernel, and smoke-tests `autofeat`, `knockpy` and
+  `matplotlib`.
+- `beamfeat_ridge` in the comparison study: `beamfeat` as a transformer into
+  the shared `RidgeCV`, giving one row strictly like-for-like with the other
+  feature builders.
+- `docs/installation.md`: three setups, from `pip install beamfeat` to the
+  pinned benchmark environment.
+- `benchmarks/independent/autofeat_repeatability.json`: six runs of one split.
+
+### Changed
+
+- Friedman #1 decomposition is reported over six draws rather than one:
+  oracle 0.960 ± 0.003, screening ceiling 0.874 ± 0.006, achieved
+  0.776 ± 0.014, with about 0.086 lost to screening and 0.098 to the search.
+  The previous single-draw figures came from a different split for the achieved
+  value and overstated the gap. `friedman_decomposition.py` now checks the
+  ordering the argument rests on rather than comparing against recorded
+  numbers, and computes the ceiling on the set actually admitted: the marginal
+  null never admits `c`, but admits `c²` on some draws, so the earlier
+  "admits only four of the six" was true of one draw rather than in general.
+- knockpy stress false-feature rate 0.11 to 0.13: the mean is over the five
+  datasets that declare their generating columns, not all six.
+- Selector calibration runs 100 trials rather than 25 and reports a standard
+  error. The published 25-trial figures were noisy point estimates: BH at
+  nominal 0.10 read 0.120, above nominal, where 100 trials give 0.084 ± 0.012
+  against a ceiling of 0.080. `selector_calibration.py` now derives each
+  procedure's bound from the design and fails if a realised rate exceeds it,
+  so no calibration constant is written by hand anywhere.
+- Fixed-X knockoff+ 0.201 to 0.159 and `offset=0` 0.289 to 0.249 at 100 trials.
+- The stress-suite false-feature rate is reported as a count of affected
+  datasets rather than a mean over five, which carried a standard error of
+  about 0.15 for autofeat and 0.08 for knockpy.
+- The end-to-end result is stated as no false discovery in 200 replicates with
+  a 95% upper bound of 0.015, rather than as an empirical rate of 0.0000.
+- Pure-noise stress at 100 trials: BH returned features in 6 trials against
+  BY's 1, both under the nominal 0.10 and not significantly different
+  (p = 0.12). BY is the default because it is valid under arbitrary
+  dependence, not because a BH failure was observed.
+- `autofeat` reproducibility: it exposes no `random_state` and draws decoy
+  features from the global NumPy generator, so six runs of one identical split
+  returned R² from +0.952 to -109.8 with 17 to 26 selected features. Thread
+  pinning does not help; the previous "seeds no internal subsampling" was wrong.
+- `feynman_panel.py` seeded each equation's data with `hash(name)`, which
+  Python randomises per process, so the panel drew different data on every run
+  and returned 9/12 or 10/12 at random. Seeded with `zlib.crc32` instead; the
+  panel now reproduces exactly, solving 10/12 and recovering 8/12 in exact
+  symbolic form at roughly 0.6 s per equation.
+- Real-data panel is seven datasets; California housing uses all 20,640 rows
+  rather than a 2,000-row subsample.
+- Every measured figure now comes from one machine (Dell Inspiron 16 Plus 7640,
+  22 logical cores, Linux 7.0, Python 3.11.15, scikit-learn 1.7.2, numpy
+  1.26.4), the pinned environment the compared tools require.
+- Reproducibility is stated from two measured machines: deterministic given a
+  seed within a stack, with marginal fits moving in the third decimal across
+  scikit-learn 1.6 to 1.9.
+- `pytest-cov` moved into the `test` extra, so `floor-versions` in CI and a
+  local `pip install -e ".[test]"` both get it without naming it separately.
+- The comparison notebook calls `bench.py` rather than duplicating it, dropping
+  from 523 lines to 136.
+- Removed `benchmarks/independent/run_all.sh`: it re-implemented the notebook's
+  full-run path, so a method added in one place was missing from the other.
+- The sdist ships the benchmark scripts and archived results, which
+  `benchmarks/README.md` already documented.
+
+### Fixed
+
+- `feynman_panel.py` seeded each equation's data with `hash(name)`. Python
+  randomises string hashing per process, so the panel drew different data on
+  every run and reported 9/12 or 10/12 at random; the earlier claim that this
+  varied "across numeric stacks" mistook the cause. Seeded with `zlib.crc32`,
+  it now reproduces exactly at 10/12 solved and 8/12 exact form.
+
+- Both OpenFE patchers imported the package before rewriting it, so the kernel
+  kept running unpatched code while reporting success.
+- `benchmarks/independent/requirements.txt` installs `beamfeat[all]`, so the
+  test suite runs there; pins `setuptools<82`, without which every
+  `featuretools` fit fails on the removed `pkg_resources`; and adds `knockpy`
+  under the existing numpy pin rather than letting it pull numpy 2.
+- `aggregate.py` takes the results directory as an argument and writes its CSV
+  beside the files it read.
+- Independent study regenerated in a single pass on one machine: 360 fits,
+  nine datasets, eight methods. It replaces an archive stitched from several
+  partial runs that contained one hand-transcribed fit.
+- Removed an unsupported OpenFE figure on the diabetes dataset from the README.
+
+## [0.1.0] - 2026-07-27
 
 Initial release.
 
@@ -29,6 +128,6 @@ Initial release.
 - Optional dimensional analysis via pint quantities or unit strings,
   enforced at expression construction.
 - Committed benchmark harness, physics-equation panel, calibration
-  studies, and a vendored independent 315-fit comparison study.
+  studies, and a vendored independent comparison study.
 - Supported: Python >= 3.10, numpy >= 1.26, scikit-learn 1.6 through 1.9
   verified, no upper version pins.
