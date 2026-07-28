@@ -1,39 +1,41 @@
-# Provenance and limits of the independent benchmark
+# Provenance
 
-This directory holds a comparison study of `beamfeat` against `autofeat`,
-`OpenFE`, `featuretools`, and raw-feature baselines: 360 fits over nine
-datasets, seven methods, and five train/test splits, with average-rank and
-Friedman-test analysis. `beamfeat_benchmark.ipynb` reproduces the analysis
-from the committed results; `bench.py` regenerates the results themselves.
+What in this study is reproducible, and what is not. Read this before citing
+any figure from it.
 
-Everything below is recorded so that a reader can judge which numbers are
-reproducible and which are not.
+## What was run
 
-## Environment
+360 fits: nine datasets, eight methods, five fixed 75/25 splits, executed in
+one pass on one machine in the pinned environment of `requirements.txt`
+(Python 3.11, numpy 1.26.4, scikit-learn 1.7.2, autofeat 2.1.3, openfe 0.0.12,
+featuretools 1.31.0, lightgbm 4.7.0). Raw per-fit records are in
+`results_as_reported/`; `independent_benchmark_results.csv` is their
+aggregation. `beamfeat_benchmark.ipynb` reproduces the analysis in about two
+minutes and the fits in 45 to 70.
 
-`requirements.txt` pins the environment the reported results were produced
-in: numpy 1.26.4, scikit-learn 1.7.2, autofeat 2.1.3, OpenFE 0.0.12,
-featuretools 1.31.0, LightGBM 4.7.0. The scikit-learn pin is not a
-preference — `autofeat` 2.1.3 calls `check_array(force_all_finite=...)`,
-removed in scikit-learn 1.8, and `OpenFE` 0.0.12 calls
-`mean_squared_error(squared=...)`, removed in 1.6, so `patch_openfe.py`
-edits its installed source. `beamfeat` and `featuretools` ran unmodified.
-`beamfeat`'s own test suite runs unpatched from scikit-learn 1.6 through
-1.9; the pin exists solely to keep the competitors runnable.
+An earlier version of this study was assembled from several partial runs on an
+unknown machine and contained one value transcribed by hand rather than
+recorded. It has been replaced entirely by the single-pass run described here.
 
-## Reproducibility is method-dependent
+## What reproduces
 
-`beamfeat`, `featuretools`, and the raw-feature baselines are deterministic
-given the split seeds and pinned versions. Re-running the harness twice on
-Friedman #1 reproduced `beamfeat`'s held-out R² bit-identically across
-independent runs (0.726082, 0.719561, 0.789567).
+Every method except `autofeat`. Across four executions of this comparison,
+`beamfeat`, `beamfeat_ridge`, `ridge_raw`, `rf_raw`, `lgbm_raw`, `openfe` and
+`featuretools` returned the same means, worst cases and paired-test statistics
+to four decimals. `beamfeat` is deterministic given a seed and reproduced
+digit-for-digit across two machines running different Python, numpy and
+scikit-learn versions.
 
-`autofeat` and `OpenFE` do not expose a seed for their internal
-subsampling, so their timings — and for `autofeat` its selected features and
-score — vary between runs of the same split. This is not a small effect.
+## What does not
 
-Six runs of Friedman #1 split 0, at the library defaults in the pinned
-environment, each a separate process (`autofeat_repeatability.json`):
+`autofeat`. It exposes no `random_state`, and its noise-injection screen draws
+decoy features from the global NumPy generator before its own internal seeding
+applies, so every process starts from different entropy. The decoys set the
+bar each candidate feature must clear, so a different draw changes which
+features survive.
+
+Six runs of one identical split of Friedman #1, at the library defaults in
+this environment, each a separate process (`autofeat_repeatability.json`):
 
 | run | threading | R² | selected features |
 |---|---|---|---|
@@ -44,56 +46,44 @@ environment, each a separate process (`autofeat_repeatability.json`):
 | 5 | pinned to 1 | +0.950 | 18 |
 | 6 | pinned to 1 | +0.939 | 20 |
 
-The same instability shows at study level: four executions of the full
-nine-dataset comparison returned autofeat mean R² of 0.746, -1.694, 0.754
-and -1.561, with worst single fits from -2.28 to -108.9. Every other method
-reproduced to four decimals across those runs.
+Calling `np.random.seed()` before fitting does not control it, and pinning
+`OMP_NUM_THREADS`, `NUMBA_NUM_THREADS` and `MKL_NUM_THREADS` to 1 does not
+either. The effect appears where selection is marginal; on problems with an
+unambiguous signal, repeated processes agree exactly.
 
-An earlier regeneration of three splits
-(`results_as_reported/regenerated_autofeat_friedman1.json`) shows the same
-pattern: +0.955 became −77.86 on split 0, and +0.530 became +0.944 on split 1.
+The same instability shows at study level. Four executions of the full
+nine-dataset comparison returned `autofeat` mean R² of 0.746, −1.694, 0.754
+and −1.561, with worst single fits from −2.28 to −108.9.
 
-`autofeat` exposes no `random_state`. `featsel.py` seeds the per-run subsample
-with `np.random.seed(i)`, but `_add_noise_features` draws its decoy features
-from the global NumPy generator, seeded from OS entropy at process start. Those
-decoys set the bar each candidate feature has to clear, so a different draw
-changes which features survive. Calling `np.random.seed()` before fitting does
-not control it, and pinning `OMP_NUM_THREADS`, `NUMBA_NUM_THREADS` and
-`MKL_NUM_THREADS` to 1 does not either. The effect appears where selection is
-marginal; on problems with an unambiguous signal repeated processes agree
-exactly.
+**Consequence for citation.** `autofeat`'s row in `REPORT.md` is one draw from
+that distribution, not a measurement. The shipped run gives mean −1.561 and a
+worst fit of −103.245 (Friedman #1 split 0; its other four splits on that
+dataset fall between 0.938 and 0.955). A rerun will give something else. Cite
+the instability, not the number.
 
-**Consequence for reading the tables: every `autofeat` number in this study
-is one draw from a wide and partly heavy-tailed distribution, not a stable
-measurement.** Its reported mean R² of 0.746 across the nine datasets should
-be read as such, and its catastrophic-failure rate is plausibly higher than
-a single pass suggests (the reported run already contains R² = −2.28 on a
-Diabetes split; the repeatability runs above reach −109.8 on Friedman #1). The same
-caveat applies in the other direction — a rerun may look better than what is
-reported here. Comparisons against `autofeat` therefore carry irreducible
-uncertainty that no amount of re-running on our side can remove.
+## Data
 
-## A corrected record
+`data/` holds the three CSVs that are not bundled with scikit-learn, with
+MD5 checksums in `CHECKSUMS.md5`. Verify from this directory:
 
-The originally reported `autofeat` value for Friedman #1 split 2 (R² 0.9518,
-126.4 s, 20 features) came from an interrupted run and was inserted by hand
-during aggregation rather than written by the harness. It has been
-regenerated under the pinned environment and returned R² 0.9498, 54.9 s, 12
-features — consistent in score, and consistent in the sense that matters for
-the study's conclusions. Both the original file and the regeneration are
-committed; the aggregate tables still reflect the originally reported value,
-and this note exists so that no number in the study is taken on trust.
+```bash
+md5sum -c data/CHECKSUMS.md5
+```
 
-## Limits
+Boston housing is included for comparability with autofeat's published table,
+despite its removal from scikit-learn over documented ethical concerns. The
+repository's own real-data panel contains no contested dataset.
 
-Nine datasets, so the omnibus Friedman test is underpowered. Five splits.
-Default or paper-recommended settings only, with no hyperparameter search
-for any method — a tuned comparison could reorder the middle of the table.
-Real datasets come from GitHub mirrors of UCI rather than UCI directly.
-`PySR` is excluded (Julia toolchain) and `tsfresh` is inapplicable
-(time-series feature extraction). The downstream model for every
-construction method is the same standardised `RidgeCV`, which understates
-`OpenFE`: it targets gradient-boosted consumers, and `featuretools`'
-single-table transform mode is not its primary relational use case. Those
-two comparisons should be read as "under a linear downstream model", not as
-a verdict on either tool in its intended setting.
+## Protocol limits
+
+- Nine datasets leaves the Friedman omnibus underpowered; the paired tests
+  carry the inference.
+- Five splits per dataset.
+- Default or paper-recommended settings only, with no hyperparameter search.
+- `OpenFE` is run into a linear model rather than the gradient-boosted setting
+  it is designed for, which understates it.
+- The wine dataset here is the red-only variant (1599 x 11); autofeat's
+  published table used red and white combined (6497 x 12).
+- `recovered` measures column membership, not symbolic form: it asks whether
+  some returned feature references all of the generating columns, not whether
+  the operators combining them are right. See the docstring in `bench.py`.
