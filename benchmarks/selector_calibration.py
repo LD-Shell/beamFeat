@@ -6,7 +6,7 @@ it. Three studies, all on Gaussian designs (n=300, 25 candidate features, 5 of
 them signal, effect 3.0, unit noise):
 
 1. Permutation selector, Benjamini-Hochberg and Benjamini-Yekutieli, at
-   nominal FDR 0.05 / 0.10 / 0.20 -- realised FDR and power over 25 trials.
+   nominal FDR 0.05 / 0.10 / 0.20 -- realised FDR and power over 100 trials.
 2. Fixed-X knockoffs at nominal 0.20, with offset=1 (knockoff+, controls FDR)
    and offset=0 (controls only a modified FDR).
 3. A global-null stress on the full pipeline: 25 pure-noise problems, BH
@@ -14,10 +14,9 @@ them signal, effect 3.0, unit noise):
    false discovery proportion equals the fraction of trials selecting
    anything; this is the measurement behind the BY estimator default.
 
-Monte Carlo error at 25 trials is substantial -- roughly +/-0.03-0.06 on a
-realised FDR, and a difference of one or two trials in study 3 is not
-statistically meaningful. Read the numbers as calibration evidence, not as
-point estimates.
+Every figure is reported with its standard error, which at 100 trials runs
+0.004 to 0.016 on a realised FDR. Read them at that precision; a difference of
+a few trials in study 3 is still not statistically meaningful.
 
 Run:  python benchmarks/selector_calibration.py
 """

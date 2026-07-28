@@ -14,8 +14,10 @@ holds.
     so permuting the target yields exact p-values for the null hypothesis
     that a feature is marginally independent of the target (Phipson & Smyth,
     2010). Multiplicity is handled by Benjamini-Hochberg, valid under
-    positive regression dependence (Benjamini & Yekutieli, 2001), with the
-    Benjamini-Yekutieli correction available for arbitrary dependence.
+    positive regression dependence, or Benjamini-Yekutieli, valid under
+    arbitrary dependence (Benjamini & Yekutieli, 2001). This class defaults
+    to the former; the estimators default to the latter, since engineered
+    candidates share parents and positive dependence cannot be assumed.
 
     The marginal null composes correctly with constructed features: two
     near-duplicate expressions of one true signal are *both* genuinely

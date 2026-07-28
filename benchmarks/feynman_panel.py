@@ -11,10 +11,11 @@ canonical names — so commutative reordering and algebraic rewrites are
 handled by the same normalisation the library applies to its candidates.
 
 Four problems are included as expected failures, each marking a documented
-boundary: the Gaussian and Planck-style forms need ``exp`` (available but not
-a default operator; the panel reports both configurations), relativistic
-velocity addition needs a literal constant inside the expression, and the 2D
-distance formula needs depth-4 nesting.
+boundary: the Gaussian needs ``exp`` and a scale inside the exponent,
+relativistic velocity addition needs a literal constant inside the expression,
+the weighted mean is a depth-3 rational, and the 2D distance formula needs
+depth-4 nesting. The panel reports the default operator set and one with
+``exp`` enabled.
 
 Run with ``python benchmarks/feynman_panel.py``. Results are written to
 ``benchmarks/feynman_results.json``.

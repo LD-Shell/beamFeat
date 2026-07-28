@@ -9,7 +9,7 @@
 # sha256, which MUST come from the published sdist.
 
 {% set name = "beamfeat" %}
-{% set version = "0.1.0" %}
+{% set version = "0.1.1" %}
 
 package:
   name: {{ name|lower }}
