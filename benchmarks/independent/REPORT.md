@@ -102,6 +102,14 @@ comparison returned autofeat mean R² of 0.746, −1.694, 0.754 and −1.561, wi
 worst single fits from −2.28 to −108.9. Any single `autofeat` figure here is one draw; the
 instability is the citable finding.
 
+Catastrophic held-out scores are a documented property of the method, not an
+artifact of this harness. Horn et al. (2019) report test R² of −12.4 on
+diabetes and 0.048 on Boston at three feature-engineering steps, attributing
+it to tens of thousands of features fitted against fewer than 500 rows. This
+study uses two steps, the library default, at which their Table 2 reports no
+such failure — so what is new here is that the failure mode reaches the
+default setting, not that it exists.
+
 ## Limits
 
 Nine datasets leaves the Friedman test underpowered. Five splits. Default or

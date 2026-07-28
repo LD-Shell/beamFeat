@@ -323,7 +323,12 @@ agree exactly. It is visible at the level of the whole study too: four
 executions of the nine-dataset comparison returned `autofeat` mean $R^2$ of
 0.746, $-1.69$, 0.754 and $-1.56$, with worst single fits from $-2.28$ to
 $-108.9$. Any single `autofeat` figure, including those above, is one draw
-from that distribution. Further reproducibility signals: 370 automated tests
+from that distribution. Catastrophic held-out scores are a documented property
+of the method rather than an artifact of this harness: @horn2019 report test
+$R^2$ of $-12.4$ on diabetes and $0.048$ on Boston at three feature-engineering
+steps, attributing it to tens of thousands of features fitted against fewer
+than 500 rows. This study uses two steps, the library default, at which their
+Table 2 reports no such failure. Further reproducibility signals: 370 automated tests
 including scikit-learn's own `check_estimator` compatibility suite; tests that
 exercise 95% of the code; automatic re-testing of every change
 (continuous integration) against both the oldest supported and the newest
