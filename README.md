@@ -105,7 +105,7 @@ carries Monte Carlo error from finite trials.
 *Signal hidden among ten distractor columns. The false-feature rate is the
 fraction of returned formulas touching only irrelevant columns. beamfeat and
 OpenFE return none; autofeat returns them in roughly a third of cases.
-Regenerate with `python benchmarks/make_figures.py`; four other figures are
+Regenerate with `python benchmarks/make_figures.py`; six other figures are
 written alongside it.*
 
 
@@ -144,7 +144,7 @@ benchmark scripts, not asserted:
   0.853) and tips — where gradient boosting overfits below ridge while the
   FDR gate holds beamfeat at the ceiling — tied with ridge on diamonds from
   one interpretable feature, behind LightGBM on penguins and breast cancer,
-  and behind ridge on diabetes (0.376; autofeat 0.303): no
+  and behind ridge on diabetes (0.376): no
   nonlinear structure exists there to find, and beamfeat does not invent
   any.
 - OpenFE on the same stress suite (its features + LightGBM, after shimming a
@@ -156,29 +156,32 @@ benchmark scripts, not asserted:
   distribution-free, so heavy tails cost it nothing.
 - Known boundaries, measured: on piecewise targets trees win outright
   (LightGBM 0.998 vs 0.808 — if a tree model beats beamfeat by a wide
-  margin, the signal is likely piecewise, not algebraic; OpenFE reaches 0.998
-  there too, through a sigmoid primitive beamfeat does not carry, so the gap
-  is the operator set rather than the search), and on Friedman #1
+  margin, the signal is likely piecewise, not algebraic; OpenFE records 0.998
+  there too, but bit-identically to raw LightGBM and from a feature touching
+  only an irrelevant column, so the credit is its tree consumer's), and on
+  Friedman #1
   the shortfall splits, over six draws, into a representation oracle of
   0.960 ± 0.003, a screening-admissible ceiling of 0.874 ± 0.006 (the
   marginally-quiet quadratic is priced by the guarantee itself) and an
-  achieved 0.776 ± 0.014: about 0.086 lost to what marginal screening cannot
+  achieved 0.776 ± 0.013: about 0.086 lost to what marginal screening cannot
   see, 0.098 to the search — stated rather than hidden.
 - Test suite: 370 tests at 95% statement coverage (a 90% floor is enforced
   in CI), including scikit-learn's full estimator-conformance checks.
 - Selection-only baseline (knockpy on raw columns, modified-FDR offset —
   the only satisfiable configuration at these dimensionalities): 0/15
-  formulas recovered, core-suite R² at the ridge level (0.845), and a 0.11
-  mean false-feature rate on the stress suite — the construction step and
-  the holdout are the delta.
+  formulas recovered, core-suite R² at the ridge level (0.845), and
+  distractor-only features on 1 of the 5 scoreable stress datasets — the
+  construction step and the holdout are the delta.
 - Independent 360-fit study across nine datasets and eight methods
   (`benchmarks/independent/`): mean R² 0.803 against random forest 0.810,
-  LightGBM 0.798, autofeat 0.746, OpenFE 0.736, featuretools −2.478 — and a
-  worst single fit of 0.355 where autofeat reached −2.28 and featuretools
-  −57.3, at ~48× autofeat's speed, with the FDR flag delivered on 45/45
-  fits.
-- Benchmarks (10 synthetic problems with known formulas, 70/30 splits):
-  beamfeat mean R² 0.9989, ~0.2 s fits, 10/10 formulas recovered; autofeat
+  LightGBM 0.798, OpenFE 0.736, ridge 0.704, autofeat −1.561 and
+  featuretools −2.478 — and a worst single fit of 0.355, none below zero,
+  where autofeat reached −103.2 and featuretools −57.3, at ~60× autofeat's
+  speed, with the FDR flag delivered on 45/45 fits.
+- Benchmarks (70/30 splits): mean R² over the ten core-suite problems, and
+  recovery of the generating columns over the ten synthetic problems that
+  declare them — the two sets differ by one dataset each.
+  beamfeat mean R² 0.9989, ~0.2 s fits, 10/10 recovered; autofeat
   0.9968, ~12 s, 8/10; LightGBM 0.9798; ridge 0.8442. On the purely linear
   problem — where feature construction should not win — ridge ties beamfeat.
 
@@ -200,9 +203,9 @@ expressions on tabular columns.
 `benchmarks/independent/` holds a 360-fit study (nine datasets, eight
 methods, five splits, average ranks plus a Friedman test) with its harness,
 pinned environment, data, and a notebook that reproduces the analysis. Mean
-held-out R²: beamfeat 0.803, random forest 0.810, LightGBM 0.798, autofeat
-0.746, OpenFE 0.736, ridge 0.704, featuretools −2.478 — and worst single fit
-of 45: beamfeat 0.355, autofeat −2.28, featuretools −57.3, with the FDR
+held-out R²: beamfeat 0.803, random forest 0.810, LightGBM 0.798, OpenFE
+0.736, ridge 0.704, autofeat −1.561, featuretools −2.478 — and worst single
+fit of 45: beamfeat 0.355, autofeat −103.2, featuretools −57.3, with the FDR
 guarantee delivered on 45/45. Read `PROVENANCE.md` first: it records what is
 reproducible (beamfeat, bit-identically) and what is not (autofeat seeds
 no `random_state` and drawing its decoy features from the global NumPy

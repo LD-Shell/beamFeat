@@ -179,9 +179,10 @@ FDR-vetted association and a generalising fit: a negative held-out $R^2$
 raises a visible warning naming the gap.
 
 Third, boundaries are stated with measurements. Piecewise targets belong to
-trees (LightGBM 0.998 against 0.808 on a threshold problem, where `OpenFE`
-also reaches 0.998 by way of a sigmoid primitive `beamfeat` does not carry:
-the gap is the operator set rather than the search); the
+trees (LightGBM 0.998 against 0.808 on a threshold problem; `OpenFE` records
+0.998 there as well, but bit-identically to raw LightGBM and from a feature
+touching only an irrelevant column, so the credit belongs to its gradient-boosted
+consumer rather than to anything it constructed); the
 exponential operator ships but is not a default (enabling it changed no
 result on the physics panel below); overflow and domain errors exclude a
 candidate loudly rather than silently; and units, supplied as pint
@@ -228,13 +229,16 @@ its own declared dependencies):
 
 | measure | beamfeat | autofeat | OpenFE + LGBM | knockpy | LightGBM | ridge |
 |---|---|---|---|---|---|---|
-| formula recovery (10 recoverable) | **10/10** | 8/10 | 0/5 (stress) | 0/10 | — | — |
+| generating columns recovered | **10/10** | 8/10 | 0/5 (stress) | 0/10 | — | — |
 | mean $R^2$, core suite | **0.9989** | 0.9968 | — | 0.8450 | 0.9798 | 0.8442 |
 | stress datasets returning false features | **0 of 5** | 3 of 5 | 0 of 5 | 1 of 5 | — | — |
 | mean fit time | ~0.2 s | ~12 s | ~1.4 s | 0.02 s | ~0.3 s | <0.01 s |
 
-: Benchmark results from the repository's benchmark code: formula recovery and mean
-$R^2$ on the core suite, false-feature rate on the distractor stress suite,
+: Benchmark results from the repository's benchmark code. Recovery asks whether
+some returned feature references all of the generating columns, over the ten
+synthetic problems that declare them; the mean $R^2$ column is over the ten
+formula-recovery problems of the core suite, which substitutes `purely_linear`
+for `heavy_tail_t2` and is therefore a different ten. Also false-feature rate on the distractor stress suite,
 and mean fit time. Times are indicative figures from a single machine (a Dell
 Inspiron 16 Plus 7640 laptop, 22 logical cores, Linux 7.0, Python 3.11.15,
 scikit-learn 1.7.2, numpy 1.26.4, no accelerator), the pinned environment the
