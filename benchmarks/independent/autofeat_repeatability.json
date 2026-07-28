@@ -1,0 +1,27 @@
+{
+  "experiment": "autofeat repeatability on one identical split",
+  "question": "does autofeat return the same result when run twice on identical data?",
+  "dataset": "friedman1",
+  "split": 0,
+  "settings": "AutoFeatRegressor(feateng_steps=2, verbose=0, n_jobs=1), the library defaults",
+  "environment": "benchmarks/independent/requirements.txt (numpy 1.26.4, scikit-learn 1.7.2, autofeat 2.1.3, numba 0.66.0)",
+  "machine": "Dell Inspiron 16 Plus 7640, 22 logical cores, Linux 7.0, Python 3.11",
+  "command": "DATASETS=friedman1 python bench.py synthetic autofeat 1 <out>.json",
+  "note": "Each row is a separate process. The three 'pinned' rows additionally set OMP_NUM_THREADS, NUMBA_NUM_THREADS and MKL_NUM_THREADS to 1, which made no difference.",
+  "runs": [
+    {"condition": "default threading", "r2": 0.9515411415505659, "seconds": 78.7, "n_new": 17},
+    {"condition": "default threading", "r2": -100.9637559949173, "seconds": 117.9, "n_new": 26},
+    {"condition": "default threading", "r2": -105.31094310249625, "seconds": 85.8, "n_new": 19},
+    {"condition": "threads pinned to 1", "r2": -109.78821516140883, "seconds": 61.7, "n_new": 21},
+    {"condition": "threads pinned to 1", "r2": 0.9503302754176282, "seconds": 62.0, "n_new": 18},
+    {"condition": "threads pinned to 1", "r2": 0.9390468613968505, "seconds": 60.4, "n_new": 20}
+  ],
+  "summary": {
+    "r2_max": 0.9515411415505659,
+    "r2_min": -109.78821516140883,
+    "n_new_range": [17, 26],
+    "thread_pinning_helps": false
+  },
+  "mechanism": "autofeat exposes no random_state. featsel.py seeds the per-run subsample with np.random.seed(i), but _add_noise_features draws its decoy features from the global NumPy generator, which is seeded from OS entropy at process start. The decoys set the threshold each candidate feature must beat, so a different draw changes which features survive. Setting np.random.seed() before fitting does not control it.",
+  "scope": "The variation appears where selection is marginal. On problems with an unambiguous signal, repeated processes returned identical feature sets."
+}
