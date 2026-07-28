@@ -11,7 +11,7 @@ archived result file. The map:
 | `results_real.{json,csv}` | `run_benchmarks.py --real-only --methods ridge lightgbm beamfeat` | seven-real-dataset panel (mpg, tips, diamonds, penguins, diabetes, breast cancer, California housing) |
 | `results_autofeat_venv.json` | `run_benchmarks.py --suite core --methods autofeat` in the pinned environment described in `independent/requirements.txt` | autofeat core-suite comparison (0.9968, ~12 s, 8/10) |
 | `results_autofeat_robustness.json` | as above, `--suite robustness` | autofeat stress false-feature rate: 3 of the 5 scoreable datasets, worst 0.667 |
-| `results_knockpy.{json,csv}` | `run_benchmarks.py --suite all --synthetic-only --methods knockpy` | selection-only baseline: recovers no formula on any of the 15 scoreable synthetic sets, 10 of which form the core suite quoted in the paper |
+| `results_knockpy.{json,csv}` | `run_benchmarks.py --suite all --synthetic-only --methods knockpy` | selection-only baseline: recovers no formula on any of the 15 synthetic sets that declare their generating columns, 10 of which are the recovery ten quoted in the paper |
 | `results_knockpy_real.{json,csv}` | `run_benchmarks.py --real-only --methods knockpy` | selection-only baseline on the real panel |
 | `feynman_results.json` | `feynman_panel.py` | physics panel: 10/12 solved, 8/12 exact form |
 | `make_figures.py` | `python benchmarks/make_figures.py` | seven ACS-format vector PDFs in `paper/figures/`, with PNG previews for the README and notebooks |
@@ -34,9 +34,13 @@ autofeat 3 of 5.
 ## Suite scope
 
 `--suite core --synthetic-only` covers 12 datasets and `--suite robustness`
-covers 6. The core-suite mean R² of 0.9989 quoted in the paper is over the ten
-of those twelve that carry a known generating formula; `friedman1` and
-`heavy_tail_t2` are excluded from that average and reported separately.
+covers 6. Two aggregates are quoted over ten of those twelve, and they are not
+the same ten. The mean R² of 0.9989 excludes `friedman1` and `heavy_tail_t2`,
+which are reported separately as boundary cases — the screening limit and
+heavy-tailed noise. Recovery is scored only where a dataset declares the
+columns its formula uses, which excludes `purely_linear` (nothing to construct)
+and `friedman1`, and includes `heavy_tail_t2`. The two sets therefore differ by
+one dataset each.
 
 ## Reproducibility
 

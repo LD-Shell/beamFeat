@@ -34,10 +34,11 @@ pip install "beamfeat[units]"   # + pint, for unit-aware search (units as
 pip install "beamfeat[all]"     # + sympy display support and test deps
 ```
 
-Python ≥ 3.10. There are **no upper version pins**: the 370 tests pass on
-scikit-learn 1.6.1, 1.8.0 and 1.9.0, with numpy 2.3, 2.4 and 2.5. Running the
-test suite or reproducing the benchmarks needs a little more setup, described
-in `docs/installation.md`.
+Python ≥ 3.10. There are **no upper version pins**: the 370 tests pass from
+scikit-learn 1.6.1 with numpy 1.26 through scikit-learn 1.9.0 with numpy 2.4,
+including 1.7.2 and 1.8.0 in between. Running the test suite or reproducing
+the benchmarks needs a little more setup, described in
+`docs/installation.md`.
 
 ## What it does
 
