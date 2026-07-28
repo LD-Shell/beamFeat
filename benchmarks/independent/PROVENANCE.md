@@ -58,8 +58,9 @@ and −1.561, with worst single fits from −2.28 to −108.9.
 **Consequence for citation.** `autofeat`'s row in `REPORT.md` is one draw from
 that distribution, not a measurement. The shipped run gives mean −1.561 and a
 worst fit of −103.245 (Friedman #1 split 0; its other four splits on that
-dataset fall between 0.938 and 0.955). A rerun will give something else. Cite
-the instability, not the number.
+dataset fall between 0.938 and 0.955). A rerun will give something else. Any
+single `autofeat` figure here is one draw; the instability is the citable
+finding.
 
 ## Data
 

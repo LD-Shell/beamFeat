@@ -1,5 +1,10 @@
 # Migrating from autofeat
 
+*Examined against autofeat 2.1.3, the current release as of July 2026,
+in the pinned comparison environment (scikit-learn 1.7.2); the
+version-compatibility failures below were reproduced on scikit-learn 1.8
+and 1.9.*
+
 `beamfeat`'s design began from a review of
 [autofeat](https://github.com/cod3licious/autofeat) (Horn et al., 2019) and
 keeps its central idea — compact symbolic features feeding a linear model.
@@ -79,6 +84,18 @@ print(model.fdr_controlled_)     # check before treating features as vetted
 predictions = model.predict(X_test)
 ```
 
+## Where autofeat does better
+
+Exhaustive expansion does not need to *see* a signal marginally in order to
+generate the right basis. On targets with a strong non-monotone interaction —
+Friedman #1 is the standard example — autofeat's brute-force expansion finds
+structure that correlation-guided beam search prunes. On four of five splits
+of Friedman #1 it reaches R² 0.94 to 0.96 where `beamfeat` reaches 0.72 to
+0.79; on the fifth it returns −103. Take the win on the typical split as real
+and the mean as unusable, which is the shape of the trade: `beamfeat` accepts
+a lower ceiling as the price of a guarantee and a floor. Quantified in
+[Statistical guarantees](guarantees.md).
+
 ## Behavioural differences to expect
 
 - **Fewer features.** Selection is a hypothesis test rather than a
@@ -97,15 +114,3 @@ predictions = model.predict(X_test)
   to −109.8.
 - **No constants inside expressions.** Neither tool fits them; if you need
   `exp(-3.2 x)`, a symbolic regressor such as PySR is the right instrument.
-
-## Where autofeat does better
-
-Exhaustive expansion does not need to *see* a signal marginally in order to
-generate the right basis. On targets with a strong non-monotone interaction —
-Friedman #1 is the standard example — autofeat's brute-force expansion finds
-structure that correlation-guided beam search prunes. On four of five splits
-of Friedman #1 it reaches R² 0.94 to 0.96 where `beamfeat` reaches 0.72 to
-0.79; on the fifth it returns −103. Take the win on the typical split as real
-and the mean as unusable, which is the shape of the trade: `beamfeat` accepts
-a lower ceiling as the price of a guarantee and a floor. Quantified in
-[Statistical guarantees](guarantees.md).

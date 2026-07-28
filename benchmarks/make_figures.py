@@ -10,6 +10,7 @@ Run:  python benchmarks/make_figures.py [--outdir paper/figures]
 from __future__ import annotations
 
 import argparse
+import json
 import pathlib
 import warnings
 
@@ -102,21 +103,39 @@ def save(fig: plt.Figure, path: pathlib.Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, format="pdf")
     if WRITE_PNG:
-        fig.savefig(path.with_suffix(".png"), format="png", dpi=200)
+        fig.savefig(path.with_suffix(".png"), format="png", dpi=300)
     plt.close(fig)
     print(f"  wrote {path}")
 
 
+def _load(bench: pathlib.Path, *stems: str) -> pd.DataFrame:
+    """Concatenate result files, preferring CSV and falling back to JSON.
+
+    The harness writes both formats; a figure that silently skipped a missing
+    one would quietly drop a method from the comparison, which is how autofeat
+    once vanished from the false-feature figure. Missing sources are named.
+    """
+    frames, missing = [], []
+    for stem in stems:
+        for suffix in (".csv", ".json"):
+            path = bench / f"{stem}{suffix}"
+            if path.exists():
+                frames.append(pd.read_csv(path) if suffix == ".csv"
+                              else pd.DataFrame(json.load(open(path))))
+                break
+        else:
+            missing.append(stem)
+    if missing:
+        print(f"  WARNING: no result file for {', '.join(missing)}; "
+              "the figure below is missing those methods")
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame()
+
+
 def fig_core_accuracy(bench: pathlib.Path, out: pathlib.Path) -> None:
     """Mean R^2 on the ten formula-recovery problems."""
-    frames = []
-    for name in ("results.csv", "results_autofeat_venv.csv", "results_knockpy.csv"):
-        p = bench / name
-        if p.exists():
-            frames.append(pd.read_csv(p))
-    if not frames:
+    df = _load(bench, "results", "results_autofeat_venv", "results_knockpy")
+    if df.empty:
         return
-    df = pd.concat(frames, ignore_index=True)
     core = df[df.dataset.isin(CORE10)]
     means = core.groupby("method").r2.mean().sort_values(ascending=False)
 
@@ -136,36 +155,46 @@ def fig_core_accuracy(bench: pathlib.Path, out: pathlib.Path) -> None:
 
 
 def fig_false_features(bench: pathlib.Path, out: pathlib.Path) -> None:
-    """False-feature rate on the distractor stress suite."""
-    frames = []
-    for name in ("results_robustness.csv", "results_autofeat_robustness.csv",
-                 "results_knockpy.csv"):
-        p = bench / name
-        if p.exists():
-            frames.append(pd.read_csv(p))
-    if not frames:
+    """Stress datasets returning false features, as counts.
+
+    Counts rather than a mean: with five scoreable datasets a mean carries a
+    standard error of order 0.1, which is the reason `benchmarks/README.md`
+    reports the count. Drawn as markers rather than bars so that a result of
+    zero is visible — a zero-height bar renders the best outcome as nothing.
+    """
+    df = _load(bench, "results_robustness", "results_autofeat_robustness",
+               "results_knockpy")
+    if df.empty:
         return
-    df = pd.concat(frames, ignore_index=True)
     s = df[df.dataset.isin(STRESS)].dropna(subset=["false_feature_rate"])
     if s.empty:
         return
-    stats = s.groupby("method").false_feature_rate.agg(["mean", "max", "size"])
-    stats = stats.sort_values("mean")
+    stats = s.groupby("method").false_feature_rate.agg(
+        affected=lambda r: int((r > 0).sum()), n="size", worst="max"
+    ).sort_values("affected")
+    total = int(stats["n"].iloc[0])
 
-    fig, ax = plt.subplots(figsize=(COL_SINGLE, 2.1))
-    x = np.arange(len(stats))
-    ax.bar(x, stats["mean"], width=0.68,
-           color=[ACCENT if m == "beamfeat" else NEUTRAL for m in stats.index],
-           edgecolor="none", label="mean")
-    ax.scatter(x, stats["max"], s=9, color=WARN, zorder=3, label="worst case")
-    ax.set_xticks(x)
-    ax.set_xticklabels([LABELS.get(m, m) for m in stats.index])
-    n = int(stats["size"].iloc[0])
-    ax.set_ylabel("false-feature rate")
-    ax.set_xlabel(f"mean over {n} scoreable stress datasets", fontsize=6.5,
-                  color="#666666", labelpad=6)
-    ax.set_ylim(0, stats["max"].max() * 1.32)
-    ax.legend(loc="upper left")
+    fig, ax = plt.subplots(figsize=(COL_SINGLE, 2.2))
+    y = np.arange(len(stats))[::-1]
+    for yi, (method, row) in zip(y, stats.iterrows()):
+        colour = ACCENT if method == "beamfeat" else NEUTRAL
+        if row.affected:
+            ax.plot([0, row.affected], [yi, yi], color=colour, linewidth=1.3,
+                    solid_capstyle="round", zorder=2)
+        ax.scatter([row.affected], [yi], s=26, color=colour, zorder=3)
+        label = f"{int(row.affected)} of {int(total)}"
+        if row.affected:
+            label += f", worst {row.worst:.2f}"
+        ax.annotate(label, (row.affected, yi), textcoords="offset points",
+                    xytext=(9, -2.5), fontsize=6.5,
+                    color=WARN if row.affected else "#333333")
+
+    ax.set_yticks(y)
+    ax.set_yticklabels([LABELS.get(m, m) for m in stats.index])
+    ax.set_xlim(-0.15, total)
+    ax.set_xticks(range(total + 1))
+    ax.set_xlabel("stress datasets returning a formula that touches\n"
+                  "only irrelevant columns", fontsize=7)
     save(fig, out / "fig_false_feature_rate.pdf")
 
 

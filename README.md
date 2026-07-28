@@ -103,13 +103,13 @@ carries Monte Carlo error from finite trials.
 
 ## Measured, not assumed
 
-![False-feature rate on the distractor stress suite](paper/figures/fig_false_feature_rate.png)
+![False features returned on the distractor stress suite](https://raw.githubusercontent.com/LD-Shell/beamFeat/main/paper/figures/fig_false_feature_rate.png)
 
-*Signal hidden among ten distractor columns. The false-feature rate is the
-fraction of returned formulas touching only irrelevant columns. beamfeat and
-OpenFE return none; autofeat returns them in roughly a third of cases.
-Regenerate with `python benchmarks/make_figures.py`; six other figures are
-written alongside it.*
+*Signal hidden among ten distractor columns. A false feature is a returned
+formula touching only irrelevant ones; the count is over the five stress
+datasets that declare which columns their formula uses. Regenerate with
+`python benchmarks/make_figures.py`, which writes six other figures alongside
+it.*
 
 
 All of the following are measured by the test suite or the committed

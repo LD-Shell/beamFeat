@@ -47,3 +47,4 @@ artifacts/
 .idea/
 *.swp
 .DS_Store
+.cache/

@@ -83,20 +83,24 @@ Ridge on the unengineered columns reaches 0.704. Of the four constructors,
 constructed features did not buy accuracy here, and for two methods it cost
 some.
 
-## autofeat is not reproducible
+## Reproducibility of the compared tools
 
-`autofeat` exposes no `random_state`, and its noise-injection screen draws
-decoy features from the global NumPy generator before any internal seeding
-applies, so each process starts from different entropy. Six runs of one
+Seven of the eight methods reproduced to four decimals across the four
+executions of this study: `beamfeat`, `beamfeat_ridge`, `ridge_raw`,
+`rf_raw`, `lgbm_raw`, `openfe` and `featuretools` returned the same means,
+worst cases and paired-test statistics on every execution. `autofeat` did
+not, and the reason is structural: it exposes no `random_state`, and its
+noise-injection screen draws decoy features from the global NumPy generator
+before any internal seeding applies, so each process starts from different
+entropy. Six runs of one
 identical split of Friedman #1 returned R² from +0.952 to −109.8 with 17 to 26
 selected features (`autofeat_repeatability.json`); pinning `OMP_NUM_THREADS`,
 `NUMBA_NUM_THREADS` and `MKL_NUM_THREADS` to 1 changed nothing.
 
 The same instability is visible at study level. Four executions of this
 comparison returned autofeat mean R² of 0.746, −1.694, 0.754 and −1.561, with
-worst single fits from −2.28 to −108.9. Its rows here are one draw from that
-distribution, not a stable measurement. Every other method reproduced to four
-decimals across those runs.
+worst single fits from −2.28 to −108.9. Any single `autofeat` figure here is one draw; the
+instability is the citable finding.
 
 ## Limits
 
