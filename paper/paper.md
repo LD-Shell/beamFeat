@@ -202,7 +202,9 @@ $0.161 \pm 0.016$ at nominal 0.05/0.10/0.20, against its ceiling of $q\,m_0/m$
 realised $0.008 \pm 0.004$, $0.018 \pm 0.005$ and $0.046 \pm 0.008$. Power was
 1.00 throughout. The bounds are derived from the design rather than asserted,
 and `benchmarks/selector_calibration.py` fails if a realised rate sits above
-one. ```{=latex}
+one.
+
+```{=latex}
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.62\linewidth]{figures/fig_fdr_calibration.pdf}
