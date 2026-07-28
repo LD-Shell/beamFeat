@@ -13,6 +13,18 @@ import numpy as np
 warnings.filterwarnings("ignore")
 
 
+def _upper_bound(successes: int, trials: int) -> float:
+    """One-sided 95% Clopper-Pearson upper limit on a proportion."""
+    from scipy.stats import beta
+
+    if successes >= trials:
+        return 1.0
+    return float(beta.ppf(0.95, successes + 1, trials - successes))
+
+
+TARGET_FDR = 0.1
+
+
 def main(n_signal: int = 200, n_null: int = 60) -> dict:
     from beamfeat import BeamFeatRegressor
 
@@ -23,7 +35,7 @@ def main(n_signal: int = 200, n_null: int = 60) -> dict:
         signal = X[:, 0] * X[:, 1]
         y = signal + rng.normal(0, 0.05 * np.std(signal), 500)
         model = BeamFeatRegressor(
-            max_depth=2, beam_width=25, target_fdr=0.1, random_state=trial
+            max_depth=2, beam_width=25, target_fdr=TARGET_FDR, random_state=trial
         ).fit(X, y)
         if not model.fdr_controlled_:
             fallbacks += 1
@@ -41,22 +53,47 @@ def main(n_signal: int = 200, n_null: int = 60) -> dict:
         X = rng.uniform(1, 6, (500, 6))
         y = rng.normal(0, 1, 500)
         model = BeamFeatRegressor(
-            max_depth=2, beam_width=25, target_fdr=0.1, random_state=trial
+            max_depth=2, beam_width=25, target_fdr=TARGET_FDR, random_state=trial
         ).fit(X, y)
         null_selected += model.n_features_out_ if model.fdr_controlled_ else 0
 
+    # A run of zeros is exact as an observation but still bounds the underlying
+    # rate only so tightly; report the one-sided 95% limit so the figure is read
+    # at the precision the replicate count supports.
+    n_false = sum(1 for f in fdps if f > 0)
+    fdr_upper = _upper_bound(n_false, len(fdps))
+
     result = {
         "empirical_fdr": float(np.mean(fdps)),
+        "fdr_upper_95": fdr_upper,
         "power": recovered / len(fdps),
         "fallbacks": fallbacks,
         "null_selections": null_selected,
+        "null_upper_95": _upper_bound(null_selected, n_null),
     }
     print(
         f"SIGNAL ({n_signal} replicates, nominal 0.10): "
-        f"empirical FDR {result['empirical_fdr']:.4f} | power {result['power']:.3f} "
+        f"empirical FDR {result['empirical_fdr']:.4f} "
+        f"(95% upper bound {fdr_upper:.4f}) | power {result['power']:.3f} "
         f"| fallbacks {result['fallbacks']}"
     )
-    print(f"GLOBAL NULL ({n_null} replicates): selections {result['null_selections']}")
+    print(
+        f"GLOBAL NULL ({n_null} replicates): selections {result['null_selections']} "
+        f"(95% upper bound on the per-trial rate {result['null_upper_95']:.4f})"
+    )
+
+    # The guarantee, checked against the level the study was run at rather than
+    # against whatever this run happened to produce. Power carries no bound and
+    # is reported only.
+    if result["empirical_fdr"] > TARGET_FDR:
+        raise AssertionError(
+            f"empirical FDR {result['empirical_fdr']:.4f} exceeds the nominal {TARGET_FDR}"
+        )
+    null_rate = result["null_selections"] / n_null
+    if null_rate > TARGET_FDR:
+        raise AssertionError(
+            f"global-null selection rate {null_rate:.4f} exceeds the nominal {TARGET_FDR}"
+        )
     return result
 
 
