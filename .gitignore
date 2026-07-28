@@ -1,10 +1,49 @@
+# Byte-compiled / cache
 __pycache__/
-*.egg-info/
-dist/
+*.py[cod]
+*.so
+
+# Packaging / build
 build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test and coverage artifacts
 .pytest_cache/
-.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Documentation build
 site/
+
+# Environments
 .venv/
+venv/
+env/
+ENV/
+
+# Benchmark scratch and fetched data
+verify-*.txt
 *.feather
-benchmarks/independent/openfe_tmp_data.feather
+openfe_tmp_data.*
+benchmarks/data/
+benchmarks/independent/results_fresh_run/
+
+# Local working copies
+/paper.md
+testing/
+*.zip
+artifacts/
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
