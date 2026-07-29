@@ -16,14 +16,30 @@ affiliations:
   - index: 1
     name: Independent Researcher
 author:
-  - "Olanrewaju M. Daramola, ORCID: 0009-0006-3327-2047, Independent Researcher"
-date: 27 July 2026
+  - "Olanrewaju M. Daramola"
+date: 28 July 2026
 bibliography: paper.bib
+biblio-style: IEEEtran
+colorlinks: true
+linkcolor: linkblue
+citecolor: linkblue
+urlcolor: linkblue
+filecolor: linkblue
 link-citations: true
 header-includes:
   - \usepackage{tikz}
   - \usetikzlibrary{arrows.meta,positioning}
   - \setlength{\LTcapwidth}{\linewidth}
+  - \usepackage[margin=1in]{geometry}
+  - \IfFileExists{mathpazo.sty}{\usepackage{mathpazo}\linespread{1.05}}{}
+  - \usepackage{xcolor}
+  - \definecolor{linkblue}{RGB}{0,83,155}
+  - \usepackage[font=small,labelfont=bf,skip=6pt]{caption}
+  - \usepackage{etoolbox}
+  - \AtBeginEnvironment{longtable}{\small}
+  - \clubpenalty=10000
+  - \widowpenalty=10000
+  - \displaywidowpenalty=10000
 ---
 
 # Summary
@@ -39,7 +55,8 @@ candidates against the same data, so some will fit by chance; `beamfeat`
 controls the expected fraction of such spurious selections (the false
 discovery rate, FDR) and reports honestly, through a fitted flag and
 visible warnings, whenever that guarantee cannot be given. It is packaged as
-scikit-learn [@scikit-learn] estimators, passing scikit-learn's
+scikit-learn [@scikit-learn] estimators over numpy [@harris2020] and scipy
+[@virtanen2020], passing scikit-learn's
 own compatibility checks, with optional dimensional analysis that
 rejects physically meaningless expressions (metres plus kilograms) before
 any numerical work.
@@ -52,15 +69,16 @@ which constructed variables genuinely relate to an outcome, currently
 choose between tools that construct features without error control and
 tools that control errors without constructing features. The selection step
 is the scientific crux: candidates are generated adaptively and tested on
-the same data, a selective-inference setting: the data that suggested
-each hypothesis also tests it, so naive p-values are optimistically
-biased. `beamfeat` treats that step as the inference problem
+the same data, a selective-inference setting [@taylor2015; @wasserman2009]:
+the data that suggested each hypothesis also tests it, so naive p-values are
+optimistically biased. `beamfeat` treats that step as the inference problem
 it is. It provides an exact permutation test of marginal association,
 each candidate's relationship to the target considered alone [@phipson2010], with Benjamini--Hochberg [@bh1995] or Benjamini--Yekutieli
 [@by2001] correction, the knockoff filter in both its fixed-X [@barber2015] and
 model-X [@candes2018] forms, routed by sample size to the regime where
 each construction's assumptions hold, and a default data split (search on one half of the
-training rows, selection tested on the other) that restores the
+training rows, selection tested on the other) in the sense of Cox [@cox1975], which
+restores the
 premise the guarantees require: that candidates were fixed before seeing
 the data on which they are tested.
 
@@ -72,7 +90,8 @@ selection thresholded against injected noise columns: effective, but with
 no stated error-rate guarantee. `OpenFE` [@zhang2023] generates features
 for gradient-boosted models and ranks them by boosting-based importance;
 Deep Feature Synthesis [@kanter2015] targets relational data; the reference
-knockoffs implementation `knockpy` [@barber2015; @candes2018] selects among
+knockoffs implementation `knockpy` [@barber2015; @candes2018; @spector2022]
+selects among
 *given* features and constructs nothing, so its row in the benchmark
 table below isolates the contribution of construction itself. Symbolic
 regressors such as `PySR` [@cranmer2023] conduct a strictly more powerful
@@ -108,7 +127,7 @@ a fixed function of the data, so permutation p-values are
 exact, where statistics that re-tune themselves on the observed target (a
 cross-validated lasso penalty) break the exchangeability a permutation test rests on (under the null,
 the target and its shuffles are statistically interchangeable; a
-statistic that adapts to the observed target destroys that symmetry). The price is measured precisely on Friedman #1. A least-squares oracle
+statistic that adapts to the observed target destroys that symmetry). The price is measured precisely on Friedman #1 [@friedman1991]. A least-squares oracle
 given the ideal depth-2 basis $\{ab, (ab)^2, c, c^2, d, e\}$ reaches
 $R^2$ $0.960 \pm 0.003$ over six draws. Marginal screening never admits $c$,
 because the centred quadratic viewed alone is nearly independent of the
@@ -172,7 +191,8 @@ selection, the default returns *no* constructed features (an
 intercept-only model and a visible warning) rather than unvetted search
 output. A parsimony step (greedy forward selection *within* the screened
 set) keeps fitted equations compact while the full screened set, with exact
-p- and q-values per candidate, stays auditable; the q-level guarantee
+p- and q-values [@storey2002] per candidate, stays auditable; the q-level
+guarantee
 certifies the screening set, and the documentation says so. A post-fit
 check on the selection holdout separates two claims users conflate:
 FDR-vetted association and a generalising fit: a negative held-out $R^2$
@@ -184,7 +204,7 @@ trees (LightGBM 0.998 against 0.808 on a threshold problem; `OpenFE` records
 touching only an irrelevant column, so the credit belongs to its gradient-boosted
 consumer rather than to anything it constructed); the
 exponential operator ships but is not a default (enabling it changed no
-result on the physics panel below); overflow and domain errors exclude a
+outcome on the physics panel below, though individual scores move); overflow and domain errors exclude a
 candidate loudly rather than silently; and units, supplied as pint
 quantities or plain strings, are enforced at expression construction.
 
@@ -201,8 +221,10 @@ $0.161 \pm 0.016$ at nominal 0.05/0.10/0.20, against its ceiling of $q\,m_0/m$
 = 0.040/0.080/0.160; Benjamini--Yekutieli, stricter by a harmonic factor,
 realised $0.008 \pm 0.004$, $0.018 \pm 0.005$ and $0.046 \pm 0.008$. Power was
 1.00 throughout. The bounds are derived from the design rather than asserted,
-and `benchmarks/selector_calibration.py` fails if a realised rate sits above
-one.
+and `benchmarks/selector_calibration.py` fails if a realised rate sits
+*significantly* above its bound, that is, if the bound falls below the whole
+95% interval; a point estimate a little above its bound, as all three
+Benjamini--Hochberg rates are here, is ordinary Monte Carlo error.
 
 ```{=latex}
 \begin{figure}[h]
@@ -213,12 +235,12 @@ selector, 100 trials on Gaussian designs with 25 candidates of which 5 carry
 signal. Benjamini--Hochberg tracks its ceiling of $q\,m_0/m$; Benjamini--Yekutieli,
 stricter by a harmonic factor, sits well below nominal. Power was 1.00 at every
 level. Regenerated by \texttt{benchmarks/selector\_calibration.py}, which derives
-each bound from the design and fails if a realised rate exceeds it.}
+each bound from the design and fails if the bound falls below a realised rate's 95\% interval.}
 \end{figure}
 ```
 
-On a twelve-equation physics panel under the
-symbolic-regression community's criterion ($R^2 > 0.999$ at 0.1% noise),
+On a twelve-equation physics panel under the symbolic-regression
+community's criterion ($R^2 > 0.999$ at 0.1% noise) [@lacava2021; @udrescu2020],
 `beamfeat` solves 10/12 and recovers 8/12 in *exact symbolic form*, checked
 by algebraic proportionality, a test a merely close numeric fit cannot pass,
 at roughly 0.6 s per equation;
@@ -250,8 +272,9 @@ quantity. []{label="headtohead"}
 
 Under Student-$t(2)$ noise the exact formula is recovered at $R^2$ 0.956
 (LightGBM 0.866): the permutation test is distribution-free (it assumes nothing about the
-noise's shape). Across seven
-real datasets, `beamfeat` leads on two: mpg (0.871 against LightGBM's
+noise's shape). Across seven real
+datasets [@yeh1998; @cortez2009; @harrison1978; @gorman2014], `beamfeat`
+leads on two: mpg (0.871 against LightGBM's
 0.853) and tips, where gradient boosting overfits below ridge while the FDR
 gate holds; it matches ridge on diamonds from a single interpretable feature,
 and trails LightGBM on penguins and breast cancer and ridge on diabetes. The
@@ -270,7 +293,8 @@ The two agree to a median absolute difference of 0.0003 across 45 paired
 fits, with a largest discrepancy of 0.016, so the result comes from the
 features and not from the downstream model.
 
-Mean held-out $R^2$ was 0.803 for `beamfeat` against 0.810 for a random forest
+Mean held-out $R^2$ was 0.803 for `beamfeat` against 0.810 for a random
+forest [@breiman2001]
 and 0.798 for LightGBM on raw features, 0.736 for `OpenFE`, 0.704 for ridge,
 $-1.56$ for `autofeat` and $-2.48$ for `featuretools`. `beamfeat` took the
 best average rank (3.22 of seven methods, the tree baselines 3.44, `autofeat`
@@ -308,9 +332,9 @@ produce fits far worse than predicting the target mean, while
 
 That study also
 records a reproducibility asymmetry: `beamfeat` returns bit-identical results
-across runs given a seed, and the same fit reproduced digit-for-digit on two
-independent machines running different Python, numpy and scikit-learn
-versions, whereas `autofeat` cannot be made reproducible from outside. It
+across runs given a seed: an identical fit repeated in a fresh process
+returns identical output, checked by a fingerprint test in the suite.
+`autofeat` cannot be made reproducible from outside. It
 exposes no `random_state`, and its noise-injection feature screen draws decoy
 features from the global NumPy generator before any internal seeding applies,
 so each process starts from different entropy. Six runs on one identical split
@@ -324,7 +348,7 @@ executions of the nine-dataset comparison returned `autofeat` mean $R^2$ of
 0.746, $-1.69$, 0.754 and $-1.56$, with worst single fits from $-2.28$ to
 $-108.9$. Any single `autofeat` figure, including those above, is one draw
 from that distribution. Catastrophic held-out scores are a documented property
-of the method rather than an artifact of this harness: @horn2019 report test
+of the method rather than an artifact of this harness: Horn et al. [@horn2019] report test
 $R^2$ of $-12.4$ on diabetes and $0.048$ on Boston at three feature-engineering
 steps, attributing it to tens of thousands of features fitted against fewer
 than 500 rows. This study uses two steps, the library default, at which their
@@ -342,9 +366,11 @@ code [@horn2019], whose approach it builds on and departs from as described
 above. The author conceived the method, set its requirements and acceptance
 criteria, and directed all development, using Anthropic's Claude as an AI
 assistant for design, implementation, benchmarking, and drafting. Every
-statistical claim in this paper is backed by a test or repeat-run
-study that ships in the repository and can be executed by anyone, and the
-full tests run automatically on every change.
+figure and table in this paper is regenerated by a script that ships in the
+repository, and the full tests run automatically on every change. The one
+exception is noted where it arises: three of the four executions of the
+comparison study were superseded and their per-fit records not retained, so
+those means are reported from run transcripts rather than archived data.
 The author reviewed all code and text and takes sole responsibility for
 the work. This work received no external funding.
 
