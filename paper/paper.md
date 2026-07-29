@@ -272,8 +272,7 @@ quantity. []{label="headtohead"}
 
 Under Student-$t(2)$ noise the exact formula is recovered at $R^2$ 0.956
 (LightGBM 0.866): the permutation test is distribution-free (it assumes nothing about the
-noise's shape). Across seven real
-datasets [@yeh1998; @cortez2009; @harrison1978; @gorman2014], `beamfeat`
+noise's shape). Across seven real datasets [@gorman2014], `beamfeat`
 leads on two: mpg (0.871 against LightGBM's
 0.853) and tips, where gradient boosting overfits below ridge while the FDR
 gate holds; it matches ridge on diamonds from a single interpretable feature,
@@ -283,9 +282,13 @@ widest margin against it is California housing, at 0.700 against LightGBM's
 compact expression to find; it still clears the ridge anchor there by 0.107.
 A feature constructor should concede when there is nothing to construct, and
 the honesty flag does so on every fit. A separate 360-fit study, included in
-the repository (nine datasets, eight methods, five splits, analysed by average
+the repository (nine datasets [@yeh1998; @cortez2009; @harrison1978], eight
+methods, five splits, analysed by average
 ranks and a Friedman test [@demsar2006]) places these results in a wider
-field. Every feature-construction tool there hands its features to the same
+field. One of the nine is the Boston housing set, which scikit-learn removed
+as ethically contested; it is retained here deliberately, because the
+`autofeat` authors report their own Boston failures [@horn2019] and the
+comparison is therefore direct. Every feature-construction tool there hands its features to the same
 `RidgeCV`, so that comparison isolates the constructed features rather than
 the estimator; `beamfeat` appears twice, once as the shipped estimator with
 its own internal ridge and once as a transformer feeding the shared model.
@@ -295,12 +298,12 @@ features and not from the downstream model.
 
 Mean held-out $R^2$ was 0.803 for `beamfeat` against 0.810 for a random
 forest [@breiman2001]
-and 0.798 for LightGBM on raw features, 0.736 for `OpenFE`, 0.704 for ridge,
+and 0.798 for LightGBM [@ke2017] on raw features, 0.736 for `OpenFE`, 0.704 for ridge,
 $-1.56$ for `autofeat` and $-2.48$ for `featuretools`. `beamfeat` took the
 best average rank (3.22 of seven methods, the tree baselines 3.44, `autofeat`
 3.67), though with nine datasets the omnibus test is underpowered and does not
 separate them ($\chi^2 = 6.71$, $p = 0.35$). The paired tests are sharper:
-`beamfeat` beat `OpenFE` ($p = 0.0001$), `featuretools` and ridge
+`beamfeat` beat `OpenFE` ($p < 0.0001$), `featuretools` and ridge
 ($p < 0.0001$) under the shared downstream model, a protocol that understates
 `OpenFE` in its gradient-boosted home setting. It was indistinguishable from
 the random forest ($p = 0.60$) and LightGBM ($p = 0.86$), and the comparison
@@ -332,8 +335,8 @@ produce fits far worse than predicting the target mean, while
 
 That study also
 records a reproducibility asymmetry: `beamfeat` returns bit-identical results
-across runs given a seed: an identical fit repeated in a fresh process
-returns identical output, checked by a fingerprint test in the suite.
+across runs given a seed: a determinism test in the suite refits and
+compares formulas and predictions.
 `autofeat` cannot be made reproducible from outside. It
 exposes no `random_state`, and its noise-injection feature screen draws decoy
 features from the global NumPy generator before any internal seeding applies,
@@ -358,6 +361,12 @@ exercise 95% of the code; automatic re-testing of every change
 (continuous integration) against both the oldest supported and the newest
 dependency versions; tutorial notebooks that execute end to end; and
 every figure above produced by a script shipped in the repository.
+
+
+The version described here is archived on Zenodo [@beamfeat]; the development
+repository is at <https://github.com/LD-Shell/beamFeat>, and the package
+installs from PyPI as `pip install beamfeat`.
+
 
 # Acknowledgements
 
