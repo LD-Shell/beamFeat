@@ -2,47 +2,77 @@
   {
     "dataset": "distractors_noise05",
     "method": "autofeat",
-    "r2": 0.9975388839895215,
-    "fit_seconds": 29.35942412703298,
-    "n_features": 7,
-    "complexity": 1.8571428571428572,
+    "r2": 0.9975969529019475,
+    "fit_seconds": 24.49104469100712,
+    "n_features": 8,
+    "complexity": 2.25,
     "recovered": true,
-    "false_feature_rate": 0.5714285714285714,
+    "false_feature_rate": 0.625,
     "fdr_ok": null,
     "formulas": [
       "x000*x001",
       "exp(x001)/x004",
       "exp(x004)*exp(x005)",
       "log(x007)/x007",
-      "x002/x000",
-      "1/(x004*x008)",
-      "exp(x008)/x010"
+      "log(x007)/x008",
+      "exp(x008)/x002",
+      "exp(x004)*log(x005)",
+      "exp(x000)*exp(x010)"
     ],
     "error": ""
   },
   {
     "dataset": "distractors_noise25",
     "method": "autofeat",
-    "r2": 0.9405739697287657,
-    "fit_seconds": 35.416753717989195,
-    "n_features": 4,
-    "complexity": 2.5,
+    "r2": 0.9452510779245639,
+    "fit_seconds": 25.966680924000684,
+    "n_features": 2,
+    "complexity": 2.0,
     "recovered": true,
     "false_feature_rate": 0.0,
     "fdr_ok": null,
     "formulas": [
       "x000*x001",
-      "exp(x000)*exp(x008)",
-      "1/(x000*x004)",
-      "x010**2*exp(x001)"
+      "x001**3*x010"
     ],
     "error": ""
   },
   {
     "dataset": "distractors_noise50",
     "method": "autofeat",
-    "r2": 0.7829867580191181,
-    "fit_seconds": 37.07131358701736,
+    "r2": 0.7922647125345533,
+    "fit_seconds": 30.27907094299735,
+    "n_features": 1,
+    "complexity": 1.0,
+    "recovered": true,
+    "false_feature_rate": 0.0,
+    "fdr_ok": null,
+    "formulas": [
+      "x000*x001"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "threshold_step",
+    "method": "autofeat",
+    "r2": 0.7824902266651453,
+    "fit_seconds": 11.769615035998868,
+    "n_features": 2,
+    "complexity": 2.5,
+    "recovered": null,
+    "false_feature_rate": null,
+    "fdr_ok": null,
+    "formulas": [
+      "x000**2*x001",
+      "x000*exp(x001)"
+    ],
+    "error": ""
+  },
+  {
+    "dataset": "small_n120",
+    "method": "autofeat",
+    "r2": 0.9876506839103896,
+    "fit_seconds": 4.4730739559963695,
     "n_features": 4,
     "complexity": 2.25,
     "recovered": true,
@@ -50,45 +80,8 @@
     "fdr_ok": null,
     "formulas": [
       "x000*x001",
-      "x000**2/x008",
-      "1/(x003*x004)",
-      "exp(x011)*log(x009)"
-    ],
-    "error": ""
-  },
-  {
-    "dataset": "threshold_step",
-    "method": "autofeat",
-    "r2": 0.7517982260623227,
-    "fit_seconds": 13.810222661006264,
-    "n_features": 6,
-    "complexity": 3.3333333333333335,
-    "recovered": null,
-    "false_feature_rate": null,
-    "fdr_ok": null,
-    "formulas": [
-      "x000**2*x001",
-      "x000*exp(x001)",
-      "x001*x002**3",
-      "x001**2*x003**3",
-      "x001**3*log(x003)",
-      "sqrt(x002)*log(x000)"
-    ],
-    "error": ""
-  },
-  {
-    "dataset": "small_n120",
-    "method": "autofeat",
-    "r2": 0.9880710286853821,
-    "fit_seconds": 5.069022579991724,
-    "n_features": 3,
-    "complexity": 2.6666666666666665,
-    "recovered": true,
-    "false_feature_rate": 0.6666666666666666,
-    "fdr_ok": null,
-    "formulas": [
-      "x000*x001",
-      "x002**3/x005",
+      "x000/x002",
+      "x002**2/x005",
       "x005**3*log(x002)"
     ],
     "error": ""
@@ -97,7 +90,7 @@
     "dataset": "small_n240",
     "method": "autofeat",
     "r2": 0.9919307805653712,
-    "fit_seconds": 7.398952187038958,
+    "fit_seconds": 5.499191843999142,
     "n_features": 2,
     "complexity": 2.0,
     "recovered": true,
