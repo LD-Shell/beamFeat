@@ -38,7 +38,7 @@ Python ≥ 3.10. There are **no upper version pins**: the 370 tests pass from
 scikit-learn 1.6.1 with numpy 1.26 through scikit-learn 1.9.0 with numpy 2.4,
 including 1.7.2 and 1.8.0 in between. Running the test suite or reproducing
 the benchmarks needs a little more setup, described in
-`docs/installation.md`.
+[`docs/installation.md`](https://github.com/LD-Shell/beamfeat/blob/main/docs/installation.md).
 
 ## What it does
 
@@ -57,26 +57,27 @@ the benchmarks needs a little more setup, described in
    `.equation()`.
 
 Numerical failures (overflow, domain errors) are recorded and excluded, never
-silently masked. Optional unit propagation — units given as pint quantities
-or as plain strings like `"kg"` or `"m / s**2"` — rejects dimensionally
-invalid expressions at construction time. On a kg/m/s mechanics example this
-cuts the number of candidates ever evaluated by roughly two-thirds before any
-data work; the exact fraction depends on how many distinct dimensions the
-columns carry.
+silently masked. Optional unit propagation — units given as pint quantities,
+as plain strings like `"kg"` or `"m / s**2"`, or as a sequence with one entry
+per column — rejects dimensionally invalid expressions at construction time,
+and a units specification that matches no column raises rather than being
+ignored. On a kg/m/s mechanics example this cuts the number of candidates
+ever evaluated by roughly two-thirds before any data work; the exact fraction
+depends on how many distinct dimensions the columns carry.
 
 ## The guarantees, stated precisely
 
 - **Permutation selector (default).** Tests marginal association with an
   exact permutation test: the statistic (|Pearson r| for regression,
   eta-squared for classification) is a fixed function of the data, and
-  p-values use the add-one estimator of Phipson & Smyth (2010). Multiplicity
+  p-values use the add-one estimator of [Phipson & Smyth (2010)](https://doi.org/10.2202/1544-6115.1585). Multiplicity
   is corrected with Benjamini–Yekutieli by default (valid under arbitrary
   dependence); Benjamini–Hochberg is available and is valid under positive
   dependence (PRDS).
-- **Knockoff selector.** Fixed-X knockoffs (Barber & Candès, 2015) when
+- **Knockoff selector.** Fixed-X knockoffs ([Barber & Candès, 2015](https://doi.org/10.1214/15-AOS1337)) when
   `n ≥ 2p`: no distributional assumption on the features — engineered columns
   are fine — with the guarantee requiring Gaussian noise in the linear model.
-  Model-X Gaussian knockoffs (Candès et al., 2018) only as an `n < 2p`
+  Model-X Gaussian knockoffs ([Candès et al., 2018](https://doi.org/10.1111/rssb.12265)) only as an `n < 2p`
   fallback, with a warning, since engineered features violate its Gaussianity
   assumption.
 - **Selective inference.** Search retains candidates *because* they correlate
@@ -108,7 +109,7 @@ carries Monte Carlo error from finite trials.
 *Signal hidden among ten distractor columns. A false feature is a returned
 formula touching only irrelevant ones; the count is over the five stress
 datasets that declare which columns their formula uses. Regenerate with
-`python benchmarks/make_figures.py`, which writes six other figures alongside
+`python` [`benchmarks/make_figures.py`](https://github.com/LD-Shell/beamfeat/blob/main/benchmarks/make_figures.py), which writes six other figures alongside
 it.*
 
 
@@ -116,7 +117,7 @@ All of the following are measured by the test suite or the committed
 benchmark scripts, not asserted:
 
 - Selector calibration (Gaussian designs, 100 trials,
-  `benchmarks/selector_calibration.py`): BH realised 0.046 ± 0.008,
+  [`benchmarks/selector_calibration.py`](https://github.com/LD-Shell/beamfeat/blob/main/benchmarks/selector_calibration.py)): BH realised 0.046 ± 0.008,
   0.084 ± 0.012 and 0.161 ± 0.016 at nominal 0.05/0.10/0.20, against its
   ceiling of `q·m₀/m` = 0.040/0.080/0.160; BY, stricter by a harmonic factor,
   realised 0.008 ± 0.004, 0.018 ± 0.005 and 0.046 ± 0.008. Power 1.00
@@ -129,7 +130,7 @@ benchmark scripts, not asserted:
 - Feynman-equation panel (12 physics laws, 0.1% noise): 10/12 solved at the
   SRBench criterion and 8/12 in exact symbolic form, ~0.6 s per equation; the misses are named boundaries (a depth-3 rational, a literal
   constant, depth-4 nesting, the Gaussian's exponential).
-- Pure-noise stress (`benchmarks/selector_calibration.py`): over 100
+- Pure-noise stress ([`benchmarks/selector_calibration.py`](https://github.com/LD-Shell/beamfeat/blob/main/benchmarks/selector_calibration.py)): over 100
   global-null pipelines, where every selection is false by construction, BH
   returned features in 6 trials and BY in 1 — false discovery proportions of
   0.06 and 0.01, both under the nominal 0.10. The gap is not significant at
@@ -176,7 +177,7 @@ benchmark scripts, not asserted:
   distractor-only features on 1 of the 5 scoreable stress datasets — the
   construction step and the holdout are the delta.
 - Independent 360-fit study across nine datasets and eight methods
-  (`benchmarks/independent/`): mean R² 0.803 against random forest 0.810,
+  ([`benchmarks/independent/`](https://github.com/LD-Shell/beamfeat/tree/main/benchmarks/independent)): mean R² 0.803 against random forest 0.810,
   LightGBM 0.798, OpenFE 0.736, ridge 0.704, autofeat −1.561 and
   featuretools −2.478 — and a worst single fit of 0.355, none below zero,
   where autofeat reached −103.2 and featuretools −57.3, at ~60× autofeat's
@@ -191,44 +192,44 @@ benchmark scripts, not asserted:
 ## Relationship to autofeat
 
 beamfeat's design began from a code review of
-[autofeat](https://github.com/cod3licious/autofeat) (Horn et al., 2019) and
+[autofeat](https://github.com/cod3licious/autofeat) ([Horn et al., 2019](https://doi.org/10.1007/978-3-030-43823-4_10)) and
 keeps its best idea — compact symbolic features feeding a linear model —
 while replacing exhaustive expansion with beam search, heuristic
 noise-threshold selection with FDR-controlled procedures, and upper-pinned
 dependencies with tested floors. The generate-then-FDR-filter design has a
 direct precedent in [tsfresh](https://github.com/blue-yonder/tsfresh)
-(Christ et al., 2018), which filters mass-generated time-series features
+([Christ et al., 2018](https://doi.org/10.1016/j.neucom.2018.03.067)), which filters mass-generated time-series features
 under Benjamini–Yekutieli control; beamfeat applies that design to symbolic
 expressions on tabular columns.
 
 ## Independent comparison
 
-`benchmarks/independent/` holds a 360-fit study (nine datasets, eight
+[`benchmarks/independent/`](https://github.com/LD-Shell/beamfeat/tree/main/benchmarks/independent) holds a 360-fit study (nine datasets, eight
 methods, five splits, average ranks plus a Friedman test) with its harness,
 pinned environment, data, and a notebook that reproduces the analysis. Mean
 held-out R²: beamfeat 0.803, random forest 0.810, LightGBM 0.798, OpenFE
 0.736, ridge 0.704, autofeat −1.561, featuretools −2.478 — and worst single
 fit of 45: beamfeat 0.355, autofeat −103.2, featuretools −57.3, with the FDR
-guarantee delivered on 45/45. Read `PROVENANCE.md` first: it records what is
+guarantee delivered on 45/45. Read [`PROVENANCE.md`](https://github.com/LD-Shell/beamfeat/blob/main/benchmarks/independent/PROVENANCE.md) first: it records what is
 reproducible (beamfeat, bit-identically) and what is not (autofeat seeds
 no `random_state` and drawing its decoy features from the global NumPy
 generator, swung from +0.952 to −109.8 across six runs on one identical split).
 
 ## Documentation
 
-Tutorial notebooks live in `notebooks/` (getting started; search and scoring;
+Tutorial notebooks live in [`notebooks/`](https://github.com/LD-Shell/beamfeat/tree/main/notebooks) (getting started; search and scoring;
 selection and units). The statistical guarantees are documented in detail in
-`docs/guarantees.md` and in the module docstrings of `beamfeat.selection`. Users coming
+[`docs/guarantees.md`](https://github.com/LD-Shell/beamfeat/blob/main/docs/guarantees.md) and in the module docstrings of [`beamfeat.selection`](https://github.com/LD-Shell/beamfeat/blob/main/src/beamfeat/selection.py). Users coming
 from autofeat will find a full API mapping and version-compatibility notes
-in `docs/migrating-from-autofeat.md`.
+in [`docs/migrating-from-autofeat.md`](https://github.com/LD-Shell/beamfeat/blob/main/docs/migrating-from-autofeat.md).
 
 ## Citing
 
-See `CITATION.cff`. If you use the selection procedures, please also cite the
-underlying statistics: Benjamini & Hochberg (1995), Benjamini & Yekutieli
-(2001), Barber & Candès (2015), Candès et al. (2018), and Phipson & Smyth
-(2010).
+See [`CITATION.cff`](https://github.com/LD-Shell/beamfeat/blob/main/CITATION.cff). If you use the selection procedures, please also cite the
+underlying statistics: [Benjamini & Hochberg (1995)](https://doi.org/10.1111/j.2517-6161.1995.tb02031.x),
+[Benjamini & Yekutieli (2001)](https://doi.org/10.1214/aos/1013699998), [Barber & Candès (2015)](https://doi.org/10.1214/15-AOS1337),
+[Candès et al. (2018)](https://doi.org/10.1111/rssb.12265), and [Phipson & Smyth (2010)](https://doi.org/10.2202/1544-6115.1585).
 
 ## License
 
-MIT.
+[MIT](https://github.com/LD-Shell/beamfeat/blob/main/LICENSE).
