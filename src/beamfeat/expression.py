@@ -853,7 +853,10 @@ class Evaluator:
         dtype: Working dtype. Defaults to float64; float32 halves memory but
             makes overflow substantially more likely in deep expressions.
         cache_size: Maximum number of non-leaf arrays held in the cache.
-        variance_tol: Results with variance below this are excluded as constant.
+        variance_tol: Relative constancy threshold. A column is treated as
+            constant when its variance falls below ``variance_tol`` times the
+            square of its mean magnitude, so the verdict does not depend on
+            the unit the caller happened to choose.
     """
 
     __slots__ = ("_cache", "_columns", "_dtype", "_leaves", "_n_rows", "_units", "cache_size", "log", "variance_tol")
@@ -979,7 +982,7 @@ class Evaluator:
                 if not math.isfinite(variance):
                     self.log.record(node, ExclusionReason.OVERFLOW, "input column variance overflowed")
                     return None
-                if variance <= self.variance_tol:
+                if self._is_constant(values, variance):
                     self.log.record(node, ExclusionReason.ZERO_VARIANCE, f"input column variance={variance:.3g}")
                     return None
             return values
@@ -1056,11 +1059,28 @@ class Evaluator:
 
         if apply_filters:
             variance = float(np.var(values))
-            if not math.isfinite(variance) or variance <= self.variance_tol:
+            if self._is_constant(values, variance):
                 self.log.record(node, ExclusionReason.ZERO_VARIANCE, f"variance={variance:.3g}")
                 return None
 
         return values
+
+    def _is_constant(self, values: np.ndarray, variance: float) -> bool:
+        """Scale-free constancy test.
+
+        ``variance_tol`` is applied relative to the column's own magnitude.
+        An absolute floor makes the verdict depend on the unit: concentrations
+        in kmol/m^3 sit near 1e-6 and have variance ~1e-12, so they were
+        rejected as constant while the identical data expressed in mol/m^3 was
+        accepted. Worse, when only some columns fall below the floor the fit
+        succeeds with the important column silently removed.
+        """
+        if not math.isfinite(variance):
+            return True
+        scale = float(np.mean(np.abs(values)))
+        if math.isfinite(scale) and scale > 0.0:
+            return variance <= self.variance_tol * scale * scale
+        return variance <= self.variance_tol
 
     def _store(self, key: str, values: np.ndarray) -> None:
         """Insert into the LRU cache, evicting the oldest entry if full."""
