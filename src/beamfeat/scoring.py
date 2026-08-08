@@ -55,10 +55,25 @@ def _check_problem_type(problem_type: str) -> ProblemType:
 
 
 def _standardise(values: np.ndarray) -> np.ndarray:
-    """Centre and scale to unit variance. Constant input returns zeros."""
+    """Centre and scale to unit variance. Constant input returns zeros.
+
+    Constancy is judged relative to the values' magnitude rather than by an
+    absolute floor on the spread, since an absolute floor makes the verdict
+    depend on the column's units: a product of small-unit columns sits at
+    the product of their magnitudes and lands under any fixed floor while
+    carrying real signal. A spread twelve orders below the magnitude is far
+    inside accumulated float64 rounding noise, so nothing informative is
+    discarded; filtering of informationally constant columns happens in the
+    expression layer before candidates reach a scorer.
+    """
     centred = values - values.mean()
     scale = float(np.sqrt(np.mean(centred**2)))
-    if scale < 1e-12:
+    magnitude = float(np.mean(np.abs(values)))
+    if np.isfinite(magnitude) and magnitude > 0.0:
+        constant = scale <= 1e-12 * magnitude
+    else:
+        constant = scale == 0.0
+    if constant:
         return np.zeros_like(centred)
     return centred / scale
 
@@ -177,6 +192,14 @@ class Scorer(ABC):
         residual = numeric_target - design @ coefficients
         if not np.all(np.isfinite(residual)):  # pragma: no cover - defensive
             return numeric_target
+        spread = float(np.sqrt(np.mean((numeric_target - numeric_target.mean()) ** 2)))
+        if float(np.sqrt(np.mean(residual**2))) <= 1e-9 * spread:
+            # The incumbent reproduces the target to float precision; what is
+            # left is rounding dust, and standardising dust would hand the
+            # scorers a unit-variance noise vector to chase. The comparison is
+            # made against the target's spread so the verdict does not depend
+            # on the target's units.
+            return np.zeros_like(residual)
         return residual
 
     def __repr__(self) -> str:  # pragma: no cover - display only
