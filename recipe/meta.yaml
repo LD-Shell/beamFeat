@@ -5,11 +5,11 @@
 #      (regenerates this file with the real sha256 of the PyPI sdist)
 #   2. Fork https://github.com/conda-forge/staged-recipes, add the recipe
 #      under recipes/beamfeat/, open a PR.
-# The fields below are correct for beamfeat 0.1.1 except the placeholder
+# The fields below are correct for beamfeat 0.2.0 except the placeholder
 # sha256, which MUST come from the published sdist.
 
 {% set name = "beamfeat" %}
-{% set version = "0.1.1" %}
+{% set version = "0.2.0" %}
 
 package:
   name: {{ name|lower }}

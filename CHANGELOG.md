@@ -4,6 +4,46 @@ Notable changes to `beamfeat`. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-08-08
+
+Behavioural release: scale-free numerics throughout, strict unit validation,
+and a faithful `equation()`. Results are not bit-reproducible against 0.1.1,
+and selections on small- or mixed-unit data change deliberately.
+
+### Added
+
+- `style` parameter on `equation()` for both supervised estimators:
+  `"significant"` (default), `"fixed"`, and `"scientific"`. `"fixed"` falls
+  back to significant figures for any value that would otherwise display as
+  zero.
+- `units` accepts a positional sequence with one entry per column, alongside
+  the existing mapping form.
+
+### Changed
+
+- `variance_tol` is judged relative to a column's squared mean magnitude, so
+  the constant/not-constant verdict no longer depends on the caller's units.
+  Anyone who tuned it against an absolute variance should re-check the value.
+- Candidate ranking treats scores within 1e-6 as tied and admits the smaller
+  expression; the redundancy pass then removes the complex near-duplicate.
+- Invalid `units` fail loudly: a mapping matching no columns, a wrong-length
+  sequence, or an unsupported type raises instead of silently skipping
+  dimensional analysis.
+- `equation()` orders terms by standardised coefficient magnitude and prints
+  significant figures; `precision` counts decimal places only under
+  `style="fixed"`.
+
+### Fixed
+
+- `equation()` dropped any term whose raw coefficient fell below the printed
+  precision, deleting dominant terms on large-unit features from their own
+  equation. Only exactly-zero terms are omitted now.
+- Scoring zeroed any column whose absolute spread fell below 1e-12, which
+  made products of small-unit columns undiscoverable; the guard is now
+  relative to the column's magnitude.
+- A saturated incumbent yields zero candidate scores at every target scale;
+  previously the check held only for targets near unit magnitude.
+
 ## [0.1.1] - 2026-07-28
 
 Documentation, benchmarks and packaging. No library code changed; the public
