@@ -28,21 +28,24 @@ COL_SINGLE = 3.25
 COL_DOUBLE = 7.0
 
 # Colourblind-safe; beamfeat is the accent, everything else recedes.
-ACCENT = "#0F5C8C"
-NEUTRAL = "#9AA5AD"
-WARN = "#C4622D"
+ACCENT = "#14496E"        # deep slate blue - beamfeat
+ACCENT_LT = "#4E86B4"     # lighter tint - beamfeat -> ridge
+NEUTRAL = "#8D99A3"       # mid grey for annotations and reference lines
+WARN = "#B4552B"          # muted rust for failures / warnings
+INK = "#22282D"           # near-black for type and axis lines
+GRID = "#E3E7EA"          # very light rule for grids
 COLOURS = {
     "beamfeat": ACCENT,
-    "beamfeat_ridge": "#3D87BC",
-    "rf_raw": "#5C6B75",
-    "lgbm_raw": "#7E8B94",
-    "ridge_raw": "#C3C9CE",
-    "featuretools": "#D5DADE",
-    "autofeat": "#7E8B94",
-    "openfe": "#B0B9C0",
-    "knockpy": "#8FA3B0",
-    "lightgbm": "#5C6B75",
-    "ridge": "#C3C9CE",
+    "beamfeat_ridge": ACCENT_LT,
+    "rf_raw": "#5F6E79",
+    "lgbm_raw": "#828F98",
+    "ridge_raw": "#C6CCD1",
+    "featuretools": "#DBE0E4",
+    "autofeat": "#828F98",
+    "openfe": "#AEB7BE",
+    "knockpy": "#94A6B3",
+    "lightgbm": "#5F6E79",
+    "ridge": "#C6CCD1",
 }
 
 LABELS = {
@@ -76,16 +79,40 @@ def use_acs_style() -> None:
         "xtick.labelsize": 7,
         "ytick.labelsize": 7,
         "legend.fontsize": 7,
-        "axes.linewidth": 0.6,
-        "xtick.major.width": 0.6,
-        "ytick.major.width": 0.6,
+        "axes.linewidth": 0.7,
+        "axes.edgecolor": INK,
+        "axes.labelcolor": INK,
+        "text.color": INK,
+        "xtick.color": INK,
+        "ytick.color": INK,
+        "xtick.major.width": 0.7,
+        "ytick.major.width": 0.7,
         "xtick.major.size": 2.5,
         "ytick.major.size": 2.5,
-        "axes.spines.top": False,
-        "axes.spines.right": False,
-        "axes.grid": False,
-        "legend.frameon": False,
-        "lines.linewidth": 1.0,
+        "xtick.direction": "out",
+        "ytick.direction": "out",
+        # Boxed frame: all four spines on, as ACS figures normally set them.
+        "axes.spines.top": True,
+        "axes.spines.right": True,
+        "axes.spines.left": True,
+        "axes.spines.bottom": True,
+        # Light horizontal rules behind the data for readable value comparisons.
+        "axes.grid": True,
+        "axes.grid.axis": "y",
+        "grid.color": GRID,
+        "grid.linewidth": 0.5,
+        "axes.axisbelow": True,
+        "legend.frameon": True,
+        "legend.framealpha": 1.0,
+        "legend.edgecolor": GRID,
+        "legend.facecolor": "white",
+        "legend.borderpad": 0.4,
+        "legend.handlelength": 1.4,
+        "lines.linewidth": 1.2,
+        "lines.markersize": 4.0,
+        "patch.linewidth": 0.5,
+        "figure.facecolor": "white",
+        "savefig.facecolor": "white",
         "figure.dpi": 300,
         "savefig.dpi": 300,
         "savefig.bbox": "tight",
@@ -141,13 +168,13 @@ def fig_core_accuracy(bench: pathlib.Path, out: pathlib.Path) -> None:
 
     fig, ax = plt.subplots(figsize=(COL_SINGLE, 2.1))
     x = np.arange(len(means))
-    ax.bar(x, means.values, width=0.68, edgecolor="none",
+    ax.bar(x, means.values, width=0.68, edgecolor="white", linewidth=0.5,
            color=[COLOURS.get(m, NEUTRAL) for m in means.index])
     ax.set_xticks(x)
     ax.set_xticklabels([LABELS.get(m, m) for m in means.index])
     for xi, v in zip(x, means.values):
         ax.text(xi, v + 0.012, f"{v:.3f}", ha="center", va="bottom",
-                fontsize=6.5, color="#333333")
+                fontsize=6.5, color=INK)
     ax.set_ylabel("mean $R^2$")
     ax.set_ylim(0, 1.08)
     ax.set_yticks([0, 0.25, 0.5, 0.75, 1.0])
@@ -208,11 +235,11 @@ def fig_calibration(out: pathlib.Path) -> None:
     nominal = [0.05, 0.10, 0.20]
 
     fig, ax = plt.subplots(figsize=(COL_SINGLE, 2.4))
-    ax.plot([0, 0.22], [0, 0.22], color="#BBBBBB", linewidth=0.7,
+    ax.plot([0, 0.22], [0, 0.22], color=NEUTRAL, linewidth=0.7,
             linestyle=(0, (3, 2)), zorder=1)
     ax.annotate("exact control", xy=(0.176, 0.176), xytext=(0.116, 0.212),
-                fontsize=6, color="#999999",
-                arrowprops=dict(arrowstyle="-", color="#CCCCCC", linewidth=0.5))
+                fontsize=6, color=NEUTRAL,
+                arrowprops=dict(arrowstyle="-", color=NEUTRAL, linewidth=0.5))
     for corr, colour, marker, label in (("bh", WARN, "o", "Benjamini-Hochberg"),
                                         ("by", ACCENT, "s", "Benjamini-Yekutieli")):
         realised = [table[(corr, q)]["realised"] for q in nominal]
@@ -242,7 +269,7 @@ def fig_real_panel(bench: pathlib.Path, out: pathlib.Path) -> None:
     width = 0.8 / len(order)
     for i, m in enumerate(order):
         ax.bar(x + i * width - 0.4 + width / 2, piv[m], width=width * 0.92,
-               color=COLOURS.get(m, NEUTRAL), edgecolor="none", label=LABELS.get(m, m))
+               color=COLOURS.get(m, NEUTRAL), edgecolor="white", linewidth=0.5, label=LABELS.get(m, m))
     ax.set_xticks(x)
     ax.set_xticklabels(piv.index, rotation=20, ha="right")
     ax.set_ylabel("held-out $R^2$")
@@ -286,12 +313,12 @@ def fig_worst_case(root: pathlib.Path, out: pathlib.Path) -> None:
     ax.set_yticklabels([LABELS.get(m, m) for m in stats.index])
     ax.set_xlabel("held-out $R^2$")
     ax.set_xlim(-3.2, 1.15)
-    ax.axvline(0, color="#DDDDDD", linewidth=0.6, zorder=1)
+    ax.axvline(0, color=NEUTRAL, linewidth=0.6, zorder=1)
     ax.scatter([], [], s=14, color=NEUTRAL, label="mean")
     ax.scatter([], [], s=11, color=WARN, label="worst fit")
     ax.legend(loc="upper left", handletextpad=0.4, borderaxespad=0.3)
     ax.text(0.99, 0.02, "featuretools worst fit $-57.3$, clipped",
-            transform=ax.transAxes, fontsize=6, color="#666666",
+            transform=ax.transAxes, fontsize=6, color=NEUTRAL,
             ha="right", va="bottom")
     save(fig, out / "fig_worst_case.pdf")
 
@@ -322,7 +349,7 @@ def fig_accuracy_vs_cost(root: pathlib.Path, out: pathlib.Path) -> None:
         accent = method.startswith("beamfeat")
         ax.scatter(row.seconds, row.r2, marker=marker, s=34 if accent else 24,
                    color=ACCENT if accent else NEUTRAL,
-                   edgecolor="none", zorder=3 if accent else 2,
+                   edgecolor="white", linewidth=0.4, zorder=3 if accent else 2,
                    label=LABELS.get(method, method))
 
     ax.set_xscale("log")
@@ -338,7 +365,7 @@ def fig_accuracy_vs_cost(root: pathlib.Path, out: pathlib.Path) -> None:
     if len(offscale):
         names = ", ".join(LABELS.get(m, m) for m in offscale.index)
         ax.text(0.99, -0.22, f"{names} off scale at {offscale.r2.min():.2f}",
-                transform=ax.transAxes, fontsize=6, color="#666666",
+                transform=ax.transAxes, fontsize=6, color=NEUTRAL,
                 ha="right", va="top")
     save(fig, out / "fig_accuracy_vs_cost.pdf")
 
@@ -362,14 +389,14 @@ def fig_fit_distribution(root: pathlib.Path, out: pathlib.Path) -> None:
         vals = df[df.method == method].r2.dropna().to_numpy()
         accent = method.startswith("beamfeat")
         ax.scatter(i + rng.uniform(-0.17, 0.17, len(vals)), vals,
-                   s=7, alpha=0.75, edgecolor="none",
+                   s=7, alpha=0.8, edgecolor="none",
                    color=ACCENT if accent else NEUTRAL, zorder=3 if accent else 2)
         below = int((vals < 0).sum())
         if below:
             ax.annotate(f"{below}", (i, 0.055), xycoords=("data", "axes fraction"),
                         ha="center", fontsize=6, color=WARN)
 
-    ax.axhline(0, color="#CCCCCC", linewidth=0.6, zorder=1)
+    ax.axhline(0, color=NEUTRAL, linewidth=0.6, zorder=1)
     ax.set_yscale("symlog", linthresh=1.0, linscale=0.6)
     ax.set_xticks(range(len(order)))
     ax.set_xticklabels([LABELS.get(m, m) for m in order], rotation=20, ha="right")
