@@ -48,6 +48,14 @@ __all__ = ["BeamSearch", "SearchResult", "SearchTrace"]
 
 logger = logging.getLogger(__name__)
 
+# Scores closer than this are treated as tied, so the structurally simpler
+# expression wins. Differences of this size are numerical noise, not evidence:
+# an absolute Pearson correlation is not resolvable to anything like 1e-6 at
+# realistic sample sizes. Rounding at 1e-9 was tight enough that a negligible
+# extra term - e.g. (a*b) + (b*c) with c six orders smaller than a - could
+# out-rank the clean (a*b) and displace it as redundant.
+SCORE_TIE_TOL = 1e-6
+
 DEFAULT_UNARY = ("log", "sqrt", "reciprocal", "square", "abs")
 DEFAULT_BINARY = ("mul", "div", "add", "sub")
 
@@ -297,12 +305,14 @@ class BeamSearch:
         if not nodes:
             return [], np.empty((values.shape[0], 0)), np.empty(0), 0
 
-        # Rank by score with expression size as an exact-tie break: when two
-        # candidates score identically (to 1e-9 — differences below scoring
-        # noise), the structurally simpler one is admitted first. lexsort uses
-        # its last key as primary.
+        # Rank by score with expression size as the tie break: when two
+        # candidates score within SCORE_TIE_TOL — a difference below scoring
+        # noise — the structurally simpler one is admitted first, and the more
+        # complex near-duplicate is then dropped by the correlation check
+        # below. lexsort uses its last key as primary.
         sizes = np.array([node.n_operators for node in nodes])
-        order = np.lexsort((sizes, -np.round(scores, 9)))
+        quantised = np.round(np.asarray(scores, dtype=np.float64) / SCORE_TIE_TOL)
+        order = np.lexsort((sizes, -quantised))
         standardised = _standardise_columns(values)
 
         kept_indices: list[int] = []
