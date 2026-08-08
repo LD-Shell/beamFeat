@@ -144,7 +144,7 @@ benchmark scripts, not asserted:
   3 of the 5 scoreable datasets. Reported as a count rather than a mean:
   with five datasets the mean carries a standard error of about 0.15, and
   autofeat's output varies between processes in any case.
-- Real data (seven datasets, numeric columns): best on mpg (0.871 vs LightGBM
+- Real data (seven datasets, numeric columns): best on mpg (0.864 vs LightGBM
   0.853) and tips — where gradient boosting overfits below ridge while the
   FDR gate holds beamfeat at the ceiling — tied with ridge on diamonds from
   one interpretable feature, behind LightGBM on penguins and breast cancer,
