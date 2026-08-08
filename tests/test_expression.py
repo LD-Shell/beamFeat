@@ -475,11 +475,15 @@ class TestExclusion:
         assert len(ev.log) == 0
 
     def test_variance_tolerance_is_configurable(self, rng):
-        tiny = {"a": rng.normal(0, 1e-7, 100), "b": rng.normal(0, 1.0, 100)}
-        strict = Evaluator(tiny, variance_tol=1e-6)
+        """The tolerance is relative to the column's magnitude, so the
+        verdict survives a change of units."""
+        near_constant = {"a": 1.0 + rng.normal(0, 1e-4, 100), "b": rng.normal(0, 1.0, 100)}
+        strict = Evaluator(near_constant, variance_tol=1e-6)
         assert strict.evaluate(transform("square", leaf("a"))) is None
-        lenient = Evaluator(tiny, variance_tol=1e-40)
+        lenient = Evaluator(near_constant, variance_tol=1e-40)
         assert lenient.evaluate(transform("square", leaf("a"))) is not None
+        rescaled = {name: values * 1e-6 for name, values in near_constant.items()}
+        assert Evaluator(rescaled, variance_tol=1e-6).evaluate(transform("square", leaf("a"))) is None
 
 
 # --------------------------------------------------------------------------- #
