@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import logging
 import warnings
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 import numpy as np
@@ -81,6 +82,36 @@ def _validate_input(estimator, X, y=_UNSET, **kwargs):
 
 
 
+_EQUATION_STYLES = ("significant", "fixed", "scientific")
+
+
+def _check_equation_format(precision: int, style: str) -> None:
+    """Validate the shared formatting options of the ``equation`` methods."""
+    if precision < 1:
+        raise ValueError(f"precision must be a positive integer, got {precision!r}")
+    if style not in _EQUATION_STYLES:
+        raise ValueError(f"style must be one of {_EQUATION_STYLES}, got {style!r}")
+
+
+def _format_coefficient(value: float, precision: int, style: str) -> str:
+    """Format one number for equation output without ever displaying it as zero.
+
+    ``significant`` and ``scientific`` are the plain ``g`` and ``e`` formats.
+    ``fixed`` gives aligned decimal places, except that a nonzero value
+    which would round to ``0.0000`` falls back to significant figures: a
+    printed zero on a live coefficient misstates the model, which is worse
+    than a change of notation mid-equation.
+    """
+    if style == "significant":
+        return f"{value:.{precision}g}"
+    if style == "scientific":
+        return f"{value:.{precision}e}"
+    text = f"{value:.{precision}f}"
+    if value != 0.0 and float(text) == 0.0:
+        return f"{value:.{precision}g}"
+    return text
+
+
 def _render_linear_equation(
     lhs: str,
     coefficients: np.ndarray,
@@ -89,35 +120,49 @@ def _render_linear_equation(
     formulas: list[str],
     precision: int,
     max_terms: int | None,
+    style: str,
 ) -> str:
     """Render a fitted standardised linear model as an equation on raw features.
 
     Undoes the scaler so the printed coefficients apply to the raw feature
-    values, orders terms by magnitude, and drops terms below the printed
-    precision. Shared by the regressor's ``equation`` and the classifier's
-    log-odds ``equation`` so the two cannot drift in formatting or in the
-    de-standardisation arithmetic.
+    values. Terms are ordered by standardised coefficient magnitude — the
+    scale-free measure of importance — since raw magnitude reflects the
+    feature's units: a raw coefficient of 3e-07 on a large-valued feature
+    can carry the whole model. For the same reason only exactly-zero terms
+    are omitted, and no ``style`` displays a nonzero coefficient as zero
+    (see ``_format_coefficient``). Shared by the regressor's ``equation``
+    and the classifier's log-odds ``equation`` so the two cannot drift in
+    formatting or in the de-standardisation arithmetic.
     """
+    standardised = np.asarray(coefficients, dtype=np.float64)
     scale = np.where(scaler.scale_ == 0, 1.0, scaler.scale_)
-    raw_coefficients = np.asarray(coefficients, dtype=np.float64) / scale
+    raw_coefficients = standardised / scale
     offset = float(intercept - np.sum(raw_coefficients * scaler.mean_))
 
-    order = np.argsort(-np.abs(raw_coefficients))
+    order = np.argsort(-np.abs(standardised))
     if max_terms is not None:
         order = order[:max_terms]
 
     parts = []
     for index in order:
         coefficient = raw_coefficients[index]
-        if abs(coefficient) < 10.0**-precision:
+        if coefficient == 0.0:
             continue
         sign = "-" if coefficient < 0 else "+"
-        parts.append(f" {sign} {abs(coefficient):.{precision}f}*{formulas[index]}")
+        parts.append(
+            f" {sign} {_format_coefficient(abs(coefficient), precision, style)}"
+            f"*{formulas[index]}"
+        )
 
     body = "".join(parts).lstrip()
     body = body.removeprefix("+ ")
-    constant = f" {'-' if offset < 0 else '+'} {abs(offset):.{precision}f}"
-    return f"{lhs} = {body}{constant}" if body else f"{lhs} = {offset:.{precision}f}"
+    offset_sign = "-" if offset < 0 else "+"
+    constant = f" {offset_sign} {_format_coefficient(abs(offset), precision, style)}"
+    return (
+        f"{lhs} = {body}{constant}"
+        if body
+        else f"{lhs} = {_format_coefficient(offset, precision, style)}"
+    )
 
 
 class NoDiscoveriesError(RuntimeError):
@@ -496,11 +541,45 @@ class _BeamFeatBase(BaseEstimator):
         return np.column_stack(kept_columns)
 
     def _resolve_units(self, feature_names: list[str]) -> dict[str, Any] | None:
-        """Map user-supplied units onto the internal column names."""
-        if not self.units:
+        """Map user-supplied units onto the internal column names.
+
+        Accepts either a mapping of column name to unit, or a positional
+        sequence with one entry per input column.
+
+        A sequence of the wrong length, an object that is neither, or a
+        mapping whose keys match no column is an error rather than a silent
+        no-op. A unit constraint that is quietly ignored is worse than one
+        that raises: the caller goes on to report results as dimensionally
+        validated when no dimensional check ever ran.
+        """
+        if self.units is None:
             return None
-        resolved = {name: self.units[name] for name in feature_names if name in self.units}
-        return resolved or None
+
+        units = self.units
+        if not isinstance(units, Mapping):
+            if isinstance(units, (str, bytes)) or not isinstance(units, Sequence):
+                raise TypeError(
+                    "units must be a mapping of column name to unit, or a sequence "
+                    f"with one entry per column; got {type(units).__name__}"
+                )
+            if len(units) != len(feature_names):
+                raise ValueError(
+                    f"units has {len(units)} entries but X has {len(feature_names)} "
+                    "columns; pass one unit per column, or use a mapping"
+                )
+            units = dict(zip(feature_names, units))
+
+        if not units:
+            return None
+
+        resolved = {name: units[name] for name in feature_names if name in units}
+        if not resolved:
+            raise ValueError(
+                f"none of the units keys {sorted(map(str, units))[:5]} match the "
+                f"column names {feature_names[:5]}; the units would have been "
+                "ignored. Pass a DataFrame, or key the mapping by column name."
+            )
+        return resolved
 
     def _input_names(self, X, n_features: int) -> list[str]:
         """Derive column names, preferring those carried by a DataFrame."""
@@ -784,22 +863,35 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
             return np.full(X.shape[0], self.intercept_, dtype=np.float64)
         return self.model_.predict(self.scaler_.transform(self._apply(X)))
 
-    def equation(self, precision: int = 4, max_terms: int | None = None) -> str:  # noqa: D401
+    def equation(
+        self,
+        precision: int = 4,
+        max_terms: int | None = None,
+        style: str = "significant",
+    ) -> str:  # noqa: D401
         """Return the fitted model as a readable closed-form equation.
 
         Args:
-            precision: Decimal places for the coefficients.
-            max_terms: If set, include only the largest-magnitude terms.
+            precision: Significant figures for the coefficients, or decimal
+                places when ``style="fixed"``.
+            max_terms: If set, include only the terms with the largest
+                standardised coefficients.
+            style: ``"significant"`` adapts to each coefficient's magnitude,
+                ``"fixed"`` aligns decimal places, ``"scientific"`` uses
+                uniform e-notation. ``"fixed"`` falls back to significant
+                figures for any value that would otherwise display as zero.
 
         Returns:
-            A string such as ``y = 2.1043*(a * b) - 0.5120*log(c) + 3.9910``.
+            A string such as ``y = 2.104*(a * b) - 0.512*log(c) + 3.991``.
         """
         check_is_fitted(self, ["model_"])
+        _check_equation_format(precision, style)
         if self.model_ is None:
-            return f"y = {self.intercept_:.{precision}f}  (no feature passed selection)"
+            intercept = _format_coefficient(self.intercept_, precision, style)
+            return f"y = {intercept}  (no feature passed selection)"
         return _render_linear_equation(
             "y", self.coef_, float(self.intercept_), self.scaler_,
-            self.feature_formulas_, precision, max_terms,
+            self.feature_formulas_, precision, max_terms, style,
         )
 
 
@@ -916,7 +1008,12 @@ class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
             return np.full(X.shape[0], self.classes_[0])
         return self.model_.predict(self.scaler_.transform(self._apply(X)))
 
-    def equation(self, precision: int = 4, max_terms: int | None = None) -> str:
+    def equation(
+        self,
+        precision: int = 4,
+        max_terms: int | None = None,
+        style: str = "significant",
+    ) -> str:
         """Return the fitted classifier as a readable log-odds equation.
 
         For binary problems the single line gives the log-odds of the
@@ -927,15 +1024,21 @@ class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
         class is the argmax across lines.
 
         Args:
-            precision: Decimal places for the coefficients.
-            max_terms: If set, include only the largest-magnitude terms
-                per line.
+            precision: Significant figures for the coefficients, or decimal
+                places when ``style="fixed"``.
+            max_terms: If set, include only the terms with the largest
+                standardised coefficients per line.
+            style: ``"significant"`` adapts to each coefficient's magnitude,
+                ``"fixed"`` aligns decimal places, ``"scientific"`` uses
+                uniform e-notation. ``"fixed"`` falls back to significant
+                figures for any value that would otherwise display as zero.
         """
         check_is_fitted(self, ["model_"])
+        _check_equation_format(precision, style)
         if self.model_ is None:
             if hasattr(self, "class_prior_"):
                 prior = ", ".join(
-                    f"P({klass}) = {p:.{precision}f}"
+                    f"P({klass}) = {_format_coefficient(p, precision, style)}"
                     for klass, p in zip(self.classes_, self.class_prior_, strict=True)
                 )
                 return f"class priors only (no feature passed selection): {prior}"
@@ -947,12 +1050,12 @@ class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
             return _render_linear_equation(
                 f"logit P(y = {self.classes_[1]!r})",
                 coefficients[0], float(intercepts[0]), self.scaler_,
-                self.feature_formulas_, precision, max_terms,
+                self.feature_formulas_, precision, max_terms, style,
             )
         lines = [
             _render_linear_equation(
                 f"score({klass!r})", coefficients[row], float(intercepts[row]),
-                self.scaler_, self.feature_formulas_, precision, max_terms,
+                self.scaler_, self.feature_formulas_, precision, max_terms, style,
             )
             for row, klass in enumerate(self.classes_)
         ]
