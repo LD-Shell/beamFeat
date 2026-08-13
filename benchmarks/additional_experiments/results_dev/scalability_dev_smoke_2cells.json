@@ -1,0 +1,28 @@
+[
+ {
+  "seconds": 1.36,
+  "peak_mb": 259.2,
+  "recovered": true,
+  "n_selected": 1,
+  "false_features": 0,
+  "fdr": true,
+  "target": "ab",
+  "regime": "independent",
+  "p": 10,
+  "n": 600,
+  "seed": 0
+ },
+ {
+  "seconds": 1.56,
+  "peak_mb": 317.7,
+  "recovered": true,
+  "n_selected": 1,
+  "false_features": 0,
+  "fdr": true,
+  "target": "ab",
+  "regime": "independent",
+  "p": 30,
+  "n": 600,
+  "seed": 0
+ }
+]

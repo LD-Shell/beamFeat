@@ -1,50 +1,47 @@
-# Byte-compiled / cache
-__pycache__/
-*.py[cod]
-*.so
 
-# Packaging / build
-build/
-dist/
-*.egg-info/
-.eggs/
-
-# Test and coverage artifacts
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.nox/
-
-# Notebooks
-.ipynb_checkpoints/
-
-# Documentation build
-site/
-
-# Environments
-.venv/
-venv/
-env/
-ENV/
-
+artifacts/
+benchmarks/additional_experiments/data/blogfeedback.csv
+benchmarks/additional_experiments/data/ct_slices.csv
+benchmarks/additional_experiments/data/geomusic.csv
+benchmarks/additional_experiments/data/ujiindoorloc.csv
 # Benchmark scratch and fetched data
-verify-*.txt
-*.feather
-openfe_tmp_data.*
 benchmarks/data/
 benchmarks/independent/results_fresh_run/
-
-# Local working copies
-/paper.md
-testing/
-*.zip
-artifacts/
-
-# Editor / OS
-.vscode/
-.idea/
-*.swp
-.DS_Store
+build/
+# Byte-compiled / cache
 .cache/
+.coverage
+.coverage.*
+dist/
+# Documentation build
+.DS_Store
+# Editor / OS
+*.egg-info/
+.eggs/
+env/
+ENV/
+# Environments
+*.feather
+htmlcov/
+.idea/
+.ipynb_checkpoints/
+# Local working copies
+# Notebooks
+.nox/
+openfe_tmp_data.*
+# Packaging / build
+/paper.md
+__pycache__/
+*.py[cod]
+.pytest_cache/
+site/
+*.so
+*.swp
+# Test and coverage artifacts
+testing/
+.tox/
+.venv/
+venv/
+verify-*.txt
+.vscode/
+*.zip
