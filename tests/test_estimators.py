@@ -654,3 +654,37 @@ class TestClassifierEquation:
                 max_depth=2, beam_width=15, target_fdr=0.05, random_state=3
             ).fit(X, y)
         assert "class priors only" in model.equation()
+
+
+class TestAlphaAuto:
+    def test_default_selects_alpha_by_cv(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor).fit(X, y)
+        assert type(model.model_).__name__ == "RidgeCV"
+        assert model.alpha_ > 0
+
+    def test_float_alpha_keeps_fixed_ridge(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, alpha=0.5).fit(X, y)
+        assert type(model.model_).__name__ == "Ridge"
+        assert model.alpha_ == 0.5
+
+    def test_bad_alpha_string_raises(self, regression_data):
+        X, y = regression_data
+        with pytest.raises(ValueError, match="auto"):
+            _fast(BeamFeatRegressor, alpha="invalid").fit(X, y)
+
+    def test_wide_selection_small_n_stays_bounded(self):
+        # Regression case: many correlated screened features on few rows,
+        # where a fixed penalty is effectively no penalty. Predictions from
+        # the cross-validated default must stay on the target's scale.
+        rng = np.random.default_rng(0)
+        n, p = 140, 40
+        z = rng.standard_normal((n, 1))
+        X = 0.8 * z + 0.6 * rng.standard_normal((n, p))
+        y = (z[:, 0] + 0.3 * rng.standard_normal(n))
+        Xtr, Xte, ytr, yte = X[:100], X[100:], y[:100], y[100:]
+        model = BeamFeatRegressor(random_state=0, max_depth=1).fit(Xtr, ytr)
+        pred = model.predict(Xte)
+        assert np.all(np.isfinite(pred))
+        assert float(np.mean((yte - pred) ** 2)) < 4.0 * float(np.var(yte))

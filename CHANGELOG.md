@@ -4,6 +4,36 @@ Notable changes to `beamfeat`. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] - 2026-08-12
+
+Behavioural release: the downstream ridge penalty is now selected by
+leave-one-out cross-validation. Fitted coefficients and held-out scores move
+against 0.2.0 -- in trailing digits when rows comfortably exceed the selected
+features, and materially at p >> n, where the fixed default could produce an
+effectively unregularised fit. Selections are unchanged: the search,
+permutation tests and FDR control sit upstream of this step.
+
+### Changed
+
+- `alpha` on `BeamFeatRegressor` defaults to `"auto"`: the downstream ridge
+  penalty is chosen by efficient leave-one-out cross-validation over a
+  logarithmic grid, deterministically. Pass a float for the previous fixed
+  behaviour. The chosen strength is exposed as `alpha_`.
+- The `fdr_controlled_` documentation states the guarantee's object
+  precisely: the set-level q guarantee applies to the full screened set in
+  `selection_report_`; the parsimony subset is not re-certified at level q.
+- The post-fit check is documented as what it is -- a degeneracy diagnostic
+  on the selection rows, which also enter the final fit -- rather than an
+  independent generalisation estimate, and its warning text says so.
+
+### Fixed
+
+- With many correlated certified features selected from few rows, the fixed
+  default `alpha=1.0` amounted to almost no regularisation and could produce
+  catastrophically negative held-out scores on features the screening had
+  correctly certified. The cross-validated default keeps such fits on the
+  scale of the target.
+
 ## [0.2.0] - 2026-08-08
 
 Behavioural release: scale-free numerics throughout, strict unit validation,

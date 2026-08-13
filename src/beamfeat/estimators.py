@@ -174,11 +174,12 @@ class DegenerateFitWarning(UserWarning):
 
     FDR screening certifies that the kept features are genuinely associated
     with the target; it does not certify that the linear model built on them
-    generalises — a feature can be a true discovery and still carry extreme
-    leverage that destabilises the fit. These are different claims, and this
-    warning marks the gap when it opens: negative held-out R^2 for
-    regression, or held-out accuracy below the majority-class rate for
-    classification.
+    is well conditioned — a feature can be a true discovery and still carry
+    extreme leverage that destabilises the fit. These are different claims,
+    and this warning marks the gap when it opens: negative R^2 on the
+    selection rows for regression, or accuracy below the majority-class rate
+    for classification. The check is a diagnostic — the selection rows also
+    enter the final fit — not an independent evaluation.
     """
 
 
@@ -294,10 +295,12 @@ class _BeamFeatBase(BaseEstimator):
         return sorted(chosen)
 
     def _holdout_fit_check(self, X: np.ndarray, y: np.ndarray) -> None:
-        """Warn when the assembled model fails to generalise to the holdout.
+        """Warn when the assembled model is degenerate on the selection rows.
 
-        Runs only when a selection holdout exists and features were kept, and
-        is purely diagnostic — it changes nothing about the fitted model.
+        A diagnostic, not an independent evaluation: the selection rows also
+        enter the final fit and the parsimony step, so this check exists to
+        catch numerically pathological assemblies loudly, not to estimate
+        generalisation. It changes nothing about the fitted model.
         """
         rows = getattr(self, "_holdout_rows_", None)
         if rows is None or len(rows) == 0 or self.n_features_out_ == 0:
@@ -309,14 +312,16 @@ class _BeamFeatBase(BaseEstimator):
             _, counts = np.unique(y[rows], return_counts=True)
             floor = float(np.max(counts)) / len(rows)
             degenerate = holdout_score < floor - 1e-9
-            description = f"held-out accuracy {holdout_score:.3f} below the majority-class rate {floor:.3f}"
+            description = f"accuracy {holdout_score:.3f} on the selection rows is below the majority-class rate {floor:.3f}"
         else:
             degenerate = holdout_score < 0.0
-            description = f"held-out R^2 {holdout_score:.3f} is negative"
+            description = f"R^2 {holdout_score:.3f} on the selection rows is negative"
         if degenerate:
             warnings.warn(
                 "beamfeat: the selected features passed FDR screening (genuine "
-                f"associations), but the assembled model does not generalise: {description}. "
+                f"associations), but the assembled model is degenerate: {description}. "
+                "This is a diagnostic rather than an independent evaluation — the "
+                "selection rows also enter the final fit. "
                 "Association does not guarantee a well-conditioned fit; inspect "
                 "selection_report_ for extreme-valued features, or reduce max_depth "
                 "or the feature count.",
@@ -336,11 +341,15 @@ class _BeamFeatBase(BaseEstimator):
         guaranteed. Testing on rows the search never saw restores the fixed-
         candidate-set premise the guarantees are stated under.
 
-        Sets :attr:`fdr_controlled_`: ``True`` when the returned feature set is
-        exactly the selector's output on held-out data; ``False`` when
-        selection returned nothing and the estimator fell back to the search
-        output (in which case the features carry no FDR guarantee, and a
-        warning says so); ``None`` when no selector was configured.
+        Sets :attr:`fdr_controlled_`: ``True`` when every returned feature
+        comes from the selector's FDR-screened set on held-out data. The
+        set-level q guarantee of the screening applies to that full screened
+        set, available with per-candidate p- and q-values in
+        :attr:`selection_report_`; the parsimony step may fit a subset of it,
+        and a data-dependent subset is not re-certified at level q. ``False``
+        when selection returned nothing and the estimator fell back to the
+        search output (in which case the features carry no FDR guarantee, and
+        a warning says so); ``None`` when no selector was configured.
 
         Returns the transformed training matrix on the full data.
         """
@@ -774,7 +783,11 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
     available via :meth:`equation`.
 
     Args:
-        alpha: Ridge regularisation strength for the downstream model.
+        alpha: Ridge regularisation strength for the downstream model. The
+            default ``"auto"`` selects the strength by efficient leave-one-out
+            cross-validation over a logarithmic grid, which stays stable when
+            many correlated features are selected from few rows; pass a float
+            to fix the strength instead.
 
     Other arguments match :class:`BeamFeatTransformer`.
 
@@ -796,7 +809,7 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
         beam_width: int = 50,
         max_features: int | None = None,
         target_fdr: float = 0.1,
-        alpha: float = 1.0,
+        alpha: float | str = "auto",
         unary_ops: tuple[str, ...] = DEFAULT_UNARY,
         binary_ops: tuple[str, ...] = DEFAULT_BINARY,
         redundancy_threshold: float = 0.95,
@@ -834,7 +847,7 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
 
     def fit(self, X, y):
         """Construct features and fit the downstream model."""
-        from sklearn.linear_model import Ridge
+        from sklearn.linear_model import Ridge, RidgeCV
         from sklearn.preprocessing import StandardScaler
         X, y = _validate_input(self, X, y, dtype=np.float64, y_numeric=True)
         matrix = self._run_pipeline(X, np.asarray(y, dtype=np.float64), self._input_names(X, X.shape[1]))
@@ -849,7 +862,17 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
             return self
 
         self.scaler_ = StandardScaler().fit(matrix)
-        self.model_ = Ridge(alpha=self.alpha).fit(self.scaler_.transform(matrix), y)
+        if isinstance(self.alpha, str):
+            if self.alpha != "auto":
+                raise ValueError(f"alpha must be a float or 'auto', got {self.alpha!r}")
+            # Leave-one-out cross-validation over a wide grid: deterministic,
+            # and safe when many correlated features are selected at small n,
+            # where any fixed strength is either too weak or too strong.
+            model = RidgeCV(alphas=np.logspace(-4, 4, 41))
+        else:
+            model = Ridge(alpha=self.alpha)
+        self.model_ = model.fit(self.scaler_.transform(matrix), y)
+        self.alpha_ = float(getattr(self.model_, "alpha_", self.alpha))
         self.coef_ = self.model_.coef_
         self.intercept_ = self.model_.intercept_
         self._holdout_fit_check(X, y)
