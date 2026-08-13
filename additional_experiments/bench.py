@@ -73,7 +73,11 @@ def get_datasets(which):
         ds["superconduct_p81"] = (sc.drop(columns="critical_temp").to_numpy(float),
                                   sc["critical_temp"].to_numpy(float), None)
         tc = pd.read_csv(DATA / "tecator.csv")
-        chan = [c for c in tc.columns if c.startswith("_")]
+        chan = [c for c in tc.columns
+                if c.startswith("_") or c.startswith("absorbance")]
+        assert len(chan) == 100, (
+            f"tecator.csv has {len(chan)} channel columns, expected 100; "
+            "re-run fetch_data.py to restore the canonical header")
         ds["tecator_p100"] = (tc[chan].to_numpy(float), tc["fat"].to_numpy(float), None)
         eyd = pd.read_csv(DATA / "eyedata.csv")
         ds["eyedata_p200"] = (eyd.drop(columns="trim32").to_numpy(float),

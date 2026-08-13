@@ -29,6 +29,8 @@ datasets.
     data/                    core five datasets + CHECKSUMS.md5 (fetch_data.py adds the rest)
     results_dev/             records from development runs on a constrained machine;
                              regenerate locally before citing any number
+    REPORT.md                write-up of the five studies; bracketed slots are filled
+                             from results/ once the full runs land
     PROVENANCE.md            sources, citations, preprocessing
 
 ## Run order

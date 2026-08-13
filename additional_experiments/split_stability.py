@@ -67,7 +67,8 @@ def registry():
             continue
         df = pd.read_csv(p)
         if name == "tecator":
-            chan = [c for c in df.columns if c.startswith("_")]
+            chan = [c for c in df.columns
+                    if c.startswith("_") or c.startswith("absorbance")]
             ds[name] = (df[chan].to_numpy(float), df["fat"].to_numpy(float))
         elif name == "superconduct":
             df = df.sample(min(len(df), 5000), random_state=0)

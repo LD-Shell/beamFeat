@@ -99,9 +99,15 @@ def tecator() -> None:
     # text format; the shipped CSV came from a GitHub mirror of the standard
     # 240 x (100 absorbances + 22 PCs + 3 targets) layout and is pinned by
     # checksum. This function re-fetches that mirror.
-    url = "https://raw.githubusercontent.com/gogorazet/tecator/main/csvtecator.csv"
-    df = pd.read_csv(io.BytesIO(fetch(url)))
+    url = "https://raw.githubusercontent.com/gogorazet/tecator/main/csvtecator_simplified_header.csv"
+    alt = "https://raw.githubusercontent.com/gogorazet/tecator/main/csvtecator.csv"
+    df = pd.read_csv(io.BytesIO(fetch(url, alt)))
     assert df.shape == (240, 126), df.shape
+    # The mirror's variants differ only in header names; normalise positionally
+    # to the canonical layout so any variant yields the identical file.
+    df.columns = (["id"] + [f"_{i}" for i in range(1, 101)]
+                  + [f"principal_component_{i}" for i in range(1, 23)]
+                  + ["moisture", "fat", "protein"])
     df.to_csv(DATA / "tecator.csv", index=False)
     check(DATA / "tecator.csv")
 

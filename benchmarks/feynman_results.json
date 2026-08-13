@@ -3,13 +3,13 @@
     "label": "default operators",
     "solved": 10,
     "exact_form": 8,
-    "mean_seconds": 0.5934054535834244,
+    "mean_seconds": 0.904012023499187,
     "rows": [
       {
         "equation": "lorentz_qvB",
         "note": "triple product",
-        "r2": 0.9999961753240945,
-        "seconds": 0.578323513000214,
+        "r2": 0.9999999983431886,
+        "seconds": 1.0908321709866868,
         "solved": true,
         "exact_form": true,
         "top_formula": "(x1 * (x0 * x2))"
@@ -17,8 +17,8 @@
       {
         "equation": "spring_energy",
         "note": "k x^2 / 2",
-        "r2": 0.9999959528540121,
-        "seconds": 0.479595098993741,
+        "r2": 0.9999999974687361,
+        "seconds": 0.7376035500055877,
         "solved": true,
         "exact_form": true,
         "top_formula": "(x1 * (x0 * x1))"
@@ -26,8 +26,8 @@
       {
         "equation": "coulomb",
         "note": "q1 q2 / r^2",
-        "r2": 0.999995973476179,
-        "seconds": 0.6551311540024471,
+        "r2": 0.9999999986589547,
+        "seconds": 0.9653619559976505,
         "solved": true,
         "exact_form": true,
         "top_formula": "((x0 / x2) * (x1 / x2))"
@@ -35,8 +35,8 @@
       {
         "equation": "pendulum_period",
         "note": "2 pi sqrt(L/g)",
-        "r2": 0.9999959838920554,
-        "seconds": 0.446727219998138,
+        "r2": 0.9999999998603443,
+        "seconds": 0.6301652309921337,
         "solved": true,
         "exact_form": true,
         "top_formula": "sqrt((x0 / x1))"
@@ -44,8 +44,8 @@
       {
         "equation": "ohmic_power",
         "note": "V^2 / R",
-        "r2": 0.9999963569635452,
-        "seconds": 0.5487640029969043,
+        "r2": 0.9999999918076218,
+        "seconds": 0.7710400720097823,
         "solved": true,
         "exact_form": true,
         "top_formula": "((x0 / x1) * x0)"
@@ -53,8 +53,8 @@
       {
         "equation": "uniform_accel",
         "note": "u + a t (two-term)",
-        "r2": 0.9999960994064415,
-        "seconds": 0.599445163999917,
+        "r2": 0.9999999977709485,
+        "seconds": 0.9215282630029833,
         "solved": true,
         "exact_form": true,
         "top_formula": "(x0 + (x1 * x2))"
@@ -62,8 +62,8 @@
       {
         "equation": "ideal_gas_T",
         "note": "P V / (n R)",
-        "r2": 0.9999964163782715,
-        "seconds": 0.6121613810028066,
+        "r2": 0.9999999873596737,
+        "seconds": 0.9176157580077415,
         "solved": true,
         "exact_form": true,
         "top_formula": "((x0 / x2) * x1)"
@@ -71,8 +71,8 @@
       {
         "equation": "weighted_mean",
         "note": "(m1 r1 + m2 r2)/(m1 + m2), depth 3",
-        "r2": 0.9962356329737715,
-        "seconds": 0.8699950110021746,
+        "r2": 0.9961631213680077,
+        "seconds": 1.3506930669973372,
         "solved": false,
         "exact_form": false,
         "top_formula": "(((x1 / x2) + x3) + ((x1 + x3) - (x3 / x2)))"
@@ -80,8 +80,8 @@
       {
         "equation": "gravitational_pe",
         "note": "G m1 m2 / r (as product/ratio)",
-        "r2": 0.9999959973821242,
-        "seconds": 0.8468360920014675,
+        "r2": 0.9999999998554537,
+        "seconds": 1.31463364699448,
         "solved": true,
         "exact_form": true,
         "top_formula": "((x1 / x3) * (x0 * x2))"
@@ -89,8 +89,8 @@
       {
         "equation": "gaussian",
         "note": "no exact form available: needs exp, and the exponent's 1/2 scale is not representable; smooth surrogates can still clear the numeric criterion on a bounded domain",
-        "r2": 0.9995913848280171,
-        "seconds": 0.04190468400338432,
+        "r2": 0.9996008023609938,
+        "seconds": 0.0657506959978491,
         "solved": true,
         "exact_form": null,
         "top_formula": "(((x0)^2 - x0) / (sqrt(x0) - 1/(x0)))"
@@ -98,8 +98,8 @@
       {
         "equation": "relativistic_velocity",
         "note": "no exact form available: a literal constant inside the expression; smooth surrogates can clear the numeric criterion on a bounded domain",
-        "r2": 0.9995028689833568,
-        "seconds": 0.5239152450012625,
+        "r2": 0.9995759548898021,
+        "seconds": 0.7620858250011224,
         "solved": true,
         "exact_form": null,
         "top_formula": "(((x0)^2 / (x0 / x1)) - (x0 + x1))"
@@ -107,8 +107,8 @@
       {
         "equation": "distance_2d",
         "note": "no exact form at depth 3: the law needs depth-4 nesting",
-        "r2": 0.9718270397359594,
-        "seconds": 0.9180668769986369,
+        "r2": 0.9717397804126272,
+        "seconds": 1.3208340459968895,
         "solved": false,
         "exact_form": null,
         "top_formula": "(abs((x0 - x1)) + ((x2 / x3) + (x3 / x2)))"
@@ -119,13 +119,13 @@
     "label": "with exp enabled",
     "solved": 10,
     "exact_form": 8,
-    "mean_seconds": 0.6177457826658307,
+    "mean_seconds": 0.9071757338315365,
     "rows": [
       {
         "equation": "lorentz_qvB",
         "note": "triple product",
-        "r2": 0.9999961753240945,
-        "seconds": 0.6327401380040101,
+        "r2": 0.9999999983431886,
+        "seconds": 0.9390231509896694,
         "solved": true,
         "exact_form": true,
         "top_formula": "(x1 * (x0 * x2))"
@@ -133,8 +133,8 @@
       {
         "equation": "spring_energy",
         "note": "k x^2 / 2",
-        "r2": 0.9999959528540121,
-        "seconds": 0.47552964100032113,
+        "r2": 0.9999999974687361,
+        "seconds": 0.6936326910072239,
         "solved": true,
         "exact_form": true,
         "top_formula": "(x1 * (x0 * x1))"
@@ -142,8 +142,8 @@
       {
         "equation": "coulomb",
         "note": "q1 q2 / r^2",
-        "r2": 0.999995973476179,
-        "seconds": 0.6873385939979926,
+        "r2": 0.9999999986589547,
+        "seconds": 0.9771430629916722,
         "solved": true,
         "exact_form": true,
         "top_formula": "((x0 / x2) * (x1 / x2))"
@@ -151,8 +151,8 @@
       {
         "equation": "pendulum_period",
         "note": "2 pi sqrt(L/g)",
-        "r2": 0.9999959838920554,
-        "seconds": 0.4716836309962673,
+        "r2": 0.9999999998603443,
+        "seconds": 0.6879333130054874,
         "solved": true,
         "exact_form": true,
         "top_formula": "sqrt((x0 / x1))"
@@ -160,8 +160,8 @@
       {
         "equation": "ohmic_power",
         "note": "V^2 / R",
-        "r2": 0.9999963569635452,
-        "seconds": 0.5148654320000787,
+        "r2": 0.9999999918076218,
+        "seconds": 0.7485752349894028,
         "solved": true,
         "exact_form": true,
         "top_formula": "((x0 / x1) * x0)"
@@ -169,8 +169,8 @@
       {
         "equation": "uniform_accel",
         "note": "u + a t (two-term)",
-        "r2": 0.9999960994064415,
-        "seconds": 0.6376730920019327,
+        "r2": 0.9999999977709485,
+        "seconds": 0.9636227550072363,
         "solved": true,
         "exact_form": true,
         "top_formula": "(x0 + (x1 * x2))"
@@ -178,8 +178,8 @@
       {
         "equation": "ideal_gas_T",
         "note": "P V / (n R)",
-        "r2": 0.9999964163782715,
-        "seconds": 0.6263691989952349,
+        "r2": 0.9999999873596737,
+        "seconds": 0.9503751659940463,
         "solved": true,
         "exact_form": true,
         "top_formula": "((x0 / x2) * x1)"
@@ -187,8 +187,8 @@
       {
         "equation": "weighted_mean",
         "note": "(m1 r1 + m2 r2)/(m1 + m2), depth 3",
-        "r2": 0.9872692098402993,
-        "seconds": 0.9527550200000405,
+        "r2": 0.9877888122572853,
+        "seconds": 1.4220031360018766,
         "solved": false,
         "exact_form": false,
         "top_formula": "(((x1 / x2) + x3) + ((x1 + x3) - (x3 / x2)))"
@@ -196,8 +196,8 @@
       {
         "equation": "gravitational_pe",
         "note": "G m1 m2 / r (as product/ratio)",
-        "r2": 0.9999959973821242,
-        "seconds": 0.9225514449935872,
+        "r2": 0.9999999998554537,
+        "seconds": 1.3497022969968384,
         "solved": true,
         "exact_form": true,
         "top_formula": "((x1 / x3) * (x0 * x2))"
@@ -205,8 +205,8 @@
       {
         "equation": "gaussian",
         "note": "no exact form available: needs exp, and the exponent's 1/2 scale is not representable; smooth surrogates can still clear the numeric criterion on a bounded domain",
-        "r2": 0.9991211948598085,
-        "seconds": 0.03818078000040259,
+        "r2": 0.9991278391602119,
+        "seconds": 0.06151135399704799,
         "solved": true,
         "exact_form": null,
         "top_formula": "(x0 + (x0 * log(x0)))"
@@ -214,8 +214,8 @@
       {
         "equation": "relativistic_velocity",
         "note": "no exact form available: a literal constant inside the expression; smooth surrogates can clear the numeric criterion on a bounded domain",
-        "r2": 0.9995028689833568,
-        "seconds": 0.5239048110015574,
+        "r2": 0.9995759548898021,
+        "seconds": 0.7540999859920703,
         "solved": true,
         "exact_form": null,
         "top_formula": "(((x0)^2 / (x0 / x1)) - (x0 + x1))"
@@ -223,8 +223,8 @@
       {
         "equation": "distance_2d",
         "note": "no exact form at depth 3: the law needs depth-4 nesting",
-        "r2": 0.9756536072434449,
-        "seconds": 0.9293576089985436,
+        "r2": 0.9755794167193226,
+        "seconds": 1.3384866590058664,
         "solved": false,
         "exact_form": null,
         "top_formula": "(abs((x0 - x1)) + ((x2 / x3) + (x3 / x2)))"

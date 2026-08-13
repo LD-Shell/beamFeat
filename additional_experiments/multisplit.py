@@ -121,8 +121,9 @@ if __name__ == "__main__":
     path, target = sys.argv[1], sys.argv[2]
     splits = int(sys.argv[sys.argv.index("--splits") + 1]) if "--splits" in sys.argv else 20
     df = pd.read_csv(path)
-    if target == "fat" and any(c.startswith("_") for c in df.columns):   # tecator convenience
-        X = df[[c for c in df.columns if c.startswith("_")]].to_numpy(float)
+    if target == "fat" and any(c.startswith(("_", "absorbance")) for c in df.columns):
+        X = df[[c for c in df.columns
+                if c.startswith(("_", "absorbance"))]].to_numpy(float)
     else:
         X = df.drop(columns=target).to_numpy(float)
     y = df[target].to_numpy(float)
