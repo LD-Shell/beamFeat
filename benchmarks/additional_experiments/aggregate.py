@@ -8,14 +8,14 @@ independent_benchmark_results.csv beside them.
 Usage:
     python aggregate.py [results_dir]
 
-The directory defaults to results_as_reported (the published study). Pass
+The directory defaults to results (this suite's output). Pass
 results_fresh_run to analyse a regeneration instead.
 """
 import glob, json, os, sys
 import numpy as np, pandas as pd
 from scipy import stats
 
-RESULTS_DIR = sys.argv[1] if len(sys.argv) > 1 else "results_as_reported"
+RESULTS_DIR = sys.argv[1] if len(sys.argv) > 1 else "results"
 paths = sorted(glob.glob(os.path.join(RESULTS_DIR, "results_*.json")))
 if not paths:
     raise SystemExit(f"no results_*.json under {RESULTS_DIR}/")

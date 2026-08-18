@@ -83,7 +83,7 @@ repository's own real-data panel contains no contested dataset.
 - Default or paper-recommended settings only, with no hyperparameter search.
 - `OpenFE` is run into a linear model rather than the gradient-boosted setting
   it is designed for, which understates it.
-- The wine dataset here is the red-only variant (1599 x 11); autofeat's
+- The wine dataset here is the red-only variant (1598 x 11); autofeat's
   published table used red and white combined (6497 x 12).
 - `recovered` measures column membership, not symbolic form: it asks whether
   some returned feature references all of the generating columns, not whether

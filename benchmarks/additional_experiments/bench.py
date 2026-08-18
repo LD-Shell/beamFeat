@@ -17,6 +17,7 @@ Protocol (following Horn et al. 2019 / standard tabular practice):
 """
 from __future__ import annotations
 import json, os, pathlib, re, sys, time, warnings
+import pathlib
 import numpy as np
 import pandas as pd
 from sklearn.datasets import load_diabetes
@@ -39,13 +40,24 @@ def get_datasets(which):
     rng = np.random.default_rng(0)
     ds = {}
     if which in ("real", "all"):
-        c = pd.read_csv(DATA / "data_concrete.csv")
-        ds["concrete"] = (c.iloc[:, :-1].to_numpy(float), c.iloc[:, -1].to_numpy(float), None)
-        w = pd.read_csv(DATA / "data_winequality_red.csv")
-        ds["wine_red"] = (w.iloc[:, :-1].to_numpy(float), w.iloc[:, -1].to_numpy(float), None)
-        b = pd.read_csv(DATA / "data_housing_boston.csv")
-        yb = b["medv"].to_numpy(float); Xb = b.drop(columns=["medv"]).to_numpy(float)
-        ds["boston"] = (Xb, yb, None)
+        # These three CSVs live in the independent study's data directory, one
+        # level up; the shipped studies use the "highdim" group and never touch
+        # this branch.
+        ind = pathlib.Path(__file__).resolve().parent.parent / "independent" / "data"
+        for name, fname in (("concrete", "data_concrete.csv"),
+                            ("wine_red", "data_winequality_red.csv")):
+            f = ind / fname
+            if not f.exists():
+                print(f"  skipping {name}: {f} not found"); continue
+            t = pd.read_csv(f)
+            ds[name] = (t.iloc[:, :-1].to_numpy(float), t.iloc[:, -1].to_numpy(float), None)
+        f = ind / "data_housing_boston.csv"
+        if f.exists():
+            b = pd.read_csv(f)
+            yb = b["medv"].to_numpy(float); Xb = b.drop(columns=["medv"]).to_numpy(float)
+            ds["boston"] = (Xb, yb, None)
+        else:
+            print(f"  skipping boston: {f} not found")
         d = load_diabetes()
         ds["diabetes"] = (d.data, d.target, None)
     if which in ("synthetic", "all"):

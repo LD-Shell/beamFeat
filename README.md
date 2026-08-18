@@ -141,7 +141,7 @@ benchmark scripts, not asserted:
   is 0.000 at noise levels from 5% to 50% of the signal scale and at n as
   small as 120, with recovery and the guarantee intact throughout; autofeat
   recovers the formula equally often but returns distractor-only features on
-  3 of the 5 scoreable datasets. Reported as a count rather than a mean:
+  2 of the 5 scoreable datasets. Reported as a count rather than a mean:
   with five datasets the mean carries a standard error of about 0.15, and
   autofeat's output varies between processes in any case.
 - Real data (seven datasets, numeric columns): best on mpg (0.864 vs LightGBM
@@ -174,7 +174,7 @@ benchmark scripts, not asserted:
 - Selection-only baseline (knockpy on raw columns, modified-FDR offset —
   the only satisfiable configuration at these dimensionalities): 0/15
   formulas recovered, core-suite R² at the ridge level (0.845), and
-  distractor-only features on 1 of the 5 scoreable stress datasets — the
+  distractor-only features on 2 of the 5 scoreable stress datasets — the
   construction step and the holdout are the delta.
 - Independent 360-fit study across nine datasets and eight methods
   ([`benchmarks/independent/`](https://github.com/LD-Shell/beamfeat/tree/main/benchmarks/independent)): mean R² 0.803 against random forest 0.810,

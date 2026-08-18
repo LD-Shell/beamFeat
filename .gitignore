@@ -49,3 +49,4 @@ verify-*.txt
 beamfeat-paper-build/
 beamfeat_v0.3.0.patch
 beamfeat.zip
+.ruff_cache/

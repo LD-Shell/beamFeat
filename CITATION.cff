@@ -17,14 +17,4 @@ keywords:
   - feature selection
   - false discovery rate
   - knockoffs
-
-# After journal acceptance of the paper, add:
-# preferred-citation:
-#   type: article
-#   title: "beamfeat: beam-search feature construction with false-discovery-rate controlled selection"
-#   authors:
-#     - family-names: "Daramola"
-#       given-names: "Olanrewaju M."
-#   journal: "<journal name>"
-#   doi: <paper DOI>
 #   year: 2026
