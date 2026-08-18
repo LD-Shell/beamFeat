@@ -20,11 +20,11 @@ constructor.
 
 | dataset | p | ridge | RF | LightGBM | beamfeat | bf+ridge | features | sec |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: |
-| communities | 100 | 0.650 | 0.638 | 0.632 | **0.641** | 0.641 | 11.6 | 9 |
-| superconduct | 81 | 0.725 | 0.884 | 0.884 | **0.731** | 0.731 | 16.2 | 10 |
-| tecator | 100 | 0.957 | 0.717 | 0.756 | **0.991** | 0.991 | 3.6 | 7 |
-| eyedata | 200 | 0.479 | 0.340 | 0.031 | **0.416** | 0.412 | 34.0 | 19 |
-| riboflavin | 4088 | 0.579 | 0.436 | 0.493 | **0.544** | 0.540 | 17.4 | 42 |
+| communities | 100 | 0.650 | 0.638 | 0.632 | **0.641** | 0.641 | 11.6 | 16/30 |
+| superconduct | 81 | 0.725 | 0.884 | 0.884 | **0.731** | 0.731 | 16.2 | 23/30 |
+| tecator | 100 | 0.957 | 0.717 | 0.756 | **0.991** | 0.991 | 3.6 | 8/30 |
+| eyedata | 200 | 0.479 | 0.340 | 0.031 | **0.416** | 0.412 | 34.0 | 2/30 |
+| riboflavin | 4088 | 0.579 | 0.436 | 0.493 | **0.544** | 0.540 | 17.4 | 3/30 |
 | ct_slices | 384 | 0.852 | 0.981 | 0.981 | **0.687** | 0.687 | 14.0 | 126 |
 | blogfeedback | 280 | 0.379 | 0.548 | 0.535 | **0.415** | 0.416 | 18.4 | 104 |
 | ujiindoorloc | 520 | 0.949 | 0.995 | 0.993 | **0.812** | 0.812 | 20.0 | 361 |
@@ -33,8 +33,8 @@ constructor.
 Method means over all 45 fits: ridge 0.708, random
 forest 0.697, LightGBM 0.671,
 beamfeat 0.671, bf+ridge 0.671.
-The estimator and the transformer agree to three decimals throughout, as they
-should.
+The estimator and the transformer agree to three decimals on six of the nine
+datasets and to within 0.004 on the other three, as they should.
 
 beamfeat beats both tree ensembles on five of nine datasets and wins outright
 on tecator, where the signal is a ratio between absorbance channels that
@@ -44,8 +44,8 @@ columns: ridge shrinks all of them, while a sparsity-oriented guarantee must
 discard whatever fails a significance threshold. That is a property of
 FDR-controlled selection, not a search failure.
 
-`fdr_controlled_` was true on all 90 beamfeat fits. The 1,448 certified
-formulas are all of parenthesis-depth two or three.
+`fdr_controlled_` was true on all 90 beamfeat fits. None of the 1,448 certified
+formulas is deeper than three, and 1,434 of them (99%) are of depth two.
 
 ## 2. What the certified features carry
 
@@ -57,12 +57,12 @@ keeps ridge, whose coefficients are the deliverable.
 
 | dataset | k | ridge | RF | LGBM | bf+ridge | bf+RF | bf+LGBM | best Δ |
 | :-- | --: | --: | --: | --: | --: | --: | --: | --: |
-| tecator | 3.7 | 0.954 | 0.739 | 0.796 | 0.991 | 0.992 | 0.972 | +0.038 |
+| tecator | 3.7 | 0.954 | 0.739 | 0.796 | 0.991 | 0.992 | 0.972 | 8/30 |
 | geomusic | 9.7 | 0.800 | 0.744 | 0.742 | 0.796 | 0.816 | 0.765 | +0.016 |
-| riboflavin | 17.0 | 0.642 | 0.440 | 0.555 | 0.648 | 0.590 | 0.525 | +0.006 |
-| communities | 9.7 | 0.646 | 0.639 | 0.627 | 0.637 | 0.614 | 0.561 | -0.009 |
-| superconduct | 12.7 | 0.726 | 0.886 | 0.885 | 0.726 | 0.863 | 0.861 | -0.023 |
-| eyedata | 35.3 | 0.559 | 0.406 | 0.063 | 0.504 | 0.383 | -0.031 | -0.055 |
+| riboflavin | 17.0 | 0.642 | 0.440 | 0.555 | 0.648 | 0.590 | 0.525 | 3/30 |
+| communities | 9.7 | 0.646 | 0.639 | 0.627 | 0.637 | 0.614 | 0.561 | 16/30 |
+| superconduct | 12.7 | 0.726 | 0.886 | 0.885 | 0.726 | 0.863 | 0.861 | 23/30 |
+| eyedata | 35.3 | 0.559 | 0.406 | 0.063 | 0.504 | 0.383 | -0.031 | 2/30 |
 | ujiindoorloc | 20.0 | 0.950 | 0.995 | 0.994 | 0.813 | 0.928 | 0.926 | -0.067 |
 | blogfeedback | 15.7 | 0.351 | 0.509 | 0.493 | 0.343 | 0.421 | 0.398 | -0.088 |
 | ct_slices | 13.7 | 0.852 | 0.982 | 0.982 | 0.677 | 0.858 | 0.864 | -0.118 |
@@ -106,7 +106,7 @@ so equivalent rewritings count as recovered.
 | adv_abcd_p8 | 3 | 0.80 | 0.70 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
 
 Depth is the minimal search depth required, which differs from the legacy
-target names for four problems.
+target names for three problems.
 
 **Depth.** Recovery is complete at depths 1 and 2, near-complete at depth 3
 (0.90 to 1.00), and degrades at depth 4: nested_ratio reaches 0.90 but
@@ -142,8 +142,9 @@ beam reaches 100.
 
 ## 4. Scalability in the number of columns
 
-Planted signal among p columns, n = 600, ten seeds per cell, each fit in an
-isolated subprocess. Left block independent columns, right block
+Two planted targets, of depth one and depth two, among p columns at n = 600,
+five seeds each so that every cell holds ten fits, each in an isolated
+subprocess. Left block independent columns, right block
 equicorrelated.
 
 | p | sec | MB | recov | false | sec | MB | recov | false |
@@ -209,7 +210,8 @@ knockoffs.
 **The beam regime matches the pipeline** and there BH and BY reach power 1.00
 with zero false discoveries, while knockoffs manage 0.00, 0.03 and 0.15,
 because beam-generated candidates are heavily collinear by construction. They
-are also 50 times slower.
+cost about twice the p-value route here, and some fifty times as much in the
+two dependent regimes above.
 
 A second run with a smaller candidate pool shows the detection threshold
 directly: knockoff power at q = 0.10 under independence is 0.03 there against
@@ -250,17 +252,18 @@ class is selected across splits.
 | wine_red | 0.385 | 0.011 | 17.2 | 171 | 0.105 | 22/30 | `((x1 / x9) + (x1 - x10))` |
 | boston | 0.789 | 0.029 | 21.7 | 225 | 0.110 | 23/30 | `((x5 / x4) / (x12 + x7))` |
 | communities | 0.644 | 0.004 | 10.7 | 214 | 0.054 | 16/30 | `((x50 + x68) * x38)` |
-| tecator | 0.989 | 0.004 | 3.3 | 79 | 0.025 | 0/30 | `—` |
-| eyedata | 0.324 | 0.117 | 30.1 | 900 | 0.000 | 0/30 | `—` |
-| riboflavin | 0.550 | 0.157 | 16.8 | 479 | 0.002 | 0/30 | `—` |
+| tecator | 0.989 | 0.004 | 3.3 | 79 | 0.025 | 8/30 | `((x41 - x43) / (x37 - x39))` |
+| eyedata | 0.324 | 0.117 | 30.1 | 900 | 0.000 | 2/30 | `(x113 * (x140 - x156))` |
+| riboflavin | 0.550 | 0.157 | 16.8 | 479 | 0.002 | 3/30 | `((x6 / x1515) * (x9 / x1277))` |
 | superconduct | 0.725 | 0.008 | 17.3 | 273 | 0.065 | 23/30 | `((x7 / x72) * (x20 * x62))` |
 
 **Predictive performance is stable; the selected set is not.** R² varies by
 less than 0.01 across thirty splits on communities, tecator and superconduct,
-while Jaccard overlap between selections runs from 0.025 to 0.19 on real data.
+while Jaccard overlap between selections runs from 0.000 to 0.188 on real data.
 Recurring classes nonetheless exist and are interpretable: the planted
-interaction recurs in 30 of 30 splits on three_way, a cement-and-age product
-in 27 of 30 on concrete, and a band ratio in 23 of 30 on superconduct.
+interaction recurs in 30 of 30 splits on three_way, the combination
+(cement + slag) x log(age) in 27 of 30 on concrete, and one composite of four
+element-property columns in 23 of 30 on superconduct.
 
 Two datasets are unstable in performance as well: eyedata (sd 0.117, range
 -0.073 to 0.462) and riboflavin (sd 0.157). Both have fewer than 130 rows,
