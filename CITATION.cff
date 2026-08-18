@@ -10,6 +10,7 @@ authors:
   - family-names: "Daramola"
     given-names: "Olanrewaju M."
     orcid: "https://orcid.org/0009-0006-3327-2047"
+    affiliation: "Universiti Teknologi PETRONAS, Malaysia"
 repository-code: "https://github.com/LD-Shell/beamfeat"
 keywords:
   - feature engineering
