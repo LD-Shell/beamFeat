@@ -134,12 +134,13 @@ def run_lgbm(Xtr, ytr, Xte):
 
 def run_autofeat(Xtr, ytr, Xte):
     from autofeat import AutoFeatRegressor
-    af = AutoFeatRegressor(feateng_steps=2, verbose=0, n_jobs=1)
+    af = AutoFeatRegressor(feateng_steps=2, verbose=0, n_jobs=N_JOBS)
     Ftr = af.fit_transform(pd.DataFrame(Xtr, columns=[f"x{i:03d}" for i in range(Xtr.shape[1])]), ytr)
     Fte = af.transform(pd.DataFrame(Xte, columns=[f"x{i:03d}" for i in range(Xte.shape[1])]))
     new = [c for c in Ftr.columns if c not in {f"x{i:03d}" for i in range(Xtr.shape[1])}]
     m = ridge().fit(Ftr.to_numpy(float), ytr)
-    return m.predict(Fte.to_numpy(float)), {"n_new": len(new), "formulas": new}
+    return m.predict(Fte.to_numpy(float)), {"n_new": len(new), "formulas": new,
+                                            "n_jobs": N_JOBS}
 
 def run_featuretools(Xtr, ytr, Xte):
     import featuretools as ft
@@ -150,26 +151,28 @@ def run_featuretools(Xtr, ytr, Xte):
         es = ft.EntitySet("d")
         es = es.add_dataframe(dataframe_name="t", dataframe=df, index="_id")
         F, defs = ft.dfs(entityset=es, target_dataframe_name="t",
-                         trans_primitives=prim, max_depth=1, verbose=False)
+                         trans_primitives=prim, max_depth=1, verbose=False,
+                         n_jobs=FT_N_JOBS)
         return F.reindex(sorted(F.columns), axis=1)
     Ftr, Fte = dfs(Xtr), dfs(Xte)
     Mtr, ok = clean(Ftr.to_numpy())
     Mte = np.asarray(Fte.to_numpy(), float)[:, ok]
     Mte[~np.isfinite(Mte)] = 0.0
     m = ridge().fit(Mtr, ytr)
-    return m.predict(Mte), {"n_new": Mtr.shape[1] - Xtr.shape[1]}
+    return m.predict(Mte), {"n_new": Mtr.shape[1] - Xtr.shape[1], "n_jobs": FT_N_JOBS}
 
 def run_openfe(Xtr, ytr, Xte):
     from openfe import OpenFE, transform
     cols = [f"x{i}" for i in range(Xtr.shape[1])]
     dtr = pd.DataFrame(Xtr, columns=cols); dte = pd.DataFrame(Xte, columns=cols)
     ofe = OpenFE()
-    feats = ofe.fit(data=dtr, label=pd.Series(ytr.astype(float)), task="regression", n_jobs=1, verbose=False)
-    ttr, tte = transform(dtr, dte, feats[:20], n_jobs=1)
+    feats = ofe.fit(data=dtr, label=pd.Series(ytr.astype(float)), task="regression",
+                    n_jobs=N_JOBS, verbose=False)
+    ttr, tte = transform(dtr, dte, feats[:20], n_jobs=N_JOBS)
     Mtr, ok = clean(ttr.to_numpy()); Mte = np.asarray(tte.to_numpy(), float)[:, ok]
     Mte[~np.isfinite(Mte)] = 0.0
     m = ridge().fit(Mtr, ytr)
-    return m.predict(Mte), {"n_new": ttr.shape[1] - Xtr.shape[1]}
+    return m.predict(Mte), {"n_new": ttr.shape[1] - Xtr.shape[1], "n_jobs": N_JOBS}
 
 def run_beamfeat(Xtr, ytr, Xte):
     """beamfeat as shipped: its own estimator, an internal ridge at alpha=1."""
@@ -275,7 +278,7 @@ def main(which, methods, n_splits, out):
                     r2 = float(r2_score(yte, pred))
                     rec = recovered(info.get("formulas", []), tokens) if tokens is not None else None
                     rows.append(dict(dataset=name, method=mname, split=split, r2=r2,
-                                     seconds=dt, n_new=info.get("n_new"),
+                                     seconds=dt, n_new=info.get("n_new"), n_jobs=info.get("n_jobs"),
                                      recovered=rec, fdr=info.get("fdr"),
                                      formulas=info.get("formulas"), error=None))
                     print(f"{name:16s} {mname:13s} s{split} R2={r2:+.4f} {dt:7.1f}s n_new={info.get('n_new')}", flush=True)

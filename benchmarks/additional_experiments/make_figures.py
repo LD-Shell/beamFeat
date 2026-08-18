@@ -20,7 +20,8 @@ import matplotlib
 import numpy as np
 import pandas as pd
 
-matplotlib.use("Agg")
+if __name__ == "__main__":          # importing this module leaves the caller's backend alone
+    matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 
 warnings.filterwarnings("ignore")
@@ -139,13 +140,15 @@ def load_rows(results: pathlib.Path, *stems: str) -> pd.DataFrame:
 
 
 def fig_selector_calibration(results: pathlib.Path, outdir: pathlib.Path) -> None:
-    # Plot the canonical m=25 run; the m=100 companion gets its own axes if wanted.
-    canonical = results / "selector_comparison.json"
-    if canonical.exists():
-        df = pd.DataFrame(json.load(open(canonical)))
+    # Plot the larger candidate pool, which is the run the paper reports; fall
+    # back to the smaller one only when the m=100 file is absent.
+    primary = results / "selector_comparison_m100.json"
+    fallback = results / "selector_comparison.json"
+    source = primary if primary.exists() else fallback
+    if source.exists():
+        df = pd.DataFrame(json.load(open(source)))
     else:
         df = load_rows(results, "selector_comparison")
-        df = df[~df.get("__file", pd.Series(dtype=str)).astype(str).str.contains("m100")]             if "__file" in df else df
     if df.empty:
         print("  selector_comparison: no results, skipped")
         return
@@ -162,17 +165,25 @@ def fig_selector_calibration(results: pathlib.Path, outdir: pathlib.Path) -> Non
         lim = max(0.22, float(sub[col].max() or 0) * 1.1)
         ax.plot([0, lim], [0, lim], linestyle="--", linewidth=0.8,
                 color=NEUTRAL, zorder=1)
-        for kind in ["bh", "by", "knockoff_fixed", "knockoff_modelx"]:
+        # Series can coincide exactly -- under a shared factor BH and BY select
+        # identically -- so draw earlier ones larger and let them show through.
+        kinds = ["bh", "by", "knockoff_fixed", "knockoff_modelx"]
+        for ki, kind in enumerate(kinds):
             s = sub[sub.selector == kind].sort_values("nominal")
             if s.empty or s[col].isna().all():
                 continue
             ax.plot(s.nominal, s[col], marker=SELECTOR_MARKERS[kind],
-                    color=SELECTOR_COLOURS[kind], label=SELECTOR_LABELS[kind])
+                    color=SELECTOR_COLOURS[kind], label=SELECTOR_LABELS[kind],
+                    markersize=6.0 - 0.7 * ki, zorder=2 + (len(kinds) - ki))
         ax.set_xlim(0, lim); ax.set_ylim(0, lim)
         ax.set_title(title)
         ax.set_xlabel("nominal FDR")
     axes[0].set_ylabel("realised FDR")
-    axes[-1].legend(loc="lower right")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.tight_layout()
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.02),
+               ncol=len(labels), frameon=False, handlelength=1.6,
+               columnspacing=1.6)
     save(fig, outdir / "selector_calibration.pdf")
 
 
@@ -204,7 +215,11 @@ def fig_depth_ladder(results: pathlib.Path, outdir: pathlib.Path) -> None:
         ax.set_title(kind)
         ax.set_ylim(0, 1.05)
     axes[0].set_ylabel("recovery rate")
-    axes[0].legend(loc="lower left")
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.tight_layout()
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.02),
+               ncol=len(labels), frameon=False, handlelength=1.6,
+               columnspacing=1.6)
     save(fig, outdir / "depth_ladder.pdf")
 
 
@@ -283,11 +298,16 @@ def fig_highdim(results: pathlib.Path, outdir: pathlib.Path) -> None:
                color=COLOURS.get(m, NEUTRAL), edgecolor="white", linewidth=0.5,
                label=LABELS.get(m, m))
     ax.set_xticks(np.arange(len(piv.index)))
-    ax.set_xticklabels(piv.index, rotation=12, ha="right")
+    ax.set_xticklabels([str(d).replace("_", " ") for d in piv.index],
+                       rotation=28, ha="right", rotation_mode="anchor")
     ax.set_ylabel("held-out $R^2$")
     lo = float(np.nanmin(piv.values)) if np.isfinite(piv.values).any() else 0.0
     ax.set_ylim(min(0.0, lo - 0.02), 1.02)
-    ax.legend(ncols=min(4, n), loc="upper right")
+    handles, labels = ax.get_legend_handles_labels()
+    fig.tight_layout()
+    fig.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.02),
+               ncol=min(5, n), frameon=False, handlelength=1.4,
+               columnspacing=1.4)
     save(fig, outdir / "highdim_comparison.pdf")
 
 

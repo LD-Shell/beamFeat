@@ -1,0 +1,131 @@
+d1_product         scorer=correlation  beam= 20 recovered_all=1.00
+d1_product         scorer=correlation  beam= 50 recovered_all=1.00
+d1_product         scorer=correlation  beam=100 recovered_all=1.00
+d1_product         scorer=correlation  beam=200 recovered_all=1.00
+d1_product         scorer=mutual_info  beam= 20 recovered_all=1.00
+d1_product         scorer=mutual_info  beam= 50 recovered_all=1.00
+d1_product         scorer=mutual_info  beam=100 recovered_all=1.00
+d1_product         scorer=mutual_info  beam=200 recovered_all=1.00
+d1_ratio           scorer=correlation  beam= 20 recovered_all=1.00
+d1_ratio           scorer=correlation  beam= 50 recovered_all=1.00
+d1_ratio           scorer=correlation  beam=100 recovered_all=1.00
+d1_ratio           scorer=correlation  beam=200 recovered_all=1.00
+d1_ratio           scorer=mutual_info  beam= 20 recovered_all=0.90
+d1_ratio           scorer=mutual_info  beam= 50 recovered_all=0.90
+d1_ratio           scorer=mutual_info  beam=100 recovered_all=0.90
+d1_ratio           scorer=mutual_info  beam=200 recovered_all=0.90
+d2_three_way       scorer=correlation  beam= 20 recovered_all=1.00
+d2_three_way       scorer=correlation  beam= 50 recovered_all=1.00
+d2_three_way       scorer=correlation  beam=100 recovered_all=1.00
+d2_three_way       scorer=correlation  beam=200 recovered_all=1.00
+d2_three_way       scorer=mutual_info  beam= 20 recovered_all=1.00
+d2_three_way       scorer=mutual_info  beam= 50 recovered_all=1.00
+d2_three_way       scorer=mutual_info  beam=100 recovered_all=1.00
+d2_three_way       scorer=mutual_info  beam=200 recovered_all=1.00
+d2_sum_times       scorer=correlation  beam= 20 recovered_all=1.00
+d2_sum_times       scorer=correlation  beam= 50 recovered_all=1.00
+d2_sum_times       scorer=correlation  beam=100 recovered_all=1.00
+d2_sum_times       scorer=correlation  beam=200 recovered_all=1.00
+d2_sum_times       scorer=mutual_info  beam= 20 recovered_all=1.00
+d2_sum_times       scorer=mutual_info  beam= 50 recovered_all=1.00
+d2_sum_times       scorer=mutual_info  beam=100 recovered_all=1.00
+d2_sum_times       scorer=mutual_info  beam=200 recovered_all=1.00
+d2_sq_plus         scorer=correlation  beam= 20 recovered_all=1.00
+d2_sq_plus         scorer=correlation  beam= 50 recovered_all=1.00
+d2_sq_plus         scorer=correlation  beam=100 recovered_all=1.00
+d2_sq_plus         scorer=correlation  beam=200 recovered_all=1.00
+d2_sq_plus         scorer=mutual_info  beam= 20 recovered_all=0.70
+d2_sq_plus         scorer=mutual_info  beam= 50 recovered_all=0.70
+d2_sq_plus         scorer=mutual_info  beam=100 recovered_all=0.70
+d2_sq_plus         scorer=mutual_info  beam=200 recovered_all=0.70
+d3_prod_of_sums    scorer=correlation  beam= 20 recovered_all=0.90
+d3_prod_of_sums    scorer=correlation  beam= 50 recovered_all=0.90
+d3_prod_of_sums    scorer=correlation  beam=100 recovered_all=0.90
+d3_prod_of_sums    scorer=correlation  beam=200 recovered_all=0.90
+d3_prod_of_sums    scorer=mutual_info  beam= 20 recovered_all=0.70
+d3_prod_of_sums    scorer=mutual_info  beam= 50 recovered_all=0.70
+d3_prod_of_sums    scorer=mutual_info  beam=100 recovered_all=0.70
+d3_prod_of_sums    scorer=mutual_info  beam=200 recovered_all=0.70
+d3_ratio_of_sum    scorer=correlation  beam= 20 recovered_all=0.60
+d3_ratio_of_sum    scorer=correlation  beam= 50 recovered_all=1.00
+d3_ratio_of_sum    scorer=correlation  beam=100 recovered_all=1.00
+d3_ratio_of_sum    scorer=correlation  beam=200 recovered_all=1.00
+d3_ratio_of_sum    scorer=mutual_info  beam= 20 recovered_all=0.20
+d3_ratio_of_sum    scorer=mutual_info  beam= 50 recovered_all=0.50
+d3_ratio_of_sum    scorer=mutual_info  beam=100 recovered_all=0.50
+d3_ratio_of_sum    scorer=mutual_info  beam=200 recovered_all=0.50
+d3_sqrt_ratio      scorer=correlation  beam= 20 recovered_all=1.00
+d3_sqrt_ratio      scorer=correlation  beam= 50 recovered_all=1.00
+d3_sqrt_ratio      scorer=correlation  beam=100 recovered_all=1.00
+d3_sqrt_ratio      scorer=correlation  beam=200 recovered_all=1.00
+d3_sqrt_ratio      scorer=mutual_info  beam= 20 recovered_all=1.00
+d3_sqrt_ratio      scorer=mutual_info  beam= 50 recovered_all=1.00
+d3_sqrt_ratio      scorer=mutual_info  beam=100 recovered_all=1.00
+d3_sqrt_ratio      scorer=mutual_info  beam=200 recovered_all=1.00
+d4_nested_ratio    scorer=correlation  beam= 20 recovered_all=0.70
+d4_nested_ratio    scorer=correlation  beam= 50 recovered_all=0.90
+d4_nested_ratio    scorer=correlation  beam=100 recovered_all=0.90
+d4_nested_ratio    scorer=correlation  beam=200 recovered_all=0.90
+d4_nested_ratio    scorer=mutual_info  beam= 20 recovered_all=0.60
+d4_nested_ratio    scorer=mutual_info  beam= 50 recovered_all=0.90
+d4_nested_ratio    scorer=mutual_info  beam=100 recovered_all=0.90
+d4_nested_ratio    scorer=mutual_info  beam=200 recovered_all=0.90
+d4_distance2d      scorer=correlation  beam= 20 recovered_all=0.10
+d4_distance2d      scorer=correlation  beam= 50 recovered_all=0.20
+d4_distance2d      scorer=correlation  beam=100 recovered_all=0.20
+d4_distance2d      scorer=correlation  beam=200 recovered_all=0.20
+d4_distance2d      scorer=mutual_info  beam= 20 recovered_all=0.00
+d4_distance2d      scorer=mutual_info  beam= 50 recovered_all=0.00
+d4_distance2d      scorer=mutual_info  beam=100 recovered_all=0.00
+d4_distance2d      scorer=mutual_info  beam=200 recovered_all=0.00
+adv_ab_zeromean    scorer=correlation  beam= 20 recovered_all=1.00
+adv_ab_zeromean    scorer=correlation  beam= 50 recovered_all=1.00
+adv_ab_zeromean    scorer=correlation  beam=100 recovered_all=1.00
+adv_ab_zeromean    scorer=correlation  beam=200 recovered_all=1.00
+adv_ab_zeromean    scorer=mutual_info  beam= 20 recovered_all=1.00
+adv_ab_zeromean    scorer=mutual_info  beam= 50 recovered_all=1.00
+adv_ab_zeromean    scorer=mutual_info  beam=100 recovered_all=1.00
+adv_ab_zeromean    scorer=mutual_info  beam=200 recovered_all=1.00
+adv_abc_zeromean   scorer=correlation  beam= 20 recovered_all=1.00
+adv_abc_zeromean   scorer=correlation  beam= 50 recovered_all=1.00
+adv_abc_zeromean   scorer=correlation  beam=100 recovered_all=1.00
+adv_abc_zeromean   scorer=correlation  beam=200 recovered_all=1.00
+adv_abc_zeromean   scorer=mutual_info  beam= 20 recovered_all=1.00
+adv_abc_zeromean   scorer=mutual_info  beam= 50 recovered_all=1.00
+adv_abc_zeromean   scorer=mutual_info  beam=100 recovered_all=1.00
+adv_abc_zeromean   scorer=mutual_info  beam=200 recovered_all=1.00
+adv_ab_plus_cd     scorer=correlation  beam= 20 recovered_all=1.00
+adv_ab_plus_cd     scorer=correlation  beam= 50 recovered_all=1.00
+adv_ab_plus_cd     scorer=correlation  beam=100 recovered_all=1.00
+adv_ab_plus_cd     scorer=correlation  beam=200 recovered_all=1.00
+adv_ab_plus_cd     scorer=mutual_info  beam= 20 recovered_all=1.00
+adv_ab_plus_cd     scorer=mutual_info  beam= 50 recovered_all=1.00
+adv_ab_plus_cd     scorer=mutual_info  beam=100 recovered_all=1.00
+adv_ab_plus_cd     scorer=mutual_info  beam=200 recovered_all=1.00
+/home/dara/Downloads/beamFeat/beamFeat/src/beamfeat/estimators.py:768: NoDiscoveriesWarning: beamfeat: no feature passed FDR-controlled selection at target FDR 0.1 on the held-out split (on_no_discoveries='empty'). Returning no constructed features; the model will predict the training mean (regression) or class prior (classification). Set on_no_discoveries='fallback' to keep the unfiltered search output instead.
+  self._run_pipeline(X, np.asarray(y), self._input_names(X, X.shape[1]))
+/home/dara/Downloads/beamFeat/beamFeat/src/beamfeat/estimators.py:768: NoDiscoveriesWarning: beamfeat: no feature passed FDR-controlled selection at target FDR 0.1 on the held-out split (on_no_discoveries='empty'). Returning no constructed features; the model will predict the training mean (regression) or class prior (classification). Set on_no_discoveries='fallback' to keep the unfiltered search output instead.
+  self._run_pipeline(X, np.asarray(y), self._input_names(X, X.shape[1]))
+/home/dara/Downloads/beamFeat/beamFeat/src/beamfeat/estimators.py:768: NoDiscoveriesWarning: beamfeat: no feature passed FDR-controlled selection at target FDR 0.1 on the held-out split (on_no_discoveries='empty'). Returning no constructed features; the model will predict the training mean (regression) or class prior (classification). Set on_no_discoveries='fallback' to keep the unfiltered search output instead.
+  self._run_pipeline(X, np.asarray(y), self._input_names(X, X.shape[1]))
+adv_abc_p10        scorer=correlation  beam= 20 recovered_all=0.70
+adv_abc_p10        scorer=correlation  beam= 50 recovered_all=1.00
+adv_abc_p10        scorer=correlation  beam=100 recovered_all=1.00
+adv_abc_p10        scorer=correlation  beam=200 recovered_all=1.00
+adv_abc_p10        scorer=mutual_info  beam= 20 recovered_all=1.00
+adv_abc_p10        scorer=mutual_info  beam= 50 recovered_all=1.00
+adv_abc_p10        scorer=mutual_info  beam=100 recovered_all=1.00
+adv_abc_p10        scorer=mutual_info  beam=200 recovered_all=1.00
+/home/dara/Downloads/beamFeat/beamFeat/src/beamfeat/estimators.py:768: NoDiscoveriesWarning: beamfeat: no feature passed FDR-controlled selection at target FDR 0.1 on the held-out split (on_no_discoveries='empty'). Returning no constructed features; the model will predict the training mean (regression) or class prior (classification). Set on_no_discoveries='fallback' to keep the unfiltered search output instead.
+  self._run_pipeline(X, np.asarray(y), self._input_names(X, X.shape[1]))
+adv_abcd_p8        scorer=correlation  beam= 20 recovered_all=0.80
+/home/dara/Downloads/beamFeat/beamFeat/src/beamfeat/estimators.py:768: NoDiscoveriesWarning: beamfeat: no feature passed FDR-controlled selection at target FDR 0.1 on the held-out split (on_no_discoveries='empty'). Returning no constructed features; the model will predict the training mean (regression) or class prior (classification). Set on_no_discoveries='fallback' to keep the unfiltered search output instead.
+  self._run_pipeline(X, np.asarray(y), self._input_names(X, X.shape[1]))
+adv_abcd_p8        scorer=correlation  beam= 50 recovered_all=0.70
+adv_abcd_p8        scorer=correlation  beam=100 recovered_all=1.00
+adv_abcd_p8        scorer=correlation  beam=200 recovered_all=1.00
+adv_abcd_p8        scorer=mutual_info  beam= 20 recovered_all=1.00
+adv_abcd_p8        scorer=mutual_info  beam= 50 recovered_all=1.00
+adv_abcd_p8        scorer=mutual_info  beam=100 recovered_all=1.00
+adv_abcd_p8        scorer=mutual_info  beam=200 recovered_all=1.00
+wrote results/depth_ladder.json

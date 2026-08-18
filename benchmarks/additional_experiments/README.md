@@ -25,7 +25,8 @@ datasets.
     multisplit.py            MultiSplitBeamFeat: frequency-thresholded aggregation over
                              many internal splits (see its docstring for scope)
     make_figures.py          regenerates every figure from results/, in the paper's style
-    run_all.ipynb            driver notebook: the commands below as cells
+    run_all.ipynb            driver notebook: dataset characterisation, the run
+                             order below as cells, and the analysis
     data/                    core five datasets + CHECKSUMS.md5 (fetch_data.py adds the rest)
     results_dev/             records from development runs on a constrained machine;
                              regenerate locally before citing any number
@@ -62,6 +63,9 @@ datasets.
     python aggregate.py
     python make_figures.py
 
+Each stage tees its full log to `results/<stem>.log` beside the records it
+narrates; keep logs untracked (`results/*.log` in the repository ignore
+list), since the constructor stages emit tens of megabytes of library noise.
 Every script checkpoints as it goes (per dataset, per problem, or per
 regime-level), so an interrupted run resumes by rerunning the remaining
 subsets, e.g. `DATASETS=riboflavin_p4088 python bench.py ...` or
@@ -70,8 +74,17 @@ subsets, e.g. `DATASETS=riboflavin_p4088 python bench.py ...` or
 ## Knobs
 
     FIT_BUDGET_S   per-fit wall-clock budget in seconds (default 900; 0 disables)
+    N_JOBS         library parallelism for autofeat and OpenFE (default -1, all cores)
+    FT_N_JOBS      the same for featuretools (default 1: parallel DFS holds a copy
+                   of the frame per worker and its wide outputs already exhaust
+                   memory on one)
     FULL_N=1       lift the row caps (superconductivity 5,000; ct/blog/uji 10,000)
     DATASETS=a,b   restrict bench.py to named datasets
+
+The tree baselines use every core at the library defaults, so the
+constructors are given the same by default and the setting is recorded per
+row; beamfeat has no parallelism setting and runs single-threaded apart from
+BLAS, which its recorded times should be read against.
 
 Row caps are seeded subsamples, following the diamonds cap of the main paper;
 run the scalable methods once more with `FULL_N=1` for the full-n rows. At

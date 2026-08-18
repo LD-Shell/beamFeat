@@ -45,3 +45,7 @@ venv/
 verify-*.txt
 .vscode/
 *.zip
+.ipynb_checkpoints/
+beamfeat-paper-build/
+beamfeat_v0.3.0.patch
+beamfeat.zip
