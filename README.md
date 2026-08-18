@@ -211,7 +211,8 @@ held-out R²: beamfeat 0.803, random forest 0.810, LightGBM 0.798, OpenFE
 0.736, ridge 0.704, autofeat −1.561, featuretools −2.478 — and worst single
 fit of 45: beamfeat 0.355, autofeat −103.2, featuretools −57.3, with the FDR
 guarantee delivered on 45/45. Read [`PROVENANCE.md`](https://github.com/LD-Shell/beamfeat/blob/main/benchmarks/independent/PROVENANCE.md) first: it records what is
-reproducible (beamfeat, bit-identically) and what is not (autofeat seeds
+reproducible (beamfeat: selections bit-identically; the fitted model's
+cross-validated penalty can flip on marginal problems) and what is not (autofeat seeds
 no `random_state` and drawing its decoy features from the global NumPy
 generator, swung from +0.952 to −109.8 across six runs on one identical split).
 
