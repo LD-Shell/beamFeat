@@ -11,8 +11,12 @@ Usage:
 The directory defaults to results (this suite's output). Pass
 results_fresh_run to analyse a regeneration instead.
 """
-import glob, json, os, sys
-import numpy as np, pandas as pd
+import glob
+import json
+import os
+import sys
+
+import pandas as pd
 from scipy import stats
 
 RESULTS_DIR = sys.argv[1] if len(sys.argv) > 1 else "results"
@@ -76,8 +80,10 @@ ranks = mr.rank(axis=1, ascending=False)
 print("=== Average rank (1=best), all datasets ===")
 print(ranks.mean().sort_values().round(2).to_string())
 if real and syn:
-    print("REAL only:"); print(ranks.loc[real].mean().sort_values().round(2).to_string())
-    print("SYN only:"); print(ranks.loc[syn].mean().sort_values().round(2).to_string())
+    print("REAL only:")
+    print(ranks.loc[real].mean().sort_values().round(2).to_string())
+    print("SYN only:")
+    print(ranks.loc[syn].mean().sort_values().round(2).to_string())
 
 if len(mr) >= 3 and len(ORDER) >= 3:
     fr = stats.friedmanchisquare(*[mr[m].values for m in ORDER])

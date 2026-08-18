@@ -175,7 +175,8 @@ def fig_selector_calibration(results: pathlib.Path, outdir: pathlib.Path) -> Non
             ax.plot(s.nominal, s[col], marker=SELECTOR_MARKERS[kind],
                     color=SELECTOR_COLOURS[kind], label=SELECTOR_LABELS[kind],
                     markersize=6.0 - 0.7 * ki, zorder=2 + (len(kinds) - ki))
-        ax.set_xlim(0, lim); ax.set_ylim(0, lim)
+        ax.set_xlim(0, lim)
+        ax.set_ylim(0, lim)
         ax.set_title(title)
         ax.set_xlabel("nominal FDR")
     axes[0].set_ylabel("realised FDR")
@@ -242,8 +243,10 @@ def fig_scalability(results: pathlib.Path, outdir: pathlib.Path) -> None:
         axes[1].plot(agg.index, agg.mb, marker="o",
                      color=colours.get(regime, NEUTRAL), label=regime)
     for ax, ylab in zip(axes, ["fit time (s)", "peak memory (MB)"]):
-        ax.set_xscale("log"); ax.set_yscale("log")
-        ax.set_xlabel("input columns p"); ax.set_ylabel(ylab)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+        ax.set_xlabel("input columns p")
+        ax.set_ylabel(ylab)
         ax.grid(True, axis="both", color=GRID, linewidth=0.5)
     axes[0].legend(loc="upper left")
     save(fig, outdir / "scalability.pdf")
@@ -269,7 +272,8 @@ def fig_split_stability(results: pathlib.Path, outdir: pathlib.Path) -> None:
         axes[1].scatter([v["jaccard_mean"]], [yi], s=22, color=ACCENT, zorder=3)
         axes[1].annotate(f"  {v['n_classes']} classes", (v["jaccard_mean"], yi),
                          fontsize=6, color=NEUTRAL, va="center")
-    axes[0].set_yticks(y); axes[0].set_yticklabels(names)
+    axes[0].set_yticks(y)
+    axes[0].set_yticklabels(names)
     axes[0].set_xlabel("held-out $R^2$ across splits (min-mean-max)")
     axes[1].set_xlabel("mean Jaccard of selections, value-equivalent")
     axes[1].set_xlim(-0.03, 1.03)
@@ -291,7 +295,8 @@ def fig_highdim(results: pathlib.Path, outdir: pathlib.Path) -> None:
              if m in piv.columns]
     piv = piv[order]
     fig, ax = plt.subplots(figsize=(COL_DOUBLE, 2.3))
-    n = len(order); width = 0.8 / n
+    n = len(order)
+    width = 0.8 / n
     for mi, m in enumerate(order):
         xs = np.arange(len(piv.index)) + (mi - (n - 1) / 2) * width
         ax.bar(xs, piv[m].values, width=width * 0.92,

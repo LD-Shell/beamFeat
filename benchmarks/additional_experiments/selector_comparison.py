@@ -32,7 +32,8 @@ from beamfeat.selection import KnockoffSelector, PermutationSelector
 
 def make_independent(rng, n, m, k, amp=0.6):
     F = rng.standard_normal((n, m))
-    beta = np.zeros(m); beta[:k] = amp
+    beta = np.zeros(m)
+    beta[:k] = amp
     y = F @ beta + rng.standard_normal(n)
     sig = np.arange(m) < k
     return F, y, sig, sig            # marginal truth, conditional truth
@@ -44,7 +45,8 @@ def make_correlated_nulls(rng, n, m, k, rho=0.7, amp=0.6):
     F = np.empty((n, m))
     F[:, :k] = np.sqrt(rho) * zs + np.sqrt(1 - rho) * rng.standard_normal((n, k))
     F[:, k:] = np.sqrt(rho) * zn + np.sqrt(1 - rho) * rng.standard_normal((n, m - k))
-    beta = np.zeros(m); beta[:k] = amp
+    beta = np.zeros(m)
+    beta[:k] = amp
     y = F @ beta + rng.standard_normal(n)
     sig = np.arange(m) < k
     return F, y, sig, sig            # nulls independent of y: nulls agree
@@ -53,7 +55,8 @@ def make_correlated_nulls(rng, n, m, k, rho=0.7, amp=0.6):
 def make_shared_factor(rng, n, m, k, rho=0.5, amp=0.6):
     z = rng.standard_normal((n, 1))
     F = np.sqrt(rho) * z + np.sqrt(1 - rho) * rng.standard_normal((n, m))
-    beta = np.zeros(m); beta[:k] = amp
+    beta = np.zeros(m)
+    beta[:k] = amp
     y = F @ beta + rng.standard_normal(n)
     cond = np.arange(m) < k
     marg = np.ones(m, bool)          # every candidate marginally non-null

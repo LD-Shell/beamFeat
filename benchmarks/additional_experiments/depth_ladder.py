@@ -20,8 +20,6 @@ import time
 
 import numpy as np
 
-from beamfeat import BeamFeatRegressor
-
 # depth = minimal search depth at which the target is constructible under the
 # round-based proposal rule (round d pairs a depth-(d-1) node with anything in
 # the pool), which is what the recovery-vs-depth figure should be plotted over.
@@ -112,8 +110,10 @@ def main(a):
                     t0 = time.perf_counter()
                     try:
                         kw = {}
-                        if a.unary: kw["unary_ops"] = tuple(a.unary.split(","))
-                        if a.binary: kw["binary_ops"] = tuple(a.binary.split(","))
+                        if a.unary:
+                            kw["unary_ops"] = tuple(a.unary.split(","))
+                        if a.binary:
+                            kw["binary_ops"] = tuple(a.binary.split(","))
                         m = BeamFeatTransformer(
                             scorer=scorer, beam_width=beam, max_depth=max_depth,
                             random_state=seed, **kw,

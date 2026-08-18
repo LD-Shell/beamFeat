@@ -16,17 +16,29 @@ Protocol (following Horn et al. 2019 / standard tabular practice):
   the generating formula.
 """
 from __future__ import annotations
-import json, os, pathlib, re, sys, time, warnings
+
+import json
+import os
 import pathlib
+import re
+import sys
+import time
+import warnings
+
 import numpy as np
 import pandas as pd
 from sklearn.datasets import load_diabetes
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import RidgeCV
+from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import RidgeCV
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import r2_score
+
+# Worker counts for the compared tools; the shipped studies never enter the
+# code paths that use these. Override via the environment.
+N_JOBS = int(os.environ.get("BENCH_N_JOBS", "1"))
+FT_N_JOBS = int(os.environ.get("BENCH_FT_N_JOBS", "1"))
 
 warnings.filterwarnings("ignore")
 
@@ -48,13 +60,15 @@ def get_datasets(which):
                             ("wine_red", "data_winequality_red.csv")):
             f = ind / fname
             if not f.exists():
-                print(f"  skipping {name}: {f} not found"); continue
+                print(f"  skipping {name}: {f} not found")
+                continue
             t = pd.read_csv(f)
             ds[name] = (t.iloc[:, :-1].to_numpy(float), t.iloc[:, -1].to_numpy(float), None)
         f = ind / "data_housing_boston.csv"
         if f.exists():
             b = pd.read_csv(f)
-            yb = b["medv"].to_numpy(float); Xb = b.drop(columns=["medv"]).to_numpy(float)
+            yb = b["medv"].to_numpy(float)
+            Xb = b.drop(columns=["medv"]).to_numpy(float)
             ds["boston"] = (Xb, yb, None)
         else:
             print(f"  skipping boston: {f} not found")
@@ -62,13 +76,17 @@ def get_datasets(which):
         ds["diabetes"] = (d.data, d.target, None)
     if which in ("synthetic", "all"):
         n = 500
-        X = rng.uniform(1, 6, (n, 4)); y = X[:,0]*X[:,1]/X[:,2]
+        X = rng.uniform(1, 6, (n, 4))
+        y = X[:,0]*X[:,1]/X[:,2]
         ds["three_way:a*b/c"] = (X, y + rng.normal(0, .02*np.std(y), n), ("x0","x1","x2"))
-        X = rng.uniform(1, 6, (n, 4)); y = 0.5*X[:,0]*X[:,1]**2
+        X = rng.uniform(1, 6, (n, 4))
+        y = 0.5*X[:,0]*X[:,1]**2
         ds["kinetic:m*v^2/2"] = (X, y + rng.normal(0, .02*np.std(y), n), ("x0","x1"))
-        X = rng.uniform(1, 6, (n, 10)); y = X[:,0]*X[:,1]
+        X = rng.uniform(1, 6, (n, 10))
+        y = X[:,0]*X[:,1]
         ds["sparse10:a*b"] = (X, y + rng.normal(0, .05*np.std(y), n), ("x0","x1"))
-        X = rng.uniform(1, 6, (n, 4)); y = 3*X[:,0]-2*X[:,1]+X[:,2]
+        X = rng.uniform(1, 6, (n, 4))
+        y = 3*X[:,0]-2*X[:,1]+X[:,2]
         ds["linear_ctrl"] = (X, y + rng.normal(0, .02*np.std(y), n), ())
         X = rng.uniform(0, 1, (800, 10))
         y = 10*np.sin(np.pi*X[:,0]*X[:,1]) + 20*(X[:,2]-.5)**2 + 10*X[:,3] + 5*X[:,4] + rng.normal(0,1,800)
@@ -133,7 +151,8 @@ def clean(M):
 
 # ---------------------------------------------------------------- methods
 def run_ridge(Xtr, ytr, Xte):
-    m = ridge().fit(Xtr, ytr); return m.predict(Xte), {}
+    m = ridge().fit(Xtr, ytr)
+    return m.predict(Xte), {}
 
 def run_rf(Xtr, ytr, Xte):
     m = RandomForestRegressor(n_estimators=300, random_state=0, n_jobs=-1).fit(Xtr, ytr)
@@ -159,7 +178,8 @@ def run_featuretools(Xtr, ytr, Xte):
     cols = [f"x{i}" for i in range(Xtr.shape[1])]
     prim = ["multiply_numeric", "divide_numeric"]
     def dfs(X):
-        df = pd.DataFrame(X, columns=cols); df["_id"] = range(len(df))
+        df = pd.DataFrame(X, columns=cols)
+        df["_id"] = range(len(df))
         es = ft.EntitySet("d")
         es = es.add_dataframe(dataframe_name="t", dataframe=df, index="_id")
         F, defs = ft.dfs(entityset=es, target_dataframe_name="t",
@@ -176,12 +196,14 @@ def run_featuretools(Xtr, ytr, Xte):
 def run_openfe(Xtr, ytr, Xte):
     from openfe import OpenFE, transform
     cols = [f"x{i}" for i in range(Xtr.shape[1])]
-    dtr = pd.DataFrame(Xtr, columns=cols); dte = pd.DataFrame(Xte, columns=cols)
+    dtr = pd.DataFrame(Xtr, columns=cols)
+    dte = pd.DataFrame(Xte, columns=cols)
     ofe = OpenFE()
     feats = ofe.fit(data=dtr, label=pd.Series(ytr.astype(float)), task="regression",
                     n_jobs=N_JOBS, verbose=False)
     ttr, tte = transform(dtr, dte, feats[:20], n_jobs=N_JOBS)
-    Mtr, ok = clean(ttr.to_numpy()); Mte = np.asarray(tte.to_numpy(), float)[:, ok]
+    Mtr, ok = clean(ttr.to_numpy())
+    Mte = np.asarray(tte.to_numpy(), float)[:, ok]
     Mte[~np.isfinite(Mte)] = 0.0
     m = ridge().fit(Mtr, ytr)
     return m.predict(Mte), {"n_new": ttr.shape[1] - Xtr.shape[1], "n_jobs": N_JOBS}
@@ -260,9 +282,11 @@ def call_with_budget(mname, Xtr, ytr, Xte, budget_s):
     proc.start()
     proc.join(budget_s)
     if proc.is_alive():
-        proc.terminate(); proc.join(10)
+        proc.terminate()
+        proc.join(10)
         if proc.is_alive():
-            proc.kill(); proc.join()
+            proc.kill()
+            proc.join()
         raise BudgetExceeded(f"exceeded {budget_s:.0f}s wall-clock budget")
     if proc.exitcode not in (0, None) and q.empty():
         raise RuntimeError(f"subprocess died with exit code {proc.exitcode} (likely out of memory)")

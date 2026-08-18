@@ -20,9 +20,8 @@ import pathlib
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
-
 from sklearn.linear_model import RidgeCV
+from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -35,15 +34,18 @@ INDEP = pathlib.Path(__file__).resolve().parent.parent / "independent" / "data"
 def registry():
     ds = {}
     rng = np.random.default_rng(0)
-    X = rng.uniform(1, 6, (500, 4)); y = X[:, 0] * X[:, 1] / X[:, 2]
+    X = rng.uniform(1, 6, (500, 4))
+    y = X[:, 0] * X[:, 1] / X[:, 2]
     ds["three_way"] = (X, y + rng.normal(0, .02 * y.std(), 500))
-    X = rng.uniform(1, 6, (500, 12)); y = X[:, 0] * X[:, 1]
+    X = rng.uniform(1, 6, (500, 12))
+    y = X[:, 0] * X[:, 1]
     ds["distractors25"] = (X, y + rng.normal(0, .25 * y.std(), 500))
     X = rng.uniform(0, 1, (800, 10))
     y = 10*np.sin(np.pi*X[:, 0]*X[:, 1]) + 20*(X[:, 2]-.5)**2 + 10*X[:, 3] + 5*X[:, 4]
     ds["friedman1"] = (X, y + rng.normal(0, 1, 800))
     from sklearn.datasets import load_diabetes
-    d = load_diabetes(); ds["diabetes"] = (d.data, d.target)
+    d = load_diabetes()
+    ds["diabetes"] = (d.data, d.target)
     # the comparison study's other real datasets, when the sibling folder is present
     for name, fname, target in [("concrete", "data_concrete.csv", None),
                                  ("wine_red", "data_winequality_red.csv", None),
@@ -96,7 +98,9 @@ def equivalence_classes(models, X_probe, tol=0.999):
             col = np.asarray(F[:, j], float)
             if np.isfinite(col).sum() < 50 or np.nanstd(col) == 0:
                 continue
-            feats.append(col); owners.append(i); names.append(f)
+            feats.append(col)
+            owners.append(i)
+            names.append(f)
     classes = []          # list of (representative_col, representative_name)
     member_of = []        # class index per feature
     with np.errstate(all="ignore"):
@@ -105,7 +109,8 @@ def equivalence_classes(models, X_probe, tol=0.999):
             for ci, (rep, _) in enumerate(classes):
                 m = np.isfinite(col) & np.isfinite(rep)
                 if m.sum() >= 50 and abs(np.corrcoef(col[m], rep[m])[0, 1]) > tol:
-                    hit = ci; break
+                    hit = ci
+                    break
             if hit is None:
                 classes.append((col, names[len(member_of)]))
                 hit = len(classes) - 1
@@ -135,7 +140,8 @@ def main(a):
             else:
                 lm = make_pipeline(StandardScaler(), RidgeCV(alphas=np.logspace(-4, 4, 25)))
                 r2 = float(lm.fit(Ftr, ytr).score(Fte, yte))
-            models.append(m); scores.append(r2)
+            models.append(m)
+            scores.append(r2)
             nsel.append(len(m.formulas()))
             print(f"{name:14s} split {s:2d} R2={scores[-1]:+.3f} n={nsel[-1]}", flush=True)
         per_model, freq = equivalence_classes(models, probe)

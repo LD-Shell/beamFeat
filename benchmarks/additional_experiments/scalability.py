@@ -86,7 +86,8 @@ def run_cell(target, regime, p, n, noise, seed, budget_s):
     proc.start()
     proc.join(budget_s)
     if proc.is_alive():
-        proc.terminate(); proc.join(10)
+        proc.terminate()
+        proc.join(10)
         return dict(error=f"BudgetExceeded: >{budget_s:.0f}s")
     if q.empty():
         return dict(error=f"subprocess died, exit {proc.exitcode} (likely out of memory)")

@@ -142,8 +142,9 @@ def eyedata() -> None:
 def riboflavin() -> None:
     # hdi stores riboflavin as a data.frame with a matrix column, which the
     # high-level readers reject; walk the parsed object tree instead.
-    import rdata
     import tarfile
+
+    import rdata
 
     raw = fetch("https://codeload.github.com/cran/hdi/tar.gz/refs/heads/master")
     with tarfile.open(fileobj=io.BytesIO(raw), mode="r:gz") as tf:

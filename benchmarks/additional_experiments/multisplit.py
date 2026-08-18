@@ -45,7 +45,8 @@ class MultiSplitBeamFeat:
         self.beamfeat_kwargs = beamfeat_kwargs
 
     def fit(self, X, y):
-        X = np.asarray(X, float); y = np.asarray(y, float)
+        X = np.asarray(X, float)
+        y = np.asarray(y, float)
         rng = np.random.default_rng(self.random_state)
         probe = X[rng.choice(len(X), min(len(X), self.probe_rows), replace=False)]
 
@@ -63,7 +64,9 @@ class MultiSplitBeamFeat:
                 col = np.asarray(F[:, j], float)
                 if np.isfinite(col).sum() < 50 or np.nanstd(col) == 0:
                     continue
-                owner_feature.append((s, j)); columns.append(col); names.append(formula)
+                owner_feature.append((s, j))
+                columns.append(col)
+                names.append(formula)
 
         # equivalence classes by |corr| on probe rows
         reps: list[np.ndarray] = []
@@ -74,9 +77,11 @@ class MultiSplitBeamFeat:
                 for ci, rep in enumerate(reps):
                     mk = np.isfinite(col) & np.isfinite(rep)
                     if mk.sum() >= 50 and abs(np.corrcoef(col[mk], rep[mk])[0, 1]) > self.equivalence_tol:
-                        hit = ci; break
+                        hit = ci
+                        break
                 if hit is None:
-                    reps.append(col); hit = len(reps) - 1
+                    reps.append(col)
+                    hit = len(reps) - 1
                 class_of.append(hit)
 
         n_classes = len(reps)
@@ -85,7 +90,8 @@ class MultiSplitBeamFeat:
         rep_name = {}
         for (s, j), ci, nm in zip(owner_feature, class_of, names):
             split_sets[s].add(ci)
-            rep_owner.setdefault(ci, (s, j)); rep_name.setdefault(ci, nm)
+            rep_owner.setdefault(ci, (s, j))
+            rep_name.setdefault(ci, nm)
 
         self.frequencies_ = {rep_name[ci]: sum(ci in ss for ss in split_sets) / self.n_splits
                              for ci in range(n_classes)}
