@@ -34,7 +34,7 @@ pip install "beamfeat[units]"   # + pint, for unit-aware search (units as
 pip install "beamfeat[all]"     # + sympy display support and test deps
 ```
 
-Python ≥ 3.10. There are **no upper version pins**: the 370 tests pass from
+Python ≥ 3.10. There are **no upper version pins**: the 374 tests pass from
 scikit-learn 1.6.1 with numpy 1.26 through scikit-learn 1.9.0 with numpy 2.4,
 including 1.7.2 and 1.8.0 in between. Running the test suite or reproducing
 the benchmarks needs a little more setup, described in
@@ -167,9 +167,9 @@ benchmark scripts, not asserted:
   the shortfall splits, over six draws, into a representation oracle of
   0.960 ± 0.003, a screening-admissible ceiling of 0.874 ± 0.006 (the
   marginally-quiet quadratic is priced by the guarantee itself) and an
-  achieved 0.776 ± 0.013: about 0.086 lost to what marginal screening cannot
-  see, 0.098 to the search — stated rather than hidden.
-- Test suite: 370 tests at 95% statement coverage (a 90% floor is enforced
+  achieved 0.780 ± 0.013: about 0.086 lost to what marginal screening cannot
+  see, 0.094 to the search — stated rather than hidden.
+- Test suite: 374 tests at 94% statement coverage (a 90% floor is enforced
   in CI), including scikit-learn's full estimator-conformance checks.
 - Selection-only baseline (knockpy on raw columns, modified-FDR offset —
   the only satisfiable configuration at these dimensionalities): 0/15

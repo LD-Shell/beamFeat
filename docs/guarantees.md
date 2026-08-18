@@ -61,8 +61,8 @@ complement is fitted. Marginal screening correctly excludes such features
 under its null, at a measurable predictive cost on targets built from them
 (Friedman #1, over six draws: the marginal null never admits `c`, giving a
 screening-admissible ceiling of 0.874 ± 0.006 against a representation oracle
-of 0.960 ± 0.003, with the pipeline reaching 0.776 ± 0.013. Around 0.086 is
-lost to screening and 0.098 to the search. `c²` is admitted on some draws and
+of 0.960 ± 0.003, with the pipeline reaching 0.780 ± 0.013. Around 0.086 is
+lost to screening and 0.094 to the search. `c²` is admitted on some draws and
 not others, since `(c − 0.5)²` expands to carry a little marginal signal
 through it.)
 Joint selection recovers
