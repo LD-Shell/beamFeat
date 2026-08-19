@@ -160,7 +160,9 @@ def _load(bench: pathlib.Path, *stems: str) -> pd.DataFrame:
 
 def fig_core_accuracy(bench: pathlib.Path, out: pathlib.Path) -> None:
     """Mean R^2 on the ten formula-recovery problems."""
-    df = _load(bench, "results", "results_autofeat_venv", "results_knockpy")
+    # results.json already carries the merged autofeat/knockpy rows; loading the
+    # venv files as well would average two different stochastic draws.
+    df = _load(bench, "results")
     if df.empty:
         return
     core = df[df.dataset.isin(CORE10)]

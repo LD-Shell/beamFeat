@@ -41,7 +41,7 @@ def get_datasets(which):
     if which in ("real", "all"):
         c = pd.read_csv(DATA / "data_concrete.csv")
         ds["concrete"] = (c.iloc[:, :-1].to_numpy(float), c.iloc[:, -1].to_numpy(float), None)
-        w = pd.read_csv(DATA / "data_winequality_red.csv")
+        w = pd.read_csv(DATA / "data_winequality_red.csv", header=None)  # file ships headerless
         ds["wine_red"] = (w.iloc[:, :-1].to_numpy(float), w.iloc[:, -1].to_numpy(float), None)
         b = pd.read_csv(DATA / "data_housing_boston.csv")
         yb = b["medv"].to_numpy(float); Xb = b.drop(columns=["medv"]).to_numpy(float)
