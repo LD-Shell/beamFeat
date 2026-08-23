@@ -44,7 +44,6 @@ dynamic = ["version"]
 units = ["pint>=0.24"]
 display = ["sympy>=1.13"]
 notebooks = ["pandas>=2.0"]
-notebooks = ["pandas>=2.0"]
 test = ["pytest>=8", "pytest-cov>=5", "sympy>=1.13"]
 docs = ["mkdocs-jupyter",
     "mkdocs-material>=9.5", "mkdocstrings[python]>=0.26"]
