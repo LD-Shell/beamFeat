@@ -492,3 +492,64 @@ class TestKnockoffUnsatisfiabilityDiagnostic:
         result = KnockoffSelector(target_fdr=0.1, offset=1, random_state=0).select(features, target)
         if result.n_selected == 0:
             assert any("offset=0" in message for message in result.warnings_raised)
+
+
+class TestPermutationResolution:
+    """The permutation budget must be large enough for the *configured*
+    correction, not merely for Benjamini-Hochberg.
+
+    The smallest p-value the add-one estimator can return is 1/(B+1). BH
+    asks the leading feature to clear q/m; BY asks it to clear q/(m c(m)),
+    a threshold smaller by the harmonic factor. Sizing B to the BH bound
+    while correcting with BY leaves the procedure unable to reject anything
+    at all, and it fails silently: the estimator reports an empty selection,
+    which reads as "no signal" rather than "budget too small".
+    """
+
+    @staticmethod
+    def _single_signal(rng, n=400, m=400, effect=3.0):
+        """One overwhelmingly strong column among m nulls.
+
+        The single-signal case is the one that binds. Several tied true
+        signals relax the threshold by their count, which is why the failure
+        does not show up on designs with a handful of planted columns.
+        """
+        features = rng.standard_normal((n, m))
+        target = rng.standard_normal(n)
+        features[:, 0] += effect * target
+        return features, target
+
+    def test_by_bound_scales_by_the_harmonic_factor(self):
+        for m in (25, 400, 1200):
+            harmonic = float(np.sum(1.0 / np.arange(1, m + 1)))
+            bh = PermutationSelector(target_fdr=0.1, correction="bh")._required_permutations(m)
+            by = PermutationSelector(target_fdr=0.1, correction="by")._required_permutations(m)
+            assert by == pytest.approx(bh * harmonic, rel=1e-3)
+
+    @pytest.mark.parametrize("m", [100, 400, 1200])
+    def test_by_selects_a_lone_strong_signal(self, m):
+        rng = np.random.default_rng(0)
+        features, target = self._single_signal(rng, m=m)
+        result = PermutationSelector(target_fdr=0.1, correction="by", random_state=0).select(
+            features, target
+        )
+        assert result.n_selected >= 1
+        assert 0 in result.selected
+
+    def test_bh_budget_is_unchanged(self):
+        """The fix must not inflate the Benjamini-Hochberg path, whose bound
+        was already correct."""
+        selector = PermutationSelector(target_fdr=0.1, correction="bh")
+        assert selector._required_permutations(500) == int(np.ceil(2 * 500 / 0.1))
+
+    def test_unsatisfiable_budget_names_the_correction(self):
+        rng = np.random.default_rng(0)
+        features, target = self._single_signal(rng, n=60, m=300)
+        result = PermutationSelector(
+            target_fdr=0.1,
+            correction="by",
+            random_state=0,
+            n_permutations=100,
+            max_permutations=100,
+        ).select(features, target)
+        assert any("BY" in message for message in result.warnings_raised)

@@ -317,15 +317,22 @@ class PermutationSelector(Selector):
     Benjamini-Yekutieli procedure, valid under arbitrary dependence at the
     cost of a ``log(m)``-factor in power.
 
-    **Resolution.** The smallest attainable p-value is ``1/(B + 1)``, and
-    Benjamini-Hochberg requires the leading feature to reach
-    ``target_fdr / m``. ``B`` therefore must be at least ``m / target_fdr -
-    1`` for selection to be possible at all, and one further null exceedance
-    doubles the requirement. When ``auto_permutations`` is on (default), B is
-    raised to ``ceil(2 m / target_fdr)`` — satisfiable with headroom for a
-    single exceedance — capped at ``max_permutations``. Because the statistic
-    is a single matrix product, even ``B = 100000`` costs well under a second
-    at typical sizes.
+    **Resolution.** The smallest attainable p-value is ``1/(B + 1)``, and the
+    leading feature has to reach the threshold its correction sets:
+    ``target_fdr / m`` under Benjamini-Hochberg, and
+    ``target_fdr / (m c(m))`` under Benjamini-Yekutieli, where
+    ``c(m) = sum_{j<=m} 1/j``. ``B`` therefore must be at least
+    ``m / target_fdr - 1`` in the first case and ``c(m)`` times that in the
+    second for selection to be possible at all, and one further null
+    exceedance doubles the requirement. When ``auto_permutations`` is on
+    (default), B is raised to twice the bound belonging to the configured
+    correction — satisfiable with headroom for a single exceedance — capped
+    at ``max_permutations``. The requirement binds hardest when few
+    candidates reach the floor together: several tied true signals relax the
+    threshold by their count, whereas a single one carries it alone.
+    Because the statistic is a chunked matrix product, the larger counts
+    remain inexpensive; raising ``B`` ninefold on a 4088-column problem left
+    the fit time unchanged within noise.
 
     Args:
         target_fdr: Nominal false discovery rate.
@@ -347,7 +354,7 @@ class PermutationSelector(Selector):
         random_state: int | None = 0,
         n_permutations: int = 2000,
         auto_permutations: bool = True,
-        max_permutations: int = 100_000,
+        max_permutations: int = 1_000_000,
         correction: Literal["bh", "by"] = "bh",
     ) -> None:
         super().__init__(target_fdr=target_fdr, problem_type=problem_type, random_state=random_state)
@@ -395,15 +402,26 @@ class PermutationSelector(Selector):
         return stat
 
     def _required_permutations(self, n_features: int) -> int:
-        """Permutations for Benjamini-Hochberg to be satisfiable, with headroom.
+        """Permutations for the configured correction to be satisfiable.
 
-        Satisfiability alone needs ``1/(B+1) <= target_fdr/m``, i.e.
-        ``B >= m/target_fdr - 1``. At that exact bound, a single null draw
-        exceeding the top feature makes its p-value ``2/(B+1)`` and selection
-        impossible again, so twice the bound is used: enough for one
-        exceedance.
+        Satisfiability alone needs ``1/(B+1) <= t``, where ``t`` is the
+        threshold the leading p-value has to clear. Under
+        Benjamini-Hochberg that threshold is ``target_fdr/m``, giving
+        ``B >= m/target_fdr - 1``. Under Benjamini-Yekutieli it is
+        ``target_fdr/(m c(m))`` with ``c(m) = sum_{j<=m} 1/j``, so the same
+        argument requires ``c(m)`` times as many draws; at m in the hundreds
+        that factor is already above five, and using the Benjamini-Hochberg
+        bound under Benjamini-Yekutieli leaves the correction unsatisfiable
+        whenever few candidates reach the floor together.
+
+        At either exact bound a single null draw exceeding the top feature
+        makes its p-value ``2/(B+1)`` and selection impossible again, so
+        twice the bound is used: enough for one exceedance.
         """
-        return int(np.ceil(2.0 * n_features / self.target_fdr))
+        scale = 1.0
+        if self.correction == "by":
+            scale = float(np.sum(1.0 / np.arange(1, n_features + 1)))
+        return int(np.ceil(2.0 * scale * n_features / self.target_fdr))
 
     def select(self, features: np.ndarray, target: np.ndarray) -> SelectionResult:
         features, target = self._validate(features, target)
@@ -420,9 +438,11 @@ class PermutationSelector(Selector):
                 n_permutations = self.max_permutations
                 messages.append(
                     f"{n_features} features at target FDR {self.target_fdr} need "
-                    f"~{required} permutations for the correction to be satisfiable, above "
+                    f"~{required} permutations for {self.correction.upper()} to be satisfiable, above "
                     f"max_permutations={self.max_permutations}; selection may be impossible. "
-                    "Reduce the candidate count, raise target_fdr, or raise max_permutations"
+                    "Reduce the candidate count, raise target_fdr, raise max_permutations, "
+                    "or select with correction='bh', whose bound is smaller by the "
+                    "harmonic factor at the cost of assuming positive dependence"
                 )
                 logger.warning("[beamfeat.selection] %s", messages[-1])
 
