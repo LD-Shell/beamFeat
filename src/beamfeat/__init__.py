@@ -26,6 +26,7 @@ from beamfeat.scoring import (
     GradientBoostingScorer,
     MutualInformationScorer,
     Scorer,
+    is_constant,
     make_scorer,
 )
 from beamfeat.search import BeamSearch, SearchResult, SearchTrace
@@ -38,7 +39,7 @@ from beamfeat.selection import (
     make_selector,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 __all__ = [
     "BeamFeatClassifier", "BeamFeatRegressor", "BeamFeatTransformer",
@@ -50,5 +51,6 @@ __all__ = [
     "MutualInformationScorer", "Node", "NodeError", "OperatorSpec",
     "PermutationSelector", "RejectedNode", "Scorer", "SearchResult",
     "SearchTrace", "SelectionResult", "Selector", "UnitError", "combine",
-    "knockoff_threshold", "leaf", "make_scorer", "make_selector", "transform",
+    "is_constant", "knockoff_threshold", "leaf", "make_scorer", "make_selector",
+    "transform",
 ]

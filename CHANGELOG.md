@@ -4,6 +4,130 @@ Notable changes to `beamfeat`. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.1] - 2026-08-22
+
+Correctness release for the automatic permutation budget, plus two warning
+fixes. Selections are unchanged everywhere the previous budget was already
+adequate, which is every result in the paper and every benchmark artifact:
+the two widest problems in the high-dimensional study return identical
+formulas, feature counts, flags and held-out scores, with fit times differing
+by less than the run-to-run spread. Thirty-seven tests take the suite to 411 at 95%
+statement coverage. No artifact needed regenerating.
+
+### Added
+
+- `verbose` is now a level rather than a flag, and reports to stdout instead
+  of through the module logger -- progress a caller explicitly asked for
+  should not require them to attach a handler first, which is the
+  scikit-learn convention. `0` (default) is silent and unchanged; `1` prints
+  one line per stage, covering the split, the search, the screening, the
+  parsimony step and the fitted equation, with the FDR flag on the result
+  line; `2` adds per-depth search detail -- proposed, evaluated, kept, what
+  was rejected and why -- and the strongest certified candidates with their
+  p- and q-values. Warnings and diagnostics continue to use the logger,
+  because those are events the caller did not ask for. Reporting now covers
+  selection as well as search; previously any positive `verbose` logged
+  search progress only, and the screening step, which is where the guarantee
+  is actually applied, was invisible.
+
+### Added (continued)
+
+- `parsimony_holdout` divides the selection rows a second time, so that the
+  printed equation carries a guarantee of its own rather than being a subset
+  of a certified set. Screening and parsimony run on the first part; the
+  resulting subset is fixed at that point, so re-testing it on the part held
+  back is an ordinary fixed-candidate screen and its guarantee covers the
+  subset itself. Terms that fail are dropped; if none survives, an
+  intercept-only model is returned with a visible warning rather than an
+  uncertified equation. Off by default, because what it costs is rows: on
+  240- and 5000-row problems it returns the same terms at the same accuracy,
+  and on a 71-row problem it loses twelve of nineteen terms. The estimator
+  warns rather than proceeding when the selection rows cannot be split so
+  that both parts hold at least ten. When a compact certified equation cannot
+  be produced -- because the rows will not split, or because nothing survives
+  the re-test -- the whole screened set is returned rather than a pruned
+  subset of it. The caller asked for a guarantee over what is printed; the
+  screened set supplies one and a pruned subset does not, so that is the
+  honest way to degrade. Note that `parsimony=None` reaches the same corner
+  for free, and on short samples is the better choice: a long certified
+  equation beats a compact one whose terms were dropped for want of rows.
+  The two-stage procedure has not been FDR-calibrated and is offered as an
+  option rather than a measured result.
+- `fdp_inflation_` reports |S|/|S'|, the factor by which pruning the screened
+  set down to the printed equation can inflate the realised false discovery
+  proportion. It was derivable from `selection_report_` before and is now
+  surfaced directly, since it is the number to quote alongside `target_fdr`.
+
+### Added (continued)
+
+- Constant input columns are reported at fit time. Such a column standardises
+  to zeros, so its association with the target is zero at every depth it can
+  appear in and it can never be selected; that is the correct outcome and
+  costs neither accuracy nor multiplicity, since the beam filters it before
+  screening. What it does cost is legibility: in the output a stuck sensor or
+  a column emptied by a bad join looks exactly like a variable that does not
+  matter. The test consults no response values, so reporting it cannot bias
+  what follows. It fires on real data -- 55 of 521 columns in ujiindoorloc,
+  five of 385 in ct_slices, four of 281 in blogfeedback.
+- `is_constant` is exported. Constancy is judged relative to the column's
+  magnitude rather than against an absolute floor on the spread, because an
+  absolute floor makes the verdict depend on the column's units: a column
+  varying over the whole range 0 to 1e-9 has a smaller variance than a stuck
+  sensor reading 9.81, and any floor that keeps the first also keeps the
+  second. The estimator and the diagnostic now share the one predicate, so
+  the warning cannot come to describe behaviour the fit no longer has.
+
+### Documentation
+
+- New tutorial, `notebooks/04_reading_a_fit.ipynb`. The first three notebooks
+  plant an answer and confirm it is recovered; this one is about the fit you
+  did not plant. On a pump-power problem hidden among noise columns it walks
+  through the cases an applied user actually hits: why a deeper search returns
+  a *worse* equation, why `fdr_controlled_` stays `True` when noise columns
+  appear inside a formula (the null is marginal, so a formula combining the
+  true core with noise has a false null and selecting it is not an error),
+  why depth counts composition levels rather than variables, how units remove
+  the hitchhikers where statistics cannot, why unit coverage is all or
+  nothing, where a constant factor goes, how to read `selection_report_`
+  against `equation()`, and how to tell an exhausted permutation budget from
+  an absent signal. Runs in about 14 s.
+- Notebook 03 notes that knockoffs cannot prune a term out of an expression:
+  selection operates on whole candidate columns, so switching the selector
+  does not reach inside a composite. The conditional null invites that
+  inference and it does not hold.
+- Notebook 01 builds its design as a DataFrame, so formulas read `(a * b) / c`
+  rather than `(x0 * x1) / x2`, and demonstrates the verbosity levels.
+
+### Fixed
+
+- The permutation count chosen when `auto_permutations` is on was sized to
+  the Benjamini-Hochberg resolution bound `2m/q`, while `"by"` is the
+  estimator's default correction. Benjamini-Yekutieli requires the leading
+  p-value to clear `q/(m c(m))`, so its bound is larger by the harmonic
+  factor -- above five once `m` reaches the low hundreds. Below it the
+  correction cannot reject at all, and the failure was silent: an empty
+  selection reads as "no signal" rather than "budget too small". It bites
+  hardest when few candidates reach the p-value floor together, since several
+  tied signals relax the threshold by their count while a lone one carries it
+  alone, which is why a sparse true set in a large pool was the exposed case.
+  `_required_permutations` now takes its bound from the configured
+  correction, and `max_permutations` rises from 100,000 to 1,000,000 so the
+  larger requirement is reachable. The warning raised when it is not names
+  the correction and offers `correction="bh"` as the cheaper alternative.
+- Fitting on a `DataFrame` no longer emits scikit-learn's "X does not have
+  valid feature names" warning. The post-fit degeneracy diagnostic scores the
+  estimator's own validated array, which carries no column names by
+  construction; the warning fired on every named fit and pointed the caller
+  at a mismatch of our own making.
+- `units` covering some columns but not all now warns. An unlabelled column
+  is dimensionally unconstrained and combines freely with the labelled ones,
+  so partial coverage leaves the check not binding on exactly the columns the
+  caller did not vouch for -- while a mapping matching *no* column already
+  raised. Labelling the known columns and leaving the rest blank looks like
+  the careful thing to do, which is what made the silence worth removing.
+  Pass `"dimensionless"` for genuinely unitless columns. The warning is
+  raised once at fit, not on every `transform` or `predict`.
+
 ## [0.3.0] - 2026-08-12
 
 Behavioural release: the downstream ridge penalty is now selected by
