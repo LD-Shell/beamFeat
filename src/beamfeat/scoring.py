@@ -54,8 +54,8 @@ def _check_problem_type(problem_type: str) -> ProblemType:
     return problem_type  # type: ignore[return-value]
 
 
-def _standardise(values: np.ndarray) -> np.ndarray:
-    """Centre and scale to unit variance. Constant input returns zeros.
+def is_constant(values: np.ndarray) -> bool:
+    """Whether a column carries no variation a scorer can use.
 
     Constancy is judged relative to the values' magnitude rather than by an
     absolute floor on the spread, since an absolute floor makes the verdict
@@ -63,19 +63,31 @@ def _standardise(values: np.ndarray) -> np.ndarray:
     the product of their magnitudes and lands under any fixed floor while
     carrying real signal. A spread twelve orders below the magnitude is far
     inside accumulated float64 rounding noise, so nothing informative is
-    discarded; filtering of informationally constant columns happens in the
-    expression layer before candidates reach a scorer.
+    discarded.
+
+    Exposed so that a caller screening a wide table can apply the same test
+    the estimator applies, and so that the diagnostic reported at fit time
+    cannot drift from the behaviour it describes.
     """
     centred = values - values.mean()
     scale = float(np.sqrt(np.mean(centred**2)))
     magnitude = float(np.mean(np.abs(values)))
     if np.isfinite(magnitude) and magnitude > 0.0:
-        constant = scale <= 1e-12 * magnitude
-    else:
-        constant = scale == 0.0
-    if constant:
+        return scale <= 1e-12 * magnitude
+    return scale == 0.0
+
+
+def _standardise(values: np.ndarray) -> np.ndarray:
+    """Centre and scale to unit variance. Constant input returns zeros.
+
+    Constancy is decided by :func:`is_constant`; filtering of informationally
+    constant columns happens in the expression layer before candidates reach
+    a scorer.
+    """
+    centred = values - values.mean()
+    if is_constant(values):
         return np.zeros_like(centred)
-    return centred / scale
+    return centred / float(np.sqrt(np.mean(centred**2)))
 
 
 class Scorer(ABC):

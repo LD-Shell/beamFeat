@@ -10,6 +10,8 @@ from beamfeat.scoring import (
     GradientBoostingScorer,
     MutualInformationScorer,
     Scorer,
+    _standardise,
+    is_constant,
     make_scorer,
 )
 
@@ -382,3 +384,37 @@ class TestSpearmanScorer:
 
         assert isinstance(make_scorer("spearman"), SpearmanScorer)
         assert isinstance(make_scorer("rank"), SpearmanScorer)
+
+
+class TestIsConstant:
+    """Constancy is relative to magnitude, not an absolute floor on the
+    spread. An absolute floor makes the verdict depend on the column's units,
+    which is how a genuinely varying small-magnitude column gets discarded and
+    a stuck sensor gets kept."""
+
+    @pytest.mark.parametrize(
+        ("values", "expected"),
+        [
+            (np.full(500, 9.81), True),
+            (np.full(500, 9.81) + np.linspace(0, 1e-15, 500), True),
+            (np.zeros(500), True),
+            (np.linspace(0, 1e-9, 500), False),
+            (300.0 + np.linspace(0, 1e-4, 500), False),
+            (np.linspace(0, 1, 500), False),
+        ],
+    )
+    def test_verdicts(self, values, expected):
+        assert is_constant(values) is expected
+
+    def test_an_absolute_floor_would_disagree(self):
+        """Pins the reason for the relative test. This column varies over its
+        whole range, but its variance sits below any floor low enough to be
+        worth writing down, so an absolute test would discard it."""
+        varying = np.linspace(0, 1e-9, 500)
+        assert np.var(varying) < 1e-8
+        assert is_constant(varying) is False
+
+    def test_standardise_agrees_with_the_predicate(self):
+        for values in (np.full(200, 4.0), np.linspace(0, 1e-9, 200), np.linspace(1, 9, 200)):
+            standardised = _standardise(values)
+            assert np.allclose(standardised, 0.0) is is_constant(values)
