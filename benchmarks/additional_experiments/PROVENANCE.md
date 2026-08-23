@@ -25,6 +25,27 @@ note it in the revision.
 | ujiindoorloc.csv (via --all) | 19,937 x 521 | UCI UJIIndoorLoc; Torres-Sospedra et al. (2014) | 520 WAP columns, sentinel 100 -> -105 dBm; target = longitude |
 | geomusic.csv (via --all) | 1,059 x 118 | PMLB 4544_GeographicalOriginalofMusic; Zhou et al. (2014); Olson et al. (2017) | PMLB file verbatim |
 
+## Row caps
+
+A candidate matrix holds one column of `n` rows per proposal, so memory
+rather than time is what binds on the wide sets. The four largest are
+therefore subsampled to a fixed row count with a fixed seed
+(`df.sample(cap, random_state=0)`), following the diamonds-cap precedent in
+`benchmarks/run_benchmarks.py`:
+
+| dataset | source rows | cap used |
+|---|---|---|
+| superconductivity | 21,263 | 5,000 |
+| ct_slices | 53,500 | 10,000 |
+| blogfeedback | 52,397 | 10,000 |
+| ujiindoorloc | 19,937 | 10,000 |
+
+The caps apply to every method in the comparison, so no method sees rows
+another does not. Set `FULL_N=1` to lift them and run at full `n`; the
+scalable methods complete there, and the per-fit budget (`FIT_BUDGET_S`,
+900 s by default) is the constraint that then binds. Every other dataset in
+the study is used in full.
+
 ## Result records
 
 `results_dev/` holds records from development runs on a constrained machine
