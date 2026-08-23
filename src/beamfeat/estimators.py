@@ -35,8 +35,8 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted
 
 from beamfeat.expression import Evaluator, Node
-from beamfeat.scoring import Scorer
-from beamfeat.search import DEFAULT_BINARY, DEFAULT_UNARY, BeamSearch
+from beamfeat.scoring import Scorer, is_constant
+from beamfeat.search import DEFAULT_BINARY, DEFAULT_UNARY, BeamSearch, report
 from beamfeat.selection import Selector, make_selector  # noqa: F401
 
 __all__ = ["BeamFeatClassifier", "BeamFeatRegressor", "BeamFeatTransformer"]
@@ -214,6 +214,7 @@ class _BeamFeatBase(BaseEstimator):
         include_originals: bool = True,
         units: dict[str, Any] | None = None,
         selection_holdout: float | None = 0.5,
+        parsimony_holdout: float | None = None,
         selection_correction: str = "by",
         on_no_discoveries: str = "empty",
         parsimony: str | None = "forward",
@@ -233,6 +234,7 @@ class _BeamFeatBase(BaseEstimator):
         self.include_originals = include_originals
         self.units = units
         self.selection_holdout = selection_holdout
+        self.parsimony_holdout = parsimony_holdout
         self.selection_correction = selection_correction
         self.on_no_discoveries = on_no_discoveries
         self.parsimony = parsimony
@@ -294,6 +296,52 @@ class _BeamFeatBase(BaseEstimator):
             chosen.append(remaining.pop(best_position))
         return sorted(chosen)
 
+    def _certify_subset(self, X, y, rows, feature_names, units, nodes, keep_order):
+        """Re-screen the parsimony subset on rows it has not been fitted to.
+
+        The subset is fixed once the screening rows have been used, so this is
+        an ordinary fixed-candidate screen at the same level, and the guarantee
+        it returns is over the subset itself rather than over the larger set
+        the subset was drawn from.
+        """
+        data = {name: X[rows, index] for index, name in enumerate(feature_names)}
+        evaluator = Evaluator(data, units=units)
+        columns, order = [], []
+        for node, index in zip(nodes, keep_order):
+            values = evaluator.transform_values(node)
+            if values is not None:
+                columns.append(values)
+                order.append(index)
+        if not columns:
+            return order
+        # A lone survivor still has to earn its place on rows it has not seen;
+        # only the multiplicity correction is trivial in that case, not the
+        # test itself.
+        selector_kwargs = {}
+        if isinstance(self.selector, str) and self.selector.lower() in ("permutation", "perm"):
+            selector_kwargs["correction"] = self.selection_correction
+        selector = make_selector(
+            self.selector,
+            target_fdr=self.target_fdr,
+            problem_type=self._problem_type,
+            random_state=self.random_state,
+            **selector_kwargs,
+        )
+        result = selector.select(np.column_stack(columns), y[rows])
+        self.certification_result_ = result
+        for diagnostic in result.warnings_raised:
+            warnings.warn(f"beamfeat certification: {diagnostic}", UserWarning, stacklevel=2)
+        if result.n_selected == 0:
+            warnings.warn(
+                "beamfeat: no term of the parsimonious equation survived re-testing on the "
+                f"held-back rows at target FDR {self.target_fdr:.3g}, so no compact "
+                "certified equation is available on this sample. The whole screened set is "
+                "returned instead: it does carry the guarantee, but it is not compact.",
+                NoDiscoveriesWarning,
+                stacklevel=2,
+            )
+        return [order[int(i)] for i in result.selected]
+
     def _holdout_fit_check(self, X: np.ndarray, y: np.ndarray) -> None:
         """Warn when the assembled model is degenerate on the selection rows.
 
@@ -307,7 +355,17 @@ class _BeamFeatBase(BaseEstimator):
             return
         if getattr(self, "model_", None) is None:
             return
-        holdout_score = float(self.score(X[rows], y[rows]))
+        with warnings.catch_warnings():
+            # X is this estimator's own validated array, so it carries no
+            # column names by construction. Without this filter scikit-learn's
+            # feature-name check fires on every fit that was given a
+            # DataFrame, pointing the caller at a mismatch of our own making.
+            warnings.filterwarnings(
+                "ignore",
+                message="X does not have valid feature names",
+                category=UserWarning,
+            )
+            holdout_score = float(self.score(X[rows], y[rows]))
         if self._problem_type == "classification":
             _, counts = np.unique(y[rows], return_counts=True)
             floor = float(np.max(counts)) / len(rows)
@@ -364,6 +422,25 @@ class _BeamFeatBase(BaseEstimator):
         units = self._resolve_units(feature_names)
         n_samples = X.shape[0]
 
+        # A column with no variation cannot be selected: it standardises to
+        # zeros, so its association with the target is zero at every depth it
+        # appears in. That is the correct outcome and costs nothing, but it is
+        # indistinguishable from an uninformative column in the output, and a
+        # stuck sensor or a column emptied by a bad join should not look the
+        # same as a variable that simply does not matter. The test consults no
+        # response values, so reporting it here cannot bias what follows.
+        flat = [name for index, name in enumerate(feature_names) if is_constant(X[:, index])]
+        if flat:
+            shown = ", ".join(str(name) for name in flat[:5])
+            warnings.warn(
+                f"beamfeat: {len(flat)} of {len(feature_names)} columns are constant "
+                f"({shown}{', ...' if len(flat) > 5 else ''}) and cannot be selected. "
+                "They are ignored and cost nothing, but check whether they are meant "
+                "to carry data.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         use_holdout = (
             self.selector is not None
             and self.selection_holdout is not None
@@ -387,7 +464,57 @@ class _BeamFeatBase(BaseEstimator):
             search_index = np.arange(n_samples)
         self._holdout_rows_ = holdout_index if use_holdout else None
 
+        # Optional second split of the selection rows. Screening and parsimony
+        # run on the first part; the surviving subset is then re-tested on the
+        # second, which it has not seen. Because that subset is fixed once the
+        # first part has been used, the re-test is an ordinary fixed-candidate
+        # screen and its guarantee therefore covers the printed equation, not
+        # merely the set it was drawn from. The price is rows: both parts have
+        # to be large enough to test on.
+        certify_index = np.empty(0, dtype=int)
+        fell_back_to_screened = False
+        use_certify = (
+            use_holdout
+            and self.parsimony_holdout is not None
+            and 0.0 < float(self.parsimony_holdout) < 1.0
+        )
+        if use_certify:
+            n_certify = int(round(float(self.parsimony_holdout) * len(holdout_index)))
+            if n_certify < 10 or len(holdout_index) - n_certify < 10:
+                use_certify = False
+                # The caller asked for a printed equation that carries the
+                # guarantee. If the rows cannot supply a compact one, the honest
+                # degradation is the screened set itself -- long, but certified --
+                # not a compact subset of it, which is the one property they
+                # explicitly did not ask for.
+                fell_back_to_screened = True
+                warnings.warn(
+                    "beamfeat: parsimony_holdout was requested but the selection rows "
+                    f"({len(holdout_index)}) cannot be split so that both parts hold at "
+                    "least 10 rows. Returning the whole screened set instead, which does "
+                    "carry the guarantee but is not compact; pass parsimony_holdout=None "
+                    "to get the compact uncertified equation, or add rows.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+            else:
+                inner = split_rng.permutation(len(holdout_index))
+                certify_index = np.sort(holdout_index[inner[:n_certify]])
+                holdout_index = np.sort(holdout_index[inner[n_certify:]])
+        self._certify_rows_ = certify_index if use_certify else None
+
         search_data = {name: X[search_index, index] for index, name in enumerate(feature_names)}
+
+        report(
+            self.verbose,
+            1,
+            f"fit: {n_samples} rows x {len(feature_names)} columns"
+            + (
+                f", split {len(search_index)} search / {len(holdout_index)} selection"
+                if use_holdout
+                else ", no holdout (selection shares the search rows)"
+            ),
+        )
 
         search = BeamSearch(
             scorer=self.scorer,
@@ -413,6 +540,8 @@ class _BeamFeatBase(BaseEstimator):
         self.selection_result_ = None
         self.selection_report_: list[dict] | None = None
         self.fdr_controlled_: bool | None = None
+        self.certification_result_ = None
+        self.fdp_inflation_: float | None = None
 
         if self.selector is not None:
             if use_holdout:
@@ -449,6 +578,34 @@ class _BeamFeatBase(BaseEstimator):
                 )
                 selection_result = selector.select(matrix, selection_target)
                 self.selection_result_ = selection_result
+                report(
+                    self.verbose,
+                    1,
+                    f"screen: {selection_result.n_candidates} candidates, "
+                    f"{selection_result.method}"
+                    + (
+                        f" ({self.selection_correction.upper()})"
+                        if selection_result.method == "permutation"
+                        else ""
+                    )
+                    + f" at q={self.target_fdr:g} -> "
+                    f"{selection_result.n_selected} certified",
+                )
+                if self.verbose >= 2 and selection_result.n_selected:
+                    ranked = sorted(
+                        selection_result.selected,
+                        key=lambda index: float(selection_result.p_values[index]),
+                    )
+                    for index in ranked[:5]:
+                        report(
+                            self.verbose,
+                            2,
+                            f"  {candidate_nodes[index].name}  "
+                            f"p={float(selection_result.p_values[index]):.2e} "
+                            f"q={float(selection_result.q_values[index]):.2e}",
+                        )
+                    if len(ranked) > 5:
+                        report(self.verbose, 2, f"  ... and {len(ranked) - 5} more")
                 for diagnostic in selection_result.warnings_raised:
                     warnings.warn(f"beamfeat selection: {diagnostic}", UserWarning, stacklevel=2)
                 screened = set(int(i) for i in selection_result.selected)
@@ -457,9 +614,42 @@ class _BeamFeatBase(BaseEstimator):
                     keep_order = self._parsimonious_subset(
                         matrix, selection_target, list(selection_result.selected)
                     )
+                    self.fdp_inflation_ = float(selection_result.n_selected) / max(
+                        len(keep_order), 1
+                    )
+                    report(
+                        self.verbose,
+                        1,
+                        f"parsimony: {selection_result.n_selected} certified -> "
+                        f"{len(keep_order)} term{'' if len(keep_order) == 1 else 's'}"
+                        f" (|S|/|S'| = {self.fdp_inflation_:.2f})",
+                    )
+                    if fell_back_to_screened:
+                        keep_order = sorted(screened)
+                    elif use_certify:
+                        certified = self._certify_subset(
+                            X, y, certify_index, feature_names, units,
+                            [candidate_nodes[index] for index in keep_order],
+                            keep_order,
+                        )
+                        # Nothing compact could be certified, but the screened
+                        # set still is; return that rather than nothing.
+                        keep_order = certified if certified else sorted(screened)
                     nodes = [candidate_nodes[index] for index in keep_order]
                     kept = set(keep_order)
-                    self.fdr_controlled_ = True
+                    self.fdr_controlled_ = bool(nodes)
+                    report(
+                        self.verbose,
+                        1,
+                        f"result set: {len(nodes)} term{'' if len(nodes) == 1 else 's'}"
+                        + (
+                            " re-certified on held-back rows; the guarantee covers the"
+                            " fitted equation"
+                            if use_certify
+                            else " in the fitted equation (the guarantee covers the"
+                            " certified set, not this subset)"
+                        ),
+                    )
                 else:
                     kept = set()
                     self.fdr_controlled_ = False
@@ -549,7 +739,7 @@ class _BeamFeatBase(BaseEstimator):
             return np.empty((n_samples, 0), dtype=np.float64)
         return np.column_stack(kept_columns)
 
-    def _resolve_units(self, feature_names: list[str]) -> dict[str, Any] | None:
+    def _resolve_units(self, feature_names: list[str], warn: bool = True) -> dict[str, Any] | None:
         """Map user-supplied units onto the internal column names.
 
         Accepts either a mapping of column name to unit, or a positional
@@ -560,6 +750,11 @@ class _BeamFeatBase(BaseEstimator):
         no-op. A unit constraint that is quietly ignored is worse than one
         that raises: the caller goes on to report results as dimensionally
         validated when no dimensional check ever ran.
+
+        A mapping that matches some columns but not others is the same
+        failure in weaker form, and warns. Columns without a unit are
+        dimensionally unconstrained, so they combine freely with the
+        labelled ones and the check does not bind where it is most needed.
         """
         if self.units is None:
             return None
@@ -587,6 +782,24 @@ class _BeamFeatBase(BaseEstimator):
                 f"none of the units keys {sorted(map(str, units))[:5]} match the "
                 f"column names {feature_names[:5]}; the units would have been "
                 "ignored. Pass a DataFrame, or key the mapping by column name."
+            )
+        missing = [name for name in feature_names if name not in units]
+        if missing and warn:
+            # An unlabelled column is dimensionally free: it combines with
+            # anything, so partial coverage leaves the gate open on exactly
+            # the columns the caller did not vouch for. That is the case
+            # worth naming, since labelling the known columns and leaving the
+            # rest blank looks like the careful thing to do.
+            warnings.warn(
+                f"beamfeat: units cover {len(resolved)} of {len(feature_names)} columns; "
+                f"{len(missing)} are unlabelled ({', '.join(map(str, missing[:5]))}"
+                f"{', ...' if len(missing) > 5 else ''}) and are treated as "
+                "dimensionally unconstrained, so expressions combining them with "
+                "labelled columns are not rejected. Give every column a unit "
+                "('dimensionless' for the genuinely unitless ones) for the check "
+                "to bind across the whole table.",
+                UserWarning,
+                stacklevel=2,
             )
         return resolved
 
@@ -622,7 +835,9 @@ class _BeamFeatBase(BaseEstimator):
         check_is_fitted(self, ["features_"])
         feature_names = self._input_names(X, X.shape[1])
         data = {name: X[:, index] for index, name in enumerate(feature_names)}
-        evaluator = Evaluator(data, units=self._resolve_units(feature_names))
+        # warn=False: coverage is a fit-time concern, and this path runs on
+        # every transform and predict.
+        evaluator = Evaluator(data, units=self._resolve_units(feature_names, warn=False))
 
         columns = []
         n_failed = 0
@@ -696,7 +911,11 @@ class BeamFeatTransformer(TransformerMixin, _BeamFeatBase):
             Supplying units restricts the search to dimensionally valid
             expressions.
         random_state: Seed. Fitting is deterministic given this.
-        verbose: If positive, log search progress.
+        verbose: Progress reporting to stdout. ``0`` (default) is silent;
+            ``1`` prints one line per stage -- the split, the search, the
+            screening, the parsimony step and the fitted result; ``2`` adds
+            per-depth search detail and the strongest certified candidates
+            with their p- and q-values.
 
     Attributes:
         features_: Selected :class:`~beamfeat.expression.Node` expressions.
@@ -722,6 +941,7 @@ class BeamFeatTransformer(TransformerMixin, _BeamFeatBase):
         include_originals: bool = True,
         units: dict[str, Any] | None = None,
         selection_holdout: float | None = 0.5,
+        parsimony_holdout: float | None = None,
         selection_correction: str = "by",
         on_no_discoveries: str = "empty",
         parsimony: str | None = "forward",
@@ -742,6 +962,7 @@ class BeamFeatTransformer(TransformerMixin, _BeamFeatBase):
             include_originals=include_originals,
             units=units,
             selection_holdout=selection_holdout,
+            parsimony_holdout=parsimony_holdout,
             selection_correction=selection_correction,
             on_no_discoveries=on_no_discoveries,
             parsimony=parsimony,
@@ -816,6 +1037,7 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
         include_originals: bool = True,
         units: dict[str, Any] | None = None,
         selection_holdout: float | None = 0.5,
+        parsimony_holdout: float | None = None,
         selection_correction: str = "by",
         on_no_discoveries: str = "empty",
         parsimony: str | None = "forward",
@@ -836,6 +1058,7 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
             include_originals=include_originals,
             units=units,
             selection_holdout=selection_holdout,
+            parsimony_holdout=parsimony_holdout,
             selection_correction=selection_correction,
             on_no_discoveries=on_no_discoveries,
             parsimony=parsimony,
@@ -876,6 +1099,18 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
         self.coef_ = self.model_.coef_
         self.intercept_ = self.model_.intercept_
         self._holdout_fit_check(X, y)
+        report(
+            self.verbose,
+            1,
+            f"result: {self.equation()}"
+            + (
+                ""
+                if self.fdr_controlled_ is None
+                else "  [FDR controlled]"
+                if self.fdr_controlled_
+                else "  [NOT FDR controlled]"
+            ),
+        )
         return self
 
     def predict(self, X) -> np.ndarray:
@@ -949,6 +1184,7 @@ class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
         include_originals: bool = True,
         units: dict[str, Any] | None = None,
         selection_holdout: float | None = 0.5,
+        parsimony_holdout: float | None = None,
         selection_correction: str = "by",
         on_no_discoveries: str = "empty",
         parsimony: str | None = "forward",
@@ -969,6 +1205,7 @@ class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
             include_originals=include_originals,
             units=units,
             selection_holdout=selection_holdout,
+            parsimony_holdout=parsimony_holdout,
             selection_correction=selection_correction,
             on_no_discoveries=on_no_discoveries,
             parsimony=parsimony,
@@ -1019,6 +1256,20 @@ class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
         )
         self.coef_ = self.model_.coef_
         self.intercept_ = self.model_.intercept_
+        report(
+            self.verbose,
+            1,
+            f"result: {self.n_features_out_} constructed feature"
+            f"{'' if self.n_features_out_ == 1 else 's'}, "
+            f"{len(self.classes_)} classes"
+            + (
+                ""
+                if self.fdr_controlled_ is None
+                else "  [FDR controlled]"
+                if self.fdr_controlled_
+                else "  [NOT FDR controlled]"
+            ),
+        )
         return self
 
     def predict(self, X) -> np.ndarray:

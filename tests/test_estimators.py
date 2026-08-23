@@ -534,6 +534,58 @@ class TestUnitsIntegration:
         X, y = regression_data
         assert _fast(BeamFeatRegressor, units=None).fit(X, y).n_features_out_ > 0
 
+    def test_partial_coverage_warns(self, regression_data):
+        """Labelling some columns and leaving the rest blank looks like the
+        careful thing to do, and is the case where the gate quietly stops
+        binding: an unlabelled column is dimensionally free and combines
+        with anything."""
+        X, y = regression_data
+        with pytest.warns(UserWarning, match="units cover 2 of 4 columns"):
+            _fast(BeamFeatRegressor, units={"x0": "kilogram", "x1": "meter"}).fit(X, y)
+
+    def test_full_coverage_is_silent(self, regression_data):
+        X, y = regression_data
+        units = {f"x{index}": "dimensionless" for index in range(X.shape[1])}
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            _fast(BeamFeatRegressor, units=units).fit(X, y)
+
+    def test_coverage_warning_does_not_repeat_on_predict(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, units={"x0": "kilogram"})
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            model.fit(X, y)
+            model.predict(X)
+            model.predict(X)
+        coverage = [entry for entry in caught if "units cover" in str(entry.message)]
+        assert len(coverage) == 1
+
+
+class TestFeatureNames:
+    def test_dataframe_columns_reach_the_equation(self, regression_data):
+        pd = pytest.importorskip("pandas")
+        X, y = regression_data
+        frame = pd.DataFrame(X, columns=["P", "V", "n", "spare"])
+        model = _fast(BeamFeatRegressor, selector="permutation").fit(frame, y)
+        assert list(model.feature_names_in_) == ["P", "V", "n", "spare"]
+        assert all(not re.search(r"\bx\d+\b", formula) for formula in model.formulas())
+
+    def test_fitting_a_dataframe_raises_no_feature_name_warning(self, regression_data):
+        """The post-fit diagnostic scores the estimator's own validated
+        array, which carries no column names. Left unfiltered, scikit-learn's
+        feature-name check fires on every fit given a DataFrame and points
+        the caller at a mismatch of our own making."""
+        pd = pytest.importorskip("pandas")
+        X, y = regression_data
+        frame = pd.DataFrame(X, columns=["a", "b", "c", "d"])
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            _fast(BeamFeatRegressor, selector="permutation").fit(frame, y)
+        assert not [
+            entry for entry in caught if "does not have valid feature names" in str(entry.message)
+        ]
+
 
 # --------------------------------------------------------------------------- #
 # Configuration
@@ -688,3 +740,189 @@ class TestAlphaAuto:
         pred = model.predict(Xte)
         assert np.all(np.isfinite(pred))
         assert float(np.mean((yte - pred) ** 2)) < 4.0 * float(np.var(yte))
+
+
+class TestVerbose:
+    """`verbose` is a level, not a flag, and it reports to stdout.
+
+    Progress the caller explicitly asked for should appear without their
+    having to attach a logging handler first, which is the scikit-learn
+    convention; warnings keep going through the logger.
+    """
+
+    def test_zero_is_silent(self, regression_data, capsys):
+        X, y = regression_data
+        _fast(BeamFeatRegressor, selector="permutation").fit(X, y)
+        assert capsys.readouterr().out == ""
+
+    def test_one_reports_each_stage(self, regression_data, capsys):
+        X, y = regression_data
+        _fast(BeamFeatRegressor, selector="permutation", verbose=1).fit(X, y)
+        out = capsys.readouterr().out
+        for stage in ("fit:", "search:", "screen:", "result:"):
+            assert stage in out
+        assert "depth 0:" not in out
+
+    def test_two_adds_depth_and_candidate_detail(self, regression_data, capsys):
+        X, y = regression_data
+        _fast(BeamFeatRegressor, selector="permutation", verbose=2).fit(X, y)
+        out = capsys.readouterr().out
+        assert "depth 0:" in out
+        assert "p=" in out and "q=" in out
+
+    def test_result_line_records_the_flag(self, regression_data, capsys):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation", verbose=1).fit(X, y)
+        out = capsys.readouterr().out
+        expected = "[FDR controlled]" if model.fdr_controlled_ else "[NOT FDR controlled]"
+        assert expected in out
+
+    def test_transformer_and_classifier_accept_levels(self, regression_data, capsys):
+        X, y = regression_data
+        _fast(BeamFeatTransformer, selector="permutation", verbose=1).fit(X, y)
+        assert "fit:" in capsys.readouterr().out
+        _fast(BeamFeatClassifier, selector="permutation", verbose=1).fit(X, (y > np.median(y)).astype(int))
+        assert "result:" in capsys.readouterr().out
+
+
+class TestParsimonyHoldout:
+    """The screened set is certified; the parsimonious subset drawn from it is
+    not, because it is chosen on the same rows.
+
+    Splitting the selection rows once more restores control over the printed
+    equation: the subset is fixed once the first part has been used, so
+    re-testing it on the second is an ordinary fixed-candidate screen. What it
+    costs is rows, which is why it is off by default.
+    """
+
+    def test_off_by_default(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation").fit(X, y)
+        assert model.parsimony_holdout is None
+        assert model.certification_result_ is None
+
+    def test_inflation_factor_is_reported(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation").fit(X, y)
+        report = model.selection_report_
+        screened = sum(bool(row["screened"]) for row in report)
+        kept = sum(bool(row["kept"]) for row in report)
+        if kept:
+            assert model.fdp_inflation_ == pytest.approx(screened / kept)
+            assert model.fdp_inflation_ >= 1.0
+
+    def test_second_split_certifies_the_returned_set(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation", parsimony_holdout=0.5).fit(X, y)
+        if model.n_features_out_:
+            assert model.certification_result_ is not None
+            # every returned feature survived the re-test, so the count cannot
+            # exceed what that screen certified
+            assert model.n_features_out_ <= model.certification_result_.n_candidates
+            assert model.fdr_controlled_ is True
+
+    def test_second_split_never_grows_the_returned_set(self, regression_data):
+        X, y = regression_data
+        plain = _fast(BeamFeatRegressor, selector="permutation").fit(X, y)
+        split = _fast(BeamFeatRegressor, selector="permutation", parsimony_holdout=0.5).fit(X, y)
+        assert split.n_features_out_ <= plain.n_features_out_
+
+    def test_warns_when_rows_are_too_few_to_split(self, rng):
+        X = rng.uniform(1.0, 6.0, (30, 4))
+        y = (X[:, 0] * X[:, 1]) / X[:, 2] + rng.normal(0, 0.05, 30)
+        with pytest.warns(UserWarning, match="cannot be split"):
+            _fast(BeamFeatRegressor, selector="permutation", parsimony_holdout=0.5).fit(X, y)
+
+    def test_falls_back_to_the_screened_set_not_a_pruned_one(self, rng):
+        """A caller who asked for a certified equation and cannot have a compact
+        one should get the long certified set, not the compact uncertified
+        subset --- that subset is the single property they ruled out."""
+        X = rng.uniform(1.0, 6.0, (30, 4))
+        y = (X[:, 0] * X[:, 1]) / X[:, 2] + rng.normal(0, 0.05, 30)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            fallback = _fast(
+                BeamFeatRegressor, selector="permutation", parsimony_holdout=0.5
+            ).fit(X, y)
+            unpruned = _fast(BeamFeatRegressor, selector="permutation", parsimony=None).fit(X, y)
+            pruned = _fast(BeamFeatRegressor, selector="permutation").fit(X, y)
+        assert fallback.n_features_out_ == unpruned.n_features_out_
+        if pruned.n_features_out_ < unpruned.n_features_out_:
+            assert fallback.n_features_out_ > pruned.n_features_out_
+
+    def test_unpruned_equation_is_the_certified_set(self, regression_data):
+        """`parsimony=None` already gives a printed equation that carries the
+        guarantee, at no cost in rows. It is the free corner of the trade-off
+        and the fallback the split degrades to."""
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation", parsimony=None).fit(X, y)
+        report = model.selection_report_
+        screened = sum(bool(row["screened"]) for row in report)
+        assert model.n_features_out_ == screened
+        assert model.fdp_inflation_ == pytest.approx(1.0)
+
+    def test_predictions_still_work_after_the_second_split(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation", parsimony_holdout=0.5).fit(X, y)
+        assert model.predict(X).shape == y.shape
+
+
+class TestConstantColumns:
+    """A column with no variation standardises to zeros, so it can never be
+    selected. That is correct and costs nothing, but in the output it is
+    indistinguishable from a column that simply does not matter, so it is
+    reported."""
+
+    @staticmethod
+    def _with_constants(_rng, n_constant):
+        # Seeded here rather than drawn from the shared generator so that the
+        # padded and unpadded designs share their real columns exactly; drawing
+        # twice from a shared generator would compare two different problems.
+        rng = np.random.default_rng(20260723)
+        n = 300
+        columns = [rng.uniform(1.0, 6.0, n) for _ in range(3)]
+        target = columns[0] * columns[1] + rng.normal(0, 0.05, n)
+        columns += [np.full(n, float(k + 1)) for k in range(n_constant)]
+        return np.column_stack(columns), target
+
+    def test_reports_constant_columns(self, rng):
+        X, y = self._with_constants(rng, 2)
+        with pytest.warns(UserWarning, match=r"2 of 5 columns are constant"):
+            _fast(BeamFeatRegressor, selector="permutation").fit(X, y)
+
+    def test_silent_when_every_column_varies(self, regression_data):
+        X, y = regression_data
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            _fast(BeamFeatRegressor, selector="permutation").fit(X, y)
+        assert not [entry for entry in caught if "columns are constant" in str(entry.message)]
+
+    def test_small_magnitude_columns_are_not_reported(self, rng):
+        """The case an absolute floor on the variance would get wrong: values
+        around 1e-9 vary genuinely but have a smaller variance than a stuck
+        sensor reading 9.81."""
+        n = 300
+        tiny = rng.normal(0, 1e-9, n)
+        X = np.column_stack([rng.uniform(1.0, 6.0, (n, 3)), tiny])
+        y = X[:, 0] * X[:, 1] + rng.normal(0, 0.05, n)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            _fast(BeamFeatRegressor, selector="permutation").fit(X, y)
+        assert not [entry for entry in caught if "columns are constant" in str(entry.message)]
+
+    def test_long_lists_are_truncated(self, rng):
+        X, y = self._with_constants(rng, 8)
+        with pytest.warns(UserWarning, match=r"8 of 11 columns are constant.*\.\.\."):
+            _fast(BeamFeatRegressor, selector="permutation").fit(X, y)
+
+    def test_constant_columns_change_nothing(self, rng):
+        """They are filtered by the beam before screening, so they cost neither
+        accuracy nor multiplicity."""
+        plain, y = self._with_constants(rng, 0)
+        padded, _ = self._with_constants(rng, 8)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            a = _fast(BeamFeatRegressor, selector="permutation").fit(plain, y)
+            b = _fast(BeamFeatRegressor, selector="permutation").fit(padded, y)
+        assert a.n_features_out_ == b.n_features_out_
+        assert len(a.selection_report_) == len(b.selection_report_)
