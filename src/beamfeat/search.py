@@ -60,6 +60,19 @@ DEFAULT_UNARY = ("log", "sqrt", "reciprocal", "square", "abs")
 DEFAULT_BINARY = ("mul", "div", "add", "sub")
 
 
+def report(verbose: int, level: int, message: str) -> None:
+    """Print a progress line when ``verbose`` reaches ``level``.
+
+    Progress goes to stdout rather than through :mod:`logging`, following the
+    scikit-learn convention for ``verbose``: a caller who asks for progress
+    should see it without first having to configure a handler. Warnings and
+    diagnostics continue to use the module logger, because those are events
+    the caller did not ask for and may want to capture.
+    """
+    if verbose >= level:
+        print(f"[beamfeat] {message}", flush=True)
+
+
 @dataclass(frozen=True, slots=True)
 class SearchTrace:
     """Per-depth record of what the search did.
@@ -175,7 +188,8 @@ class BeamSearch:
             proposed; the beam is traversed in score order so the truncation
             falls on the least promising parents.
         random_state: Seed passed to the scorer. Search itself is deterministic.
-        verbose: If positive, log progress at each depth.
+        verbose: Progress reporting to stdout. ``0`` is silent, ``1`` prints a
+            single summary line for the search, ``2`` adds a line per depth.
 
     Attributes:
         result_: :class:`SearchResult` from the most recent :meth:`run`.
@@ -399,8 +413,12 @@ class BeamSearch:
                 elapsed=time.perf_counter() - started,
             )
         )
-        if self.verbose:
-            logger.info("[beamfeat] %s", trace[-1])
+        report(
+            self.verbose,
+            2,
+            f"  depth 0: {len(beam)} input columns, best score "
+            f"{float(np.max(beam_scores)) if len(beam_scores) else 0.0:.4f}",
+        )
 
         for depth in range(1, self.max_depth + 1):
             depth_started = time.perf_counter()
@@ -408,16 +426,14 @@ class BeamSearch:
             candidates, n_unit_rejected = self._propose(beam, pool, seen)
             n_proposed_total += len(candidates)
             if not candidates:
-                if self.verbose:
-                    logger.info("[beamfeat] depth %d: no new candidates; stopping", depth)
+                report(self.verbose, 2, f"  depth {depth}: no new candidates; stopping")
                 break
 
             evaluated, values = evaluator.evaluate_many(candidates)
             n_numeric_rejected = len(candidates) - len(evaluated)
             n_evaluated_total += len(evaluated)
             if not evaluated:
-                if self.verbose:
-                    logger.info("[beamfeat] depth %d: no candidate survived evaluation; stopping", depth)
+                report(self.verbose, 2, f"  depth {depth}: nothing survived evaluation; stopping")
                 break
 
             # Rank on a blend of marginal and absolute value.
@@ -445,8 +461,7 @@ class BeamSearch:
                 evaluated, values, scores, self.beam_width
             )
             if not beam:
-                if self.verbose:
-                    logger.info("[beamfeat] depth %d: beam collapsed after redundancy pruning; stopping", depth)
+                report(self.verbose, 2, f"  depth {depth}: beam collapsed after redundancy pruning; stopping")
                 break
 
             selected.extend(beam)
@@ -471,8 +486,22 @@ class BeamSearch:
                     elapsed=time.perf_counter() - depth_started,
                 )
             )
-            if self.verbose:
-                logger.info("[beamfeat] %s", trace[-1])
+            dropped = []
+            if n_unit_rejected:
+                dropped.append(f"{n_unit_rejected} unit")
+            if n_numeric_rejected:
+                dropped.append(f"{n_numeric_rejected} numeric")
+            if n_redundant:
+                dropped.append(f"{n_redundant} near-duplicate")
+            report(
+                self.verbose,
+                2,
+                f"  depth {depth}: {len(candidates)} proposed -> {len(evaluated)} evaluated"
+                f" -> {len(beam)} kept by beam"
+                + (f" ({', '.join(dropped)} rejected)" if dropped else "")
+                + f", best {float(np.max(kept_scores)):.4f}"
+                f", {time.perf_counter() - depth_started:.2f}s",
+            )
 
         # Final ranking across every depth, with one more redundancy pass so
         # that features admitted at different depths are also deduplicated.
@@ -492,6 +521,13 @@ class BeamSearch:
         result.n_proposed_total = n_proposed_total
         result.n_evaluated_total = n_evaluated_total
         self.result_ = result
+        report(
+            self.verbose,
+            1,
+            f"search: depth {self.max_depth}, beam {self.beam_width} -> "
+            f"{n_proposed_total} proposed, {len(result.nodes)} candidates "
+            f"({result.elapsed:.2f}s)",
+        )
         return result
 
     def _finalise(
