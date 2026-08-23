@@ -60,7 +60,5 @@ The order matters; each step feeds the next.
 5. Archive the release on Zenodo; copy the concept DOI into
    `CITATION.cff` (template at the bottom of that file) and the README's
    DOI badge.
-6. If submitting the paper to a journal, cite the archive DOI; after
-   acceptance, add the `preferred-citation` block to `CITATION.cff`.
-7. Publish the conda-forge recipe: `grayskull pypi beamfeat`, then a pull
+6. Publish the conda-forge recipe: `grayskull pypi beamfeat`, then a pull
    request to `conda-forge/staged-recipes` (a skeleton is in `recipe/`).
