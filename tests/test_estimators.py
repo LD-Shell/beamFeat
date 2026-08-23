@@ -539,11 +539,13 @@ class TestUnitsIntegration:
         careful thing to do, and is the case where the gate quietly stops
         binding: an unlabelled column is dimensionally free and combines
         with anything."""
+        pytest.importorskip("pint")
         X, y = regression_data
         with pytest.warns(UserWarning, match="units cover 2 of 4 columns"):
             _fast(BeamFeatRegressor, units={"x0": "kilogram", "x1": "meter"}).fit(X, y)
 
     def test_full_coverage_is_silent(self, regression_data):
+        pytest.importorskip("pint")
         X, y = regression_data
         units = {f"x{index}": "dimensionless" for index in range(X.shape[1])}
         with warnings.catch_warnings():
@@ -551,6 +553,7 @@ class TestUnitsIntegration:
             _fast(BeamFeatRegressor, units=units).fit(X, y)
 
     def test_coverage_warning_does_not_repeat_on_predict(self, regression_data):
+        pytest.importorskip("pint")
         X, y = regression_data
         model = _fast(BeamFeatRegressor, units={"x0": "kilogram"})
         with warnings.catch_warnings(record=True) as caught:
