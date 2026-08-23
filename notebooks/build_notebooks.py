@@ -72,6 +72,7 @@ selection machinery in detail.
 import warnings
 
 import numpy as np
+import pandas as pd
 
 warnings.filterwarnings("ignore")
 
@@ -97,7 +98,10 @@ b = rng.uniform(1.0, 6.0, n)
 c = rng.uniform(1.0, 6.0, n)
 d = rng.uniform(1.0, 6.0, n)  # an irrelevant column
 
-X = np.column_stack([a, b, c, d])
+# A DataFrame rather than a bare array: beamfeat takes column names from it,
+# so the formulas come back as `(a * b) / c` instead of `(x0 * x1) / x2`.
+# A NumPy array works identically and reports columns as x0...xp.
+X = pd.DataFrame({"a": a, "b": b, "c": c, "d": d})
 y = (a * b) / c + rng.normal(0, 0.05, n)
 
 print(f"{X.shape[0]} rows, {X.shape[1]} columns")
@@ -121,6 +125,21 @@ model.fit(X, y)
 
 print(f"R^2: {model.score(X, y):.4f}")
 print(f"features constructed: {model.n_features_out_}")
+        """
+    ),
+    markdown(
+        """
+## Watching it work
+
+`verbose` is a level. `0` is silent, `1` prints a line per stage, and `2` adds
+per-depth search detail and the strongest certified candidates with their
+p- and q-values. It is the quickest way to see where a fit spent its effort,
+and to tell a search that found nothing from a screen that certified nothing.
+        """
+    ),
+    code(
+        """
+BeamFeatRegressor(max_depth=2, beam_width=30, random_state=0, verbose=1).fit(X, y)
         """
     ),
     markdown(
@@ -227,6 +246,8 @@ for formula in classifier.formulas():
   scoring strategies differ in what they detect and what they cost.
 - **03: Selection and units** — how false discovery rate control works, why the
   default is not knockoffs, and how dimensional analysis constrains the search.
+- **04: Reading a fit** — what to do when the equation contains columns you did
+  not expect, and how to tell a search failure from a selection failure.
         """
     ),
 ]
@@ -504,6 +525,7 @@ selected features that are spurious.
 import warnings
 
 import numpy as np
+import pandas as pd
 
 warnings.filterwarnings("ignore")
 
@@ -612,6 +634,13 @@ construction when `n < 2p`, where fixed-X does not exist, and warns.
 
 beamfeat routes between the two automatically and reports which assumptions
 are under strain, rather than pretending otherwise.
+
+One thing knockoffs will *not* do, since the conditional null invites the
+inference: they cannot prune a term out of an expression. Selection operates
+on whole candidate columns, so a candidate like `noise + (a * b) / c` is one
+column and is accepted or rejected entire — switching the selector does not
+reach inside it. Constraining what gets *built* is the lever there, and
+notebook 04 uses units for exactly that.
         """
     ),
     code(
@@ -778,10 +807,14 @@ physical_target = (
     physical["mass"] * physical["length"] / physical["time"] + cell_rng.normal(0, 0.05, n)
 )
 
-X_physical = np.column_stack([physical["mass"], physical["length"], physical["time"]])
+# Units are keyed by column name, so a DataFrame lets the mapping read as
+# physics rather than as indices.
+X_physical = pd.DataFrame(physical)
 # Units may be pint quantities or plain strings; strings are parsed with
-# pint at fit time.
-estimator_units = {"x0": "kg", "x1": "meter", "x2": "second"}
+# pint at fit time. Cover every column: one left unlabelled is dimensionally
+# unconstrained and combines freely with the rest, so partial coverage stops
+# the check binding where it matters (beamfeat warns when that happens).
+estimator_units = {"mass": "kg", "length": "meter", "time": "second"}
 
 model = BeamFeatRegressor(
     max_depth=2, beam_width=25, units=estimator_units, selector="permutation",
@@ -796,7 +829,354 @@ print(model.equation())
 ]
 
 
+# --------------------------------------------------------------------------- #
+# 04: Reading a fit
+# --------------------------------------------------------------------------- #
+
+reading_a_fit = [
+    markdown(
+        """
+# Reading a fit
+
+The three notebooks before this one plant an answer and check that beamfeat
+finds it. Real fits do not arrive that way. They arrive as an equation you did
+not write, containing columns you did not expect, with `fdr_controlled_`
+reporting `True` and no obvious way to tell a triumph from a coincidence.
+
+This notebook is about that moment. We take a problem with a known physical
+answer, hide it among noise, and then get it wrong on purpose — because the
+ways it goes wrong are more instructive than the way it goes right, and every
+one of them has a fix.
+        """
+    ),
+    code(
+        """
+import warnings
+
+import numpy as np
+import pandas as pd
+
+warnings.filterwarnings("default")  # we want to see beamfeat's warnings here
+
+from beamfeat import BeamFeatRegressor
+
+rng = np.random.default_rng(99)
+n = 300
+        """
+    ),
+    markdown(
+        """
+## The problem
+
+Hydraulic power of a centrifugal pump, `P = rho * g * Q * H / eta`: density,
+gravity, flow rate, head, efficiency. Five real variables, buried among eight
+columns of plausible-looking nonsense — the ambient noise any plant historian
+is full of.
+
+Note that `g` is a constant. Keep an eye on it.
+        """
+    ),
+    code(
+        """
+columns = {
+    "rho": rng.uniform(800, 1200, n),   # density, kg/m^3
+    "g": np.full(n, 9.81),              # gravity, m/s^2 — constant
+    "Q": rng.uniform(0.01, 0.5, n),     # flow rate, m^3/s
+    "H": rng.uniform(10, 100, n),       # head, m
+    "eta": rng.uniform(0.6, 0.9, n),    # efficiency, dimensionless
+}
+power = columns["rho"] * columns["g"] * columns["Q"] * columns["H"] / columns["eta"]
+y = power + rng.normal(0, 0.02 * power.std(), n)
+
+for index in range(8):
+    columns[f"noise_{index}"] = rng.uniform(0, 50, n)
+
+X = pd.DataFrame(columns)
+print(f"{X.shape[0]} rows, {X.shape[1]} columns, {X.shape[1] - 5} of them irrelevant")
+        """
+    ),
+    markdown(
+        """
+## Start at the defaults
+
+Always. The defaults are `max_depth=2`, `beam_width=50`.
+        """
+    ),
+    code(
+        """
+model = BeamFeatRegressor(random_state=99).fit(X, y)
+
+print(model.equation())
+print(f"R^2: {model.score(X, y):.4f}")
+        """
+    ),
+    markdown(
+        """
+`(H / eta) * (Q * rho)` is `rho * Q * H / eta` — the physics, exactly, with
+none of the eight noise columns in it.
+
+### Where did gravity go?
+
+It is in the coefficient. `g` never varies, so no expression containing it can
+be distinguished from the same expression without it: `rho * g` is just
+`9.81 * rho`, perfectly collinear with `rho`, and the redundancy pass keeps one
+representative of the pair. The scaling then lands in the linear model, which
+is why the fitted coefficient reads 9.79 rather than 1.
+
+This generalises. A multiplicative constant is absorbed into the coefficient
+rather than recovered as a symbol, so its absence from the formula is not a
+miss. Check the coefficient before concluding a factor was lost.
+        """
+    ),
+    markdown(
+        """
+## Searching harder makes it worse
+
+Five variables feels like it should need a deep search. Let us give it one:
+depth 3, and a wider beam. `verbose=1` shows what each stage did.
+        """
+    ),
+    code(
+        """
+deep = BeamFeatRegressor(
+    random_state=99, max_depth=3, beam_width=60, verbose=1
+).fit(X, y)
+
+print()
+print(deep.equation())
+print(f"R^2: {deep.score(X, y):.4f}")
+print(f"fdr_controlled_: {deep.fdr_controlled_}")
+        """
+    ),
+    markdown(
+        """
+The physics is still in there — `(H / eta) * (Q * rho)` — but a junk term
+containing `noise_0` has been bolted onto it, and `fdr_controlled_` is still
+`True`. The R^2 is unchanged to four decimals. We paid three times the runtime
+for an equation nobody can read.
+
+### Why the flag is still True
+
+This is the single most important thing to understand about the guarantee, and
+it is not a defect.
+
+The null being tested is **marginal**: is this expression, *as a whole*,
+independent of the target? An expression that combines the true core with a
+noise column is emphatically not independent of the target — the core sees to
+that — so its null is false and selecting it is not an error under the
+criterion. The guarantee certifies that a selected formula is not pure noise.
+It does not certify that every column inside it earns its place.
+
+So `fdr_controlled_ = True` means what it says, and it is not the property you
+wanted here. Noise hitchhikes on a strong signal.
+        """
+    ),
+    markdown(
+        """
+## Depth is not the number of variables
+
+The instinct that sent us to `max_depth=3` was wrong arithmetic. Depth counts
+*composition levels*, not variables, and a binary operator combines any two
+surviving expressions — not a variable onto a chain.
+
+So `rho * Q * H / eta`, four variables, is depth **two**:
+
+| depth | built |
+|---|---|
+| 1 | `(Q * H)` and `(eta / rho)` |
+| 2 | `(Q * H) / (eta / rho)` |
+
+The default reached it on the first try. The extra level bought no accuracy and
+gave the search room to decorate a finished answer with noise. Raise `max_depth`
+when a target you expect is *not* being recovered, never speculatively: a deeper
+search enlarges the candidate pool, every threshold scales as 1/m, and each
+extra candidate costs power on the ones that matter.
+        """
+    ),
+    markdown(
+        """
+## Units are the fix
+
+Statistics cannot tell that `noise_0` does not belong — as we just saw, it is
+genuinely associated with the target once attached to the core. Physics can.
+You cannot add a dimensionless number to a quantity in kg·m/s, and beamfeat
+rejects such expressions at construction, before they are ever scored.
+        """
+    ),
+    code(
+        """
+units = {
+    "rho": "kg/m**3", "g": "m/s**2", "Q": "m**3/s", "H": "m",
+    "eta": "dimensionless",
+    **{f"noise_{index}": "dimensionless" for index in range(8)},
+}
+
+gated = BeamFeatRegressor(
+    random_state=99, max_depth=3, beam_width=60, units=units
+).fit(X, y)
+
+print(gated.equation())
+print(f"R^2: {gated.score(X, y):.4f}")
+        """
+    ),
+    markdown(
+        """
+The same over-deep search now returns the clean core. Identical R^2, no
+parasites — and this is the general lesson: where a statistical criterion
+cannot separate two candidates, a structural constraint often can, and it costs
+nothing because it applies before any numerical work.
+
+A caution about what units check. They enforce that an expression is internally
+coherent, not that it matches the target's dimension. `rho * Q * H / eta` is
+kg·m/s while power is watts, and nothing objects, because `g` was absorbed.
+Units reject nonsense; they will not tell you a factor is missing.
+        """
+    ),
+    markdown(
+        """
+### Cover every column
+
+Labelling the five real measurements and leaving the noise columns blank looks
+like the careful thing to do. It is not.
+        """
+    ),
+    code(
+        """
+partial = {
+    "rho": "kg/m**3", "g": "m/s**2", "Q": "m**3/s", "H": "m",
+    "eta": "dimensionless",
+}
+
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always")
+    half_gated = BeamFeatRegressor(
+        random_state=99, max_depth=3, beam_width=60, units=partial
+    ).fit(X, y)
+
+for entry in caught:
+    if "units cover" in str(entry.message):
+        print(str(entry.message)[:200])
+        break
+
+print()
+print(half_gated.equation())
+        """
+    ),
+    markdown(
+        """
+`noise_0` is back, added directly to a kg·m/s quantity — the exact violation
+the units pass exists to catch. An unlabelled column is dimensionally
+*unconstrained*, so it combines freely with everything, and the gate stops
+binding on precisely the columns you did not vouch for. Units are all or
+nothing; give the genuinely unitless columns `"dimensionless"`.
+        """
+    ),
+    markdown(
+        """
+## The equation is not the certified set
+
+`equation()` prints the parsimony subset. The guarantee covers the larger
+screened set, which `selection_report_` holds in full, with an exact p- and
+q-value per candidate.
+        """
+    ),
+    code(
+        """
+report = deep.selection_report_
+screened = [row for row in report if row["screened"]]
+printed = [row for row in report if row["kept"]]
+
+print(f"candidates screened: {len(report)}")
+print(f"certified (guarantee applies here): {len(screened)}")
+print(f"terms in equation(): {len(printed)}")
+print()
+for row in sorted(screened, key=lambda r: r["p_value"])[:3]:
+    formula = row["formula"]
+    shown = formula if len(formula) <= 62 else formula[:59] + "..."
+    print(f"  {shown:62} p={row['p_value']:.2e} q={row['q_value']:.2e}")
+        """
+    ),
+    markdown(
+        """
+The gap matters. Parsimony picks a subset by greedy forward selection on the
+same rows, and a data-dependent subset of an FDR-controlled set does not
+inherit the guarantee: pruning cannot add false selections, but it can raise
+the false discovery *proportion*, because the denominator shrinks faster than
+the numerator. Report the screened set when you need the guarantee; use the
+equation when you need something to read.
+        """
+    ),
+    markdown(
+        """
+## When nothing is selected
+
+Two very different situations produce an empty selection, and they have
+different fixes. Here is the honest one — a target that is pure noise.
+        """
+    ),
+    code(
+        """
+with warnings.catch_warnings(record=True) as caught:
+    warnings.simplefilter("always")
+    empty = BeamFeatRegressor(random_state=0).fit(X, rng.normal(0, 1, n))
+
+print(f"features constructed: {empty.n_features_out_}")
+print(f"fdr_controlled_: {empty.fdr_controlled_}")
+for entry in caught:
+    print(f"  warning: {str(entry.message)[:130]}")
+        """
+    ),
+    markdown(
+        """
+An intercept-only model and a visible warning, which is the correct answer:
+there was nothing to find, and the constructor declined to invent it.
+`fdr_controlled_` reads `False` here rather than `True` — no feature was
+returned, so nothing carries the guarantee, and the flag describes what came
+back rather than how hard the procedure tried.
+
+The other case looks identical from the outside but is not. If the candidate
+pool is large enough that the multiplicity threshold falls below the smallest
+p-value the permutation budget can produce, the correction cannot reject
+*anything*, whatever the data say. The selector detects this and says so in its
+warning, naming the correction and what to change. So read the warning before
+concluding there is no signal: an empty selection with a budget warning means
+the test could not fire, not that the data are silent.
+        """
+    ),
+    markdown(
+        """
+## A checklist
+
+- Start at the defaults. Raise `beam_width` when an expected target is missed;
+  raise `max_depth` only when the target genuinely needs the depth, and count
+  composition levels, not variables.
+- An equation that grew noise terms is a sign you searched too deep, not that
+  you need to search deeper.
+- `fdr_controlled_ = True` says the formula is not noise. It does not say every
+  column in it belongs.
+- Supply units when you have them, for every column.
+- A missing constant is usually in the coefficient.
+- Quote `selection_report_` when you need the guarantee; quote `equation()`
+  when you need a sentence.
+- Read the warnings. They distinguish states that look identical from outside.
+        """
+    ),
+    markdown(
+        """
+## What to read next
+
+- **02: Search and scoring** — beam width, depth and the scoring strategies,
+  with the trace that shows where the cost went.
+- **03: Selection and units** — the calibration behind the guarantee, why the
+  default is not knockoffs, and the dimensional analysis used above.
+        """
+    ),
+]
+
+
+
 if __name__ == "__main__":
     build(HERE / "01_getting_started.ipynb", getting_started, "Getting started with beamfeat")
     build(HERE / "02_search_and_scoring.ipynb", search_and_scoring, "Search and scoring")
     build(HERE / "03_selection_and_units.ipynb", selection_and_units, "Selection and units")
+    build(HERE / "04_reading_a_fit.ipynb", reading_a_fit, "Reading a fit")

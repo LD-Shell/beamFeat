@@ -2,8 +2,8 @@ site_name: beamfeat
 site_description: Beam-search feature construction with FDR-controlled selection
 site_author: Olanrewaju M. Daramola
 copyright: '&copy; 2026 <a href="https://orcid.org/0009-0006-3327-2047" rel="author">Olanrewaju M. Daramola</a> (ORCID)'
-repo_url: https://github.com/LD-Shell/beamfeat
-site_url: https://ld-shell.github.io/beamfeat/
+repo_url: https://github.com/LD-Shell/beamFeat
+site_url: https://ld-shell.github.io/beamFeat/
 edit_uri: edit/main/docs/
 theme:
   name: material
@@ -32,6 +32,7 @@ nav:
       - Getting started: notebooks/01_getting_started.ipynb
       - Search and scoring: notebooks/02_search_and_scoring.ipynb
       - Selection and units: notebooks/03_selection_and_units.ipynb
+      - Reading a fit: notebooks/04_reading_a_fit.ipynb
   - API reference: api.md
 plugins:
   - search
