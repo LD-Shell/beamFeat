@@ -74,6 +74,38 @@ print(model.formulas())
 The recovered form, kg·m/s, is exactly the target's dimension — and the
 dimensionally invalid spellings never consumed a beam slot.
 
+Cover every column. A column without a unit is dimensionally
+unconstrained, so it combines freely with the labelled ones and the check
+stops binding on exactly the columns you did not vouch for — labelling your
+real measurements and leaving the noise blank is the case worth naming,
+because it looks careful and is not. Give the genuinely unitless columns
+`"dimensionless"`; the estimator warns when coverage is partial, and raises
+when the keys match no column at all. Keys are column names, so a DataFrame
+lets you write `{"rho": "kg/m**3"}` rather than `{"x0": ...}`.
+
+## Columns that carry no data
+
+A column with no variation cannot be selected — it standardises to zeros, so
+its association with the target is zero wherever it appears. That is the right
+outcome and costs nothing, but in the output it looks the same as a column
+that simply does not matter, so it is reported:
+
+```text
+beamfeat: 55 of 521 columns are constant (WAP003, WAP004, WAP092, ...) and
+cannot be selected. They are ignored and cost nothing, but check whether they
+are meant to carry data.
+```
+
+Constancy is relative to the column's magnitude, not an absolute floor on the
+spread — a column varying over 0 to 1e-9 has a smaller variance than a stuck
+sensor reading 9.81, and only the second is constant. Use `is_constant` to
+apply the same test when screening a table before fitting.
+
+A constant with a genuine unit is a different matter: gravity is m/s² whether
+or not it varies, and expressions built from it are unit-checked, so label it.
+Its absence from a recovered formula is not a miss — a multiplicative constant
+is absorbed into the fitted coefficient rather than returned as a symbol.
+
 ## Audit what selection did
 
 Every candidate's exact p-value and q-value is kept:

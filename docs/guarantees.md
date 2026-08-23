@@ -26,8 +26,14 @@ repeated inside every permutation; beamfeat deliberately avoids them.
 **P-values.** Add-one estimator `(1 + #exceedances)/(B + 1)` (Phipson &
 Smyth, 2010): exact, and never zero. The floor `1/(B+1)` interacts with the
 multiplicity correction — Benjamini–Hochberg needs the leading feature to
-reach `q/m` — so B is auto-raised to `ceil(2m/q)` (satisfiability plus
-headroom for one null exceedance), capped at `max_permutations`.
+reach `q/m`, Benjamini–Yekutieli the smaller `q/(m c(m))` — so B is
+auto-raised to twice the bound belonging to the *configured* correction
+(satisfiability plus headroom for one null exceedance), capped at
+`max_permutations`. The requirement binds hardest when few candidates reach
+the floor together: several tied signals relax the threshold by their count,
+a lone one carries it alone. If the pool is large enough that even the cap
+cannot meet it, the selector says so in `warnings_raised` and an empty
+selection should be read as an exhausted budget rather than an absent signal.
 
 **Null semantics.** Marginal independence. A near-duplicate of a genuine
 signal is a *true* discovery under this null; de-duplication is performed by
@@ -120,6 +126,24 @@ candidate, remains auditable in `selection_report_`. Stated precisely: the
 q-level guarantee certifies the screening set; the kept subset is a
 predictive selection from within it. Set `parsimony=None` to keep the entire
 screened set.
+
+`fdp_inflation_` reports |S|/|S'|, the factor by which pruning can inflate the
+realised false discovery proportion — the denominator shrinks faster than the
+numerator, so the count of false selections cannot rise but the proportion can.
+
+To certify the printed equation itself, there are two routes and they differ
+in price. `parsimony=None` prints the screened set entire — the equation *is*
+the certified object, at no cost in rows, but on wide data it runs to dozens of
+terms. `parsimony_holdout` keeps the equation compact as well. This splits the
+selection rows again: screening and parsimony use the first part, and the
+resulting subset — fixed at that point, and so an ordinary fixed-candidate set —
+is re-tested on the part held back. Terms failing the re-test are dropped. The
+cost is rows, and it is real: comfortable above a few hundred, unaffordable
+below roughly a hundred, where `parsimony=None` is the better choice. If a
+compact certified equation cannot be produced, the whole screened set is
+returned rather than a pruned subset — the pruned subset is the one thing a
+caller asking for certification did not want. The two-stage procedure has not
+been FDR-calibrated; it is offered as an option, not a measured result.
 
 ## Association is not generalisation
 
