@@ -37,7 +37,7 @@ pip install "beamfeat[units]"   # + pint, for unit-aware search (units as
 pip install "beamfeat[all]"     # + sympy display support and test deps
 ```
 
-Python ≥ 3.10. There are **no upper version pins**: the 411 tests pass from
+Python ≥ 3.10. There are **no upper version pins**: the 431 tests pass from
 scikit-learn 1.6.1 with numpy 1.26 through scikit-learn 1.9.0 with numpy 2.4,
 including 1.7.2 and 1.8.0 in between. Running the test suite or reproducing
 the benchmarks needs a little more setup, described in
@@ -54,10 +54,11 @@ the benchmarks needs a little more setup, described in
    procedures that control the false discovery rate (details below), on a
    held-out split of the training rows that the search never saw.
 3. **Fit.** A parsimony step (greedy forward selection within the screened
-   set, on by default) keeps the compact subset the equation uses — the full
+   set, on by default) keeps the compact subset the equation uses, and
+   `.equation()` marks how many of the certified terms it printed — the full
    screened set with per-candidate p- and q-values stays auditable in
-   `selection_report_` — then a linear model fits it, readable via
-   `.equation()`.
+   `selection_report_`. `parsimony=None` fits that whole set instead, so the
+   printed equation is itself the certified object.
 
 Numerical failures (overflow, domain errors) are recorded and excluded, never
 silently masked. Optional unit propagation — units given as pint quantities,
@@ -92,6 +93,11 @@ depends on how many distinct dimensions the columns carry.
   fails to generalise (negative held-out R², or accuracy below the majority
   class) — FDR certifies the features' association, and this check covers
   the separate claim that the equation built on them is sound.
+- **Scope, not just a flag.** `fdr_controlled_` says whether the returned
+  features carry the guarantee; `fdr_scope_` says what it is over —
+  `"screened set"` when the parsimony step pruned the equation down from a
+  larger certified set, `"printed equation"` when the two coincide.
+  `.equation()` prints the same distinction for a human reader.
 - **Honest failure.** If nothing passes selection, the default
   (`on_no_discoveries="empty"`) keeps no constructed features: the model
   degrades to an intercept-only fit and raises a visible
@@ -126,7 +132,10 @@ benchmark scripts, not asserted:
   realised 0.008 ± 0.004, 0.018 ± 0.005 and 0.046 ± 0.008. Power 1.00
   throughout. The bounds are computed from the design and the script fails if
   a realised rate sits above one.
-- End-to-end pipeline (search + holdout selection) at nominal FDR 0.10:
+- End-to-end pipeline (search + holdout selection) at nominal FDR 0.10,
+  500 rows and 6 input columns of which 2 carry signal through their product,
+  noise at 5% of the signal's standard deviation
+  ([`benchmarks/calibration_study.py`](https://github.com/LD-Shell/beamFeat/blob/main/benchmarks/calibration_study.py)):
   no false discovery in 200 replicates, a 95% upper bound of 0.015 on the true
   rate, power 1.000, zero fallbacks; zero selections over 60 global-null
   replicates.
@@ -172,7 +181,7 @@ benchmark scripts, not asserted:
   marginally-quiet quadratic is priced by the guarantee itself) and an
   achieved 0.780 ± 0.013: about 0.086 lost to what marginal screening cannot
   see, 0.094 to the search — stated rather than hidden.
-- Test suite: 411 tests at 95% statement coverage (a 90% floor is enforced
+- Test suite: 431 tests at 95% statement coverage (a 90% floor is enforced
   in CI), including scikit-learn's full estimator-conformance checks.
 - Selection-only baseline (knockpy on raw columns, modified-FDR offset —
   the only satisfiable configuration at these dimensionalities): 0/15

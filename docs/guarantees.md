@@ -111,39 +111,94 @@ optimistically biased, and the nominal FDR is not guaranteed for them. By
 default the estimators search on one half of the training rows and run
 selection on the other (`selection_holdout=0.5`), restoring the
 fixed-candidate-set premise. Measured end-to-end over
-200 replicates at nominal 0.10: not one false discovery, a 95% upper bound of
-0.015 on the true rate, power 1.000, no fallbacks; 60 global-null replicates
-selected nothing. If the holdout is disabled, the
-estimator refuses to claim the guarantee (`fdr_controlled_ = False`).
+200 replicates at nominal 0.10 (500 rows, 6 input columns of which 2 carry
+signal through their product, noise at 5% of the signal's standard
+deviation, `max_depth=2`, `beam_width=25`): not one false discovery, a 95%
+upper bound of 0.015 on the true rate, power 1.000, no fallbacks; 60
+global-null replicates selected nothing. That is a far stronger signal than
+the selector-level design above — the generating feature correlates with the
+target at 0.999 — so read it as an end-to-end check that the split does its
+job, not as a power measurement at the margin.
+`benchmarks/calibration_study.py` regenerates it. If the holdout is
+disabled, the estimator refuses to claim the guarantee
+(`fdr_controlled_ = False`).
 
 ## Parsimony within the screened set
 
-On a strong signal the marginal null correctly passes many mutually
-redundant true discoveries. By default the estimators therefore apply greedy
-forward selection *within* the screened set (`parsimony="forward"`) and fit
-the compact subset; the full screened set, with exact p- and q-values per
-candidate, remains auditable in `selection_report_`. Stated precisely: the
-q-level guarantee certifies the screening set; the kept subset is a
-predictive selection from within it. Set `parsimony=None` to keep the entire
-screened set.
+Three things can be wanted of the fitted equation: that it be short, that the
+guarantee cover the terms actually printed, and that it cost no selection
+rows. Any two are available together, and the choice is one parameter.
 
-`fdp_inflation_` reports |S|/|S'|, the factor by which pruning can inflate the
-realised false discovery proportion — the denominator shrinks faster than the
-numerator, so the count of false selections cannot rise but the proportion can.
+**`parsimony="forward"` (the default)** applies greedy forward selection
+*within* the screened set and fits the compact subset. It is short and costs
+no rows. What it gives up is the second property: the subset is chosen on the
+rows selection already used, so the q-level guarantee certifies the set it was
+drawn from and not the terms that survived. `equation()` says so on its own
+output whenever terms were dropped —
 
-To certify the printed equation itself, there are two routes and they differ
-in price. `parsimony=None` prints the screened set entire — the equation *is*
-the certified object, at no cost in rows, but on wide data it runs to dozens of
-terms. `parsimony_holdout` keeps the equation compact as well. This splits the
-selection rows again: screening and parsimony use the first part, and the
-resulting subset — fixed at that point, and so an ordinary fixed-candidate set —
-is re-tested on the part held back. Terms failing the re-test are dropped. The
-cost is rows, and it is real: comfortable above a few hundred, unaffordable
-below roughly a hundred, where `parsimony=None` is the better choice. If a
-compact certified equation cannot be produced, the whole screened set is
-returned rather than a pruned subset — the pruned subset is the one thing a
-caller asking for certification did not want. The two-stage procedure has not
-been FDR-calibrated; it is offered as an option, not a measured result.
+```text
+y = 0.9999*(x0 * x1) - 0.003943   [1 of 25 certified terms; parsimony=None prints all 25]
+```
+
+— and `fdr_scope_` records the same thing for code, which never sees that
+string: `"screened set"` here, `"printed equation"` when the guarantee covers
+the returned features themselves. `fdr_controlled_` says whether there *is* a
+guarantee; `fdr_scope_` says what it is over. The full screened set with exact
+p- and q-values per candidate stays auditable in `selection_report_`. `fdp_inflation_` reports |S|/|S'|, the factor by which
+pruning can inflate the realised false discovery proportion: the denominator
+shrinks faster than the numerator, so the count of false selections cannot
+rise but the proportion can.
+
+**`parsimony=None`** prints the screened set entire. The guarantee covers what
+is printed — the equation *is* the certified object, not a selection from it —
+and it still costs no rows. The price is length: on wide data the equation runs
+to dozens of terms. `fdp_inflation_` is 1.0, because the printed set and the
+screened set are the same set.
+
+**`parsimony_holdout`** buys both, and pays in rows. It splits the selection
+rows again: screening and parsimony use the first part, and the resulting
+subset — fixed at that point, and so an ordinary fixed-candidate set — is
+re-tested on the part held back. Terms failing the re-test are dropped, and
+because the guarantee then does cover the printed terms, `equation()` prints
+no subset note. The cost is real: comfortable above a few hundred rows,
+unaffordable below roughly a hundred, where `parsimony=None` is the better
+choice. If a compact certified equation cannot be produced, the whole screened
+set is returned rather than a pruned subset — the pruned subset is the one
+thing a caller asking for certification did not want. The two-stage procedure
+has not been FDR-calibrated; it is offered as an option, not a measured result.
+
+### What the default costs
+
+The exchange above is stated rather than assumed elsewhere in this page, so it
+is measured here. `benchmarks/parsimony_cost.py` re-runs the affected studies
+at both settings and pairs them fit by fit; `benchmarks/PARSIMONY_COST.md`
+records which studies depend on the setting and why. Over 308 paired fits
+across four studies:
+
+| study | fits | mean ΔR² (forward − None) | worst ΔR² | terms, None ÷ forward | `fdr_controlled_` disagreements |
+|---|---|---|---|---|---|
+| end-to-end calibration | 260 | −0.0001 | −0.0003 | 25.0× | 0 |
+| known-formula + stress suites | 18 | −0.0008 | −0.0148 | 26.0× | 0 |
+| Feynman physics panel | 24 | −0.0009 | −0.0111 | 30.6× | 0 |
+| Friedman #1 decomposition | 6 | −0.0095 | −0.0192 | 3.6× | 0 |
+
+Compactness costs about a thousandth of held-out R² on average and at most
+0.019 on a single fit, and buys an equation roughly twenty-five times shorter.
+`fdr_controlled_` never disagreed between the two settings on any of the 308
+fits, and the end-to-end calibration figures above — empirical FDR, its upper
+bound, power, fallbacks, null selections — are identical at both settings to
+every digit reported.
+
+Pruning was also never observed to inflate the realised false discovery
+proportion. That is not a theorem and should not be read as one: |S|/|S'| is
+the only bound available, and it is weak. It is an empirical observation with
+a mechanism behind it — greedy forward selection ranks by predictive
+contribution, and a marginally null feature contributes nothing, so it tends
+to be dropped first rather than kept. On a selector-level stress where
+screening was forced to admit false candidates (Gaussian design, nominal
+q = 0.5, 300 trials), the screened set realised FDP 0.397 and the greedily
+pruned subset realised 0.000, with the proportion rising in none of the 300
+trials.
 
 ## Association is not generalisation
 

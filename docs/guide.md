@@ -28,14 +28,78 @@ print(model.fdr_controlled_)
 ```
 
 ```text
-y = 0.9974*(x0 * x1) + 0.0264
+y = 0.9999*(x0 * x1) - 0.003943   [1 of 25 certified terms; parsimony=None prints all 25]
 True
 ```
 
-Two lines matter. `equation()` is the fitted model itself — evaluate it on
+Three things matter. `equation()` is the fitted model itself — evaluate it on
 raw feature values and you reproduce `predict()`. `fdr_controlled_` states
-whether the features carry the false-discovery-rate guarantee; check it
-before treating them as statistically vetted.
+whether the features carry the false-discovery-rate guarantee; check it before
+treating them as statistically vetted. And the suffix says that those two do
+not describe the same set of terms.
+
+That last point has an attribute as well as a suffix, because a script never
+reads the printed string:
+
+```python
+print(model.fdr_controlled_, "|", model.fdr_scope_)
+```
+
+```text
+True | screened set
+```
+
+`fdr_controlled_` says whether there is a guarantee. `fdr_scope_` says what it
+is over: `"screened set"` when the printed terms were pruned from a larger
+certified set, `"printed equation"` when the guarantee covers the terms you
+are looking at, `None` when there is no guarantee to scope. Branch on
+`fdr_scope_`, not on the equation text.
+
+## Why the equation says "1 of 25"
+
+Screening certified twenty-five formulas. On a strong signal the marginal
+null correctly passes every near-duplicate of the true feature — each one
+really is associated with the target — so twenty-five is the honest size of
+the certified set. A parsimony step then keeps the compact predictive subset
+and fits that, because an equation of dozens of near-duplicate terms defeats
+the interpretability the library exists for.
+
+The subset is chosen on the rows selection already used, so the q-level
+guarantee covers the twenty-five it came from and not the one that survived.
+That is what the suffix records, and `fdp_inflation_` prices it:
+
+```python
+print(model.fdp_inflation_)
+```
+
+```text
+25.0
+```
+
+|S|/|S'|, the factor by which pruning can inflate the realised false
+discovery proportion, since the denominator shrinks faster than the numerator
+can. Set `parsimony=None` to fit the screened set entire, at which point the
+printed equation *is* the certified object and the suffix disappears:
+
+```python
+full = BeamFeatRegressor(max_depth=2, beam_width=25, random_state=0,
+                         parsimony=None).fit(X, y)
+print(full.n_features_out_)
+print(full.equation(max_terms=3))
+```
+
+```text
+25
+y = 1.077*(x0 * x1) - 0.2264*(x0 * sqrt(x1)) - 0.5879*(sqrt(x1) - 1/(x0)) + 0.09804
+```
+
+What the default costs you in fit is small, and measured rather than asserted:
+about a thousandth of held-out R² across 308 paired fits, for an equation some
+twenty-five times shorter, with no case where pruning inflated the realised
+false discovery proportion. The measurement is
+`benchmarks/PARSIMONY_COST.md`. Short *and* certified costs rows instead of
+the guarantee: see `parsimony_holdout` on the
+[guarantees page](guarantees.md).
 
 ## Column names flow into formulas
 
@@ -116,8 +180,10 @@ for row in model.selection_report_[:3]:
 ```
 
 Features are *kept* only if they pass FDR screening at `target_fdr`
-(default 0.1, Benjamini–Yekutieli) on a held-out split, then survive a
-parsimony pass that keeps the compact predictive subset.
+(default 0.1, Benjamini–Yekutieli) on a held-out split, then survive the
+parsimony pass. `screened` marks the certified set, which is what the
+guarantee covers; `kept` marks the compact subset the equation prints. Set
+`parsimony=None` and the two agree.
 
 ## Honest failure, by default
 

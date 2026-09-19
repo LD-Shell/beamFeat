@@ -101,7 +101,8 @@ a lower ceiling as the price of a guarantee and a floor. Quantified in
 - **Fewer features.** Selection is a hypothesis test rather than a
   noise-threshold heuristic, and a parsimony step keeps a compact subset of
   what passes. Expect single-digit feature counts where autofeat returns
-  tens.
+  tens. `equation()` records how many of the certified terms it printed, and
+  `parsimony=None` returns the whole certified set if you want it.
 - **A guarantee, and an honest failure.** If nothing passes selection,
   `beamfeat` returns *no* constructed features, warns, and sets
   `fdr_controlled_ = False` rather than returning unvetted candidates. Check
