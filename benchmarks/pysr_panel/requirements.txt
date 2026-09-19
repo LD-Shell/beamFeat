@@ -1,0 +1,21 @@
+# PySR needs a Julia runtime and installs one through juliapkg on first
+# import. It cannot share the repository's development environment: the
+# juliacall/juliapkg pair pins its own numpy and pandas floors and drags a
+# ~500 MB Julia depot into the environment's prefix, and the independent
+# study next door pins numpy 1.26.4 for autofeat, which PySR will not accept.
+# Hence a dedicated environment, as benchmarks/independent/ uses for autofeat.
+pysr==2.4.1
+
+# The panel's scoring code. sympy carries the proportionality test that
+# decides exact symbolic recovery; scikit-learn supplies r2_score, which is
+# the same function beamfeat's own score() calls, so the numeric criterion is
+# computed identically for both methods.
+sympy>=1.13
+scikit-learn>=1.6
+numpy>=1.26
+pandas>=2.0
+
+# beamfeat is deliberately NOT installed here. run_panel.py imports only the
+# data generators and the scoring predicates from benchmarks/feynman_panel.py,
+# which need numpy and sympy alone, so this environment scores PySR without
+# being able to influence a beamfeat number.
