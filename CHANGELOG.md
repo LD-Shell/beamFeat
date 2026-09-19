@@ -4,6 +4,75 @@ Notable changes to `beamfeat`. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] - 2026-09-17
+
+`equation()` now says when the equation it prints is a subset of the certified
+set. The default is unchanged -- `parsimony="forward"` still keeps the compact
+predictive subset -- but a caller reading the equation next to
+`fdr_controlled_ = True` previously had no signal that the two do not describe
+the same terms. They now do:
+
+```text
+y = 0.9999*(x0 * x1) - 0.003943   [1 of 25 certified terms; parsimony=None prints all 25]
+```
+
+What the default costs is also measured rather than asserted. Across 308
+paired fits the compact equation is worse by 0.001 of held-out R^2 on average
+and 0.019 at worst, roughly twenty-five times shorter, and `fdr_controlled_`
+never disagreed between the two settings. The end-to-end calibration figures
+are identical at both. `benchmarks/PARSIMONY_COST.md` records the numbers, the
+per-study dependency map behind them, and what pruning does to the realised
+false discovery proportion, which in every regime tested was nothing or an
+improvement. Seventeen tests take the suite to 431.
+
+The printed string is the only behavioural change, and it affects anything
+that parses `equation()` output. `equation()` splits cleanly on `"   ["`, and
+the suffix is absent whenever the printed terms *are* the certified ones.
+
+### Added
+
+- `equation()` appends `[k of m certified terms; parsimony=None prints all m]`
+  when the parsimony step dropped terms. It is absent with no selector, with
+  nothing screened, at `parsimony=None`, when the greedy pass happened to keep
+  everything, and after a `parsimony_holdout` re-test, which certifies the
+  subset on rows of its own and so leaves nothing to warn about. On a
+  multiclass classifier the terms are shared across the lines, so the suffix
+  appears once at the end of the block.
+- `fdr_scope_` names which set `fdr_controlled_` is a statement about:
+  `"printed equation"` when the guarantee covers the returned features,
+  `"screened set"` when it covers a larger set they were drawn from, `None`
+  when the flag is not `True`. The flag has always meant "the returned
+  features came from the screened set", which is not the same claim, and a
+  caller branching on it in a script cannot see the note `equation()` prints.
+  At `verbose=1` the result line names the scope too.
+- `benchmarks/PARSIMONY_COST.md` and `benchmarks/parsimony_cost.py`: the
+  measurement above, and the runner that produces it. The runner drives each
+  study through its own module rather than a copy of its protocol, and writes
+  only to `benchmarks/parsimony_cost/`; no archived result is read or written.
+- `parsimony` is selectable from the benchmark harnesses -- a keyword argument
+  on `feynman_panel.run_panel`, `calibration_study.main`,
+  `friedman_decomposition.main` and `run_benchmarks.evaluate`, a `--parsimony`
+  flag on the three `additional_experiments` studies, and the
+  `BEAMFEAT_PARSIMONY` environment variable for the two `bench.py` harnesses.
+  Unset or omitted reproduces the library default exactly, and the value in
+  force is recorded on every row.
+- `feynman_panel.make_data` exposes the panel's data generation, so a
+  comparison harness scores its method on the same rows rather than on a copy
+  of that code. It is the original code moved, not rewritten: the arrays it
+  returns are identical to those the previous version produced.
+- `benchmarks/pysr_panel/`: PySR on the same twelve-law panel, in its own
+  pinned environment with its own Julia runtime, scored by the panel's own
+  data generators and proportionality test imported unmodified. The budget,
+  the operator sets and the Pareto-front selection rule are fixed in advance
+  and stated in its README. `pysr` is not a dependency of this package.
+
+### Documentation
+
+- The guarantees page states the three-way trade-off with the measurement
+  attached, rather than asserting the exchange rate.
+- The user guide's opening example explains the suffix where a reader first
+  meets it, and shows what `parsimony=None` returns instead.
+
 ## [0.3.1] - 2026-08-22
 
 Correctness release for the automatic permutation budget, plus two warning
