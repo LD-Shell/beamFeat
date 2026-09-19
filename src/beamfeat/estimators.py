@@ -249,21 +249,34 @@ class _BeamFeatBase(BaseEstimator):
     ) -> list[int]:
         """Greedy forward selection among the FDR-screened features.
 
-        Purpose and guarantee semantics, stated precisely: the q-level FDR
-        guarantee applies to the *screening* step (the full screened set); this
-        step then chooses a predictive subset of it for the fitted model, on
-        the same rows selection used. It is a parsimony heuristic — the subset
-        itself is not re-certified at level q — but every kept feature passed
-        screening, and the full screened set with p- and q-values remains
-        available in ``selection_report_``. The rationale: on a strong signal
-        the marginal null correctly passes many mutually redundant true
-        discoveries, and an equation of dozens of near-duplicate terms
-        defeats the interpretability the library exists for.
+        On by default (``parsimony="forward"``). Purpose and guarantee
+        semantics, stated precisely: the q-level FDR guarantee applies to the
+        *screening* step (the full screened set); this step then chooses a
+        predictive subset of it for the fitted model, on the same rows
+        selection used. The subset is not re-certified at level q, so the
+        guarantee covers the set it came from and not the terms that survive
+        — which is why :meth:`equation` says so in its own output whenever
+        this step has dropped anything, rather than leaving the caller to
+        find it in the documentation. Every kept feature did pass screening,
+        and the full screened set with p- and q-values remains available in
+        ``selection_report_``.
+
+        The rationale: on a strong signal the marginal null correctly passes
+        many mutually redundant true discoveries, and an equation of dozens of
+        near-duplicate terms defeats the interpretability the library exists
+        for. What compactness costs is measured rather than assumed — see
+        ``benchmarks/PARSIMONY_COST.md``, which puts it at roughly a
+        thousandth of held-out R^2 for an equation some twenty-five times
+        shorter, with no observed inflation of the realised false discovery
+        proportion.
+
+        ``parsimony=None`` keeps the entire screened set, so the printed
+        equation *is* the certified object; ``parsimony_holdout`` keeps it
+        compact and certified both, at a cost in rows.
 
         Features are added while the incremental in-sample R^2 (on integer-
         coded labels for classification, as a ranking heuristic) improves by
         at least ``parsimony_tol``; at least one feature is always kept.
-        Disable with ``parsimony=None`` to keep the entire screened set.
         """
         if self.parsimony is None or len(screened) <= 1:
             return list(screened)
@@ -296,13 +309,64 @@ class _BeamFeatBase(BaseEstimator):
             chosen.append(remaining.pop(best_position))
         return sorted(chosen)
 
-    def _certify_subset(self, X, y, rows, feature_names, units, nodes, keep_order):
-        """Re-screen the parsimony subset on rows it has not been fitted to.
+    def _resolve_fdr_scope(self) -> None:
+        """Record which set :attr:`fdr_controlled_` is a statement about.
 
-        The subset is fixed once the screening rows have been used, so this is
-        an ordinary fixed-candidate screen at the same level, and the guarantee
-        it returns is over the subset itself rather than over the larger set
-        the subset was drawn from.
+        ``True`` on the flag means the returned features came from the
+        FDR-screened set. That is not the same as the guarantee covering the
+        returned features: when fewer terms are returned than were screened,
+        the q-level statement is about the larger set they were drawn from.
+        :meth:`equation` prints that distinction for a reader, but a caller
+        branching on the flag in a script never sees the string, so it is
+        recorded here as well.
+
+        ``"printed equation"`` when the guarantee covers exactly the returned
+        features -- ``parsimony=None``, a greedy pass that kept everything, or
+        a ``parsimony_holdout`` re-test, which certifies the subset on rows of
+        its own. ``"screened set"`` when it covers a larger set the returned
+        features were drawn from. ``None`` when nothing is controlled at all.
+        """
+        if not self.fdr_controlled_:
+            self.fdr_scope_ = None
+            return
+        if self.certification_result_ is not None:
+            self.fdr_scope_ = "printed equation"
+            return
+        screened = (
+            0 if self.selection_result_ is None
+            else int(self.selection_result_.n_selected)
+        )
+        self.fdr_scope_ = (
+            "screened set" if screened > int(self.n_features_out_)
+            else "printed equation"
+        )
+
+    def _parsimony_note(self) -> str:
+        """Suffix for ``equation()`` when the printed terms are a strict subset.
+
+        Empty whenever the printed terms *are* the certified ones, which is
+        what :attr:`fdr_scope_` already decides.
+        """
+        if getattr(self, "fdr_scope_", None) != "screened set":
+            return ""
+        screened, kept = int(self.selection_result_.n_selected), int(self.n_features_out_)
+        # A subset can also arise without the parsimony step, when a screened
+        # expression cannot be evaluated on the full training data; pointing
+        # that caller at parsimony=None would be advice they have taken.
+        remedy = (
+            f"; parsimony=None prints all {screened}" if self.parsimony is not None else ""
+        )
+        return f"   [{kept} of {screened} certified terms{remedy}]"
+
+    def _certify_subset(self, X, y, rows, feature_names, units, nodes, keep_order):
+        """Re-screen the terms kept after parsimony on rows not yet used for them.
+
+        The set of terms is fixed once the screening rows have been used, so
+        this is an ordinary fixed-candidate screen at the same level, and the
+        guarantee it returns is over those terms themselves rather than over
+        the larger set they were drawn from. With ``parsimony=None`` the terms
+        are the whole screened set, and the re-test then trades length for a
+        guarantee stated on rows of its own.
         """
         data = {name: X[rows, index] for index, name in enumerate(feature_names)}
         evaluator = Evaluator(data, units=units)
@@ -403,11 +467,20 @@ class _BeamFeatBase(BaseEstimator):
         comes from the selector's FDR-screened set on held-out data. The
         set-level q guarantee of the screening applies to that full screened
         set, available with per-candidate p- and q-values in
-        :attr:`selection_report_`; the parsimony step may fit a subset of it,
-        and a data-dependent subset is not re-certified at level q. ``False``
-        when selection returned nothing and the estimator fell back to the
-        search output (in which case the features carry no FDR guarantee, and
-        a warning says so); ``None`` when no selector was configured.
+        :attr:`selection_report_`. At the default ``parsimony="forward"`` the
+        returned features are a data-dependent subset of that set, which is
+        not re-certified at level q; under ``parsimony=None`` they *are* the
+        set. ``False`` when selection returned nothing and the estimator fell
+        back to the search output (in which case the features carry no FDR
+        guarantee, and a warning says so); ``None`` when no selector was
+        configured.
+
+        Sets :attr:`fdr_scope_` alongside it, naming which set the flag is a
+        statement about: ``"printed equation"`` when the guarantee covers the
+        returned features themselves, ``"screened set"`` when it covers a
+        larger set they were drawn from, ``None`` when the flag is not
+        ``True``. The flag says whether there is a guarantee; the scope says
+        what it is over.
 
         Returns the transformed training matrix on the full data.
         """
@@ -464,13 +537,13 @@ class _BeamFeatBase(BaseEstimator):
             search_index = np.arange(n_samples)
         self._holdout_rows_ = holdout_index if use_holdout else None
 
-        # Optional second split of the selection rows. Screening and parsimony
-        # run on the first part; the surviving subset is then re-tested on the
-        # second, which it has not seen. Because that subset is fixed once the
-        # first part has been used, the re-test is an ordinary fixed-candidate
-        # screen and its guarantee therefore covers the printed equation, not
-        # merely the set it was drawn from. The price is rows: both parts have
-        # to be large enough to test on.
+        # Optional second split of the selection rows. Screening, and parsimony
+        # if it is enabled, run on the first part; the surviving terms are then
+        # re-tested on the second, which they have not seen. Because that set is
+        # fixed once the first part has been used, the re-test is an ordinary
+        # fixed-candidate screen and its guarantee therefore covers the printed
+        # equation, not merely the set it was drawn from. The price is rows:
+        # both parts have to be large enough to test on.
         certify_index = np.empty(0, dtype=int)
         fell_back_to_screened = False
         use_certify = (
@@ -492,8 +565,9 @@ class _BeamFeatBase(BaseEstimator):
                     "beamfeat: parsimony_holdout was requested but the selection rows "
                     f"({len(holdout_index)}) cannot be split so that both parts hold at "
                     "least 10 rows. Returning the whole screened set instead, which does "
-                    "carry the guarantee but is not compact; pass parsimony_holdout=None "
-                    "to get the compact uncertified equation, or add rows.",
+                    "carry the guarantee but is not compact; pass "
+                    "parsimony_holdout=None to get the compact uncertified equation, "
+                    "or add rows.",
                     UserWarning,
                     stacklevel=2,
                 )
@@ -540,6 +614,7 @@ class _BeamFeatBase(BaseEstimator):
         self.selection_result_ = None
         self.selection_report_: list[dict] | None = None
         self.fdr_controlled_: bool | None = None
+        self.fdr_scope_: str | None = None
         self.certification_result_ = None
         self.fdp_inflation_: float | None = None
 
@@ -622,7 +697,10 @@ class _BeamFeatBase(BaseEstimator):
                         1,
                         f"parsimony: {selection_result.n_selected} certified -> "
                         f"{len(keep_order)} term{'' if len(keep_order) == 1 else 's'}"
-                        f" (|S|/|S'| = {self.fdp_inflation_:.2f})",
+                        f" (|S|/|S'| = {self.fdp_inflation_:.2f})"
+                        if self.parsimony is not None
+                        else f"parsimony: off, keeping all {selection_result.n_selected} "
+                        f"certified term{'' if selection_result.n_selected == 1 else 's'}",
                     )
                     if fell_back_to_screened:
                         keep_order = sorted(screened)
@@ -638,17 +716,25 @@ class _BeamFeatBase(BaseEstimator):
                     nodes = [candidate_nodes[index] for index in keep_order]
                     kept = set(keep_order)
                     self.fdr_controlled_ = bool(nodes)
+                    if use_certify:
+                        scope = (
+                            " re-certified on held-back rows; the guarantee covers the"
+                            " fitted equation"
+                        )
+                    elif self.parsimony is None:
+                        scope = (
+                            " in the fitted equation, the screened set entire; the"
+                            " guarantee covers it"
+                        )
+                    else:
+                        scope = (
+                            " in the fitted equation (the guarantee covers the"
+                            " certified set, not this subset)"
+                        )
                     report(
                         self.verbose,
                         1,
-                        f"result set: {len(nodes)} term{'' if len(nodes) == 1 else 's'}"
-                        + (
-                            " re-certified on held-back rows; the guarantee covers the"
-                            " fitted equation"
-                            if use_certify
-                            else " in the fitted equation (the guarantee covers the"
-                            " certified set, not this subset)"
-                        ),
+                        f"result set: {len(nodes)} term{'' if len(nodes) == 1 else 's'}" + scope,
                     )
                 else:
                     kept = set()
@@ -733,6 +819,7 @@ class _BeamFeatBase(BaseEstimator):
         self.features_ = kept_nodes
         self.feature_formulas_ = [node.name for node in kept_nodes]
         self.n_features_out_ = len(kept_nodes)
+        self._resolve_fdr_scope()
         if not kept_nodes:
             # The honest empty outcome: zero constructed columns. Downstream
             # models degrade to an intercept-only fit rather than pretending.
@@ -910,6 +997,16 @@ class BeamFeatTransformer(TransformerMixin, _BeamFeatBase):
         units: Optional mapping of input column name to pint quantity.
             Supplying units restricts the search to dimensionally valid
             expressions.
+        parsimony: ``"forward"`` (default) fits a compact subset of the
+            screened set, chosen by greedy forward selection on the selection
+            rows. That subset is not re-certified, so the FDR guarantee covers
+            the set it was drawn from and not the terms returned, and
+            :meth:`equation` marks this whenever terms were dropped. ``None``
+            returns the screened set entire, so the returned features are
+            exactly the set the guarantee covers; ``parsimony_holdout`` buys
+            both, for rows.
+        parsimony_tol: Minimum incremental R^2 a feature must add to be kept by
+            ``parsimony="forward"``. Ignored when ``parsimony`` is ``None``.
         random_state: Seed. Fitting is deterministic given this.
         verbose: Progress reporting to stdout. ``0`` (default) is silent;
             ``1`` prints one line per stage -- the split, the search, the
@@ -923,6 +1020,12 @@ class BeamFeatTransformer(TransformerMixin, _BeamFeatBase):
         search_result_: The :class:`~beamfeat.search.SearchResult`.
         selection_result_: The :class:`~beamfeat.selection.SelectionResult`,
             or ``None`` if no selector was used.
+        fdr_controlled_: Whether the returned features came from the
+            FDR-screened set. ``None`` if no selector was used.
+        fdr_scope_: Which set :attr:`fdr_controlled_` is a statement about --
+            ``"printed equation"`` when the guarantee covers the returned
+            features, ``"screened set"`` when it covers a larger set they were
+            drawn from, ``None`` when the flag is not ``True``.
         n_features_out_: Number of features produced.
     """
 
@@ -1018,6 +1121,9 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
         model_: The fitted downstream linear model.
         coef_: Coefficients of the downstream model.
         intercept_: Intercept of the downstream model.
+        fdr_scope_: Which set :attr:`fdr_controlled_` is a statement about;
+            see :class:`BeamFeatTransformer`. ``"screened set"`` is what
+            :meth:`equation` marks in its output.
     """
 
     _problem_type = "regression"
@@ -1106,7 +1212,7 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
             + (
                 ""
                 if self.fdr_controlled_ is None
-                else "  [FDR controlled]"
+                else f"  [FDR controlled over the {self.fdr_scope_}]"
                 if self.fdr_controlled_
                 else "  [NOT FDR controlled]"
             ),
@@ -1141,6 +1247,10 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
 
         Returns:
             A string such as ``y = 2.104*(a * b) - 0.512*log(c) + 3.991``.
+            When the parsimony step dropped terms from the screened set, a
+            suffix records how many of the certified terms are printed and
+            how to print them all, since the guarantee covers the screened
+            set rather than this subset of it.
         """
         check_is_fitted(self, ["model_"])
         _check_equation_format(precision, style)
@@ -1150,7 +1260,7 @@ class BeamFeatRegressor(RegressorMixin, _BeamFeatBase):
         return _render_linear_equation(
             "y", self.coef_, float(self.intercept_), self.scaler_,
             self.feature_formulas_, precision, max_terms, style,
-        )
+        ) + self._parsimony_note()
 
 
 class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
@@ -1165,6 +1275,9 @@ class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
         features_: Selected expressions.
         classes_: Class labels seen during fit.
         model_: The fitted downstream logistic model.
+        fdr_scope_: Which set :attr:`fdr_controlled_` is a statement about;
+            see :class:`BeamFeatTransformer`. ``"screened set"`` is what
+            :meth:`equation` marks in its output.
     """
 
     _problem_type = "classification"
@@ -1265,7 +1378,7 @@ class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
             + (
                 ""
                 if self.fdr_controlled_ is None
-                else "  [FDR controlled]"
+                else f"  [FDR controlled over the {self.fdr_scope_}]"
                 if self.fdr_controlled_
                 else "  [NOT FDR controlled]"
             ),
@@ -1306,6 +1419,11 @@ class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
                 ``"fixed"`` aligns decimal places, ``"scientific"`` uses
                 uniform e-notation. ``"fixed"`` falls back to significant
                 figures for any value that would otherwise display as zero.
+
+        When the parsimony step dropped terms from the screened set, a suffix
+        records how many of the certified terms are printed and how to print
+        them all. The terms are shared across the lines of a multiclass
+        equation, so the suffix appears once at the end of the block.
         """
         check_is_fitted(self, ["model_"])
         _check_equation_format(precision, style)
@@ -1320,12 +1438,13 @@ class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
 
         coefficients = np.atleast_2d(self.coef_)
         intercepts = np.atleast_1d(self.intercept_)
+        note = self._parsimony_note()
         if coefficients.shape[0] == 1:
             return _render_linear_equation(
                 f"logit P(y = {self.classes_[1]!r})",
                 coefficients[0], float(intercepts[0]), self.scaler_,
                 self.feature_formulas_, precision, max_terms, style,
-            )
+            ) + note
         lines = [
             _render_linear_equation(
                 f"score({klass!r})", coefficients[row], float(intercepts[row]),
@@ -1333,7 +1452,9 @@ class BeamFeatClassifier(ClassifierMixin, _BeamFeatBase):
             )
             for row, klass in enumerate(self.classes_)
         ]
-        return "\n".join(lines) + "\n(predicted class = argmax of the softmax scores)"
+        # One note for the whole block: the terms are shared across the lines.
+        return ("\n".join(lines)
+                + "\n(predicted class = argmax of the softmax scores)" + note)
 
     def predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities."""

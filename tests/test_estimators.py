@@ -415,6 +415,35 @@ class TestSelectionIntegration:
                 on_no_discoveries="raise",
             ).fit(X, y)
 
+    @pytest.mark.parametrize("cls", [BeamFeatRegressor, BeamFeatClassifier, BeamFeatTransformer])
+    def test_parsimony_none_returns_the_whole_screened_set(self, cls, regression_data,
+                                                           classification_data):
+        """``parsimony=None`` fits the screened set itself rather than a subset
+        chosen from it, which is what makes the printed equation the object the
+        guarantee covers."""
+        X, y = (classification_data if cls is BeamFeatClassifier else regression_data)
+        model = cls(max_depth=2, beam_width=20, selector="permutation",
+                    random_state=0, parsimony=None).fit(X, y)
+        screened = {row["formula"] for row in model.selection_report_ if row["screened"]}
+        assert screened, "the fixture is meant to produce discoveries"
+        assert set(model.feature_formulas_) == screened
+        assert model.n_features_out_ == model.selection_result_.n_selected
+        assert model.fdp_inflation_ == pytest.approx(1.0)
+
+    @pytest.mark.parametrize("cls", [BeamFeatRegressor, BeamFeatClassifier, BeamFeatTransformer])
+    def test_default_prunes_within_the_screened_set(self, cls, regression_data,
+                                                    classification_data):
+        """The default is ``parsimony="forward"``: what is fitted is a subset of
+        what was screened, and every member of it passed screening."""
+        X, y = (classification_data if cls is BeamFeatClassifier else regression_data)
+        model = cls(max_depth=2, beam_width=20, selector="permutation",
+                    random_state=0).fit(X, y)
+        assert model.parsimony == "forward"
+        screened = {row["formula"] for row in model.selection_report_ if row["screened"]}
+        assert set(model.feature_formulas_) <= screened
+        assert model.n_features_out_ <= model.selection_result_.n_selected
+        assert model.fdp_inflation_ >= 1.0
+
     def test_parsimony_compacts_without_losing_recovery(self):
         rng = np.random.default_rng(0)
         X = rng.uniform(1, 6, (400, 4))
@@ -773,12 +802,14 @@ class TestVerbose:
         assert "depth 0:" in out
         assert "p=" in out and "q=" in out
 
-    def test_result_line_records_the_flag(self, regression_data, capsys):
+    def test_result_line_records_the_flag_and_its_scope(self, regression_data, capsys):
         X, y = regression_data
         model = _fast(BeamFeatRegressor, selector="permutation", verbose=1).fit(X, y)
         out = capsys.readouterr().out
-        expected = "[FDR controlled]" if model.fdr_controlled_ else "[NOT FDR controlled]"
-        assert expected in out
+        if model.fdr_controlled_:
+            assert f"[FDR controlled over the {model.fdr_scope_}]" in out
+        else:
+            assert "[NOT FDR controlled]" in out
 
     def test_transformer_and_classifier_accept_levels(self, regression_data, capsys):
         X, y = regression_data
@@ -786,6 +817,139 @@ class TestVerbose:
         assert "fit:" in capsys.readouterr().out
         _fast(BeamFeatClassifier, selector="permutation", verbose=1).fit(X, (y > np.median(y)).astype(int))
         assert "result:" in capsys.readouterr().out
+
+
+class TestParsimonyNote:
+    """``equation()`` marks a pruned equation as a subset of the certified set.
+
+    The guarantee is a statement about the screened set, and the printed
+    equation is normally a subset of it. A caller who reads the equation and
+    the ``fdr_controlled_`` flag side by side would otherwise have no signal
+    that the two do not refer to the same set of terms."""
+
+    MARKER = "certified terms; parsimony=None prints all"
+
+    def test_present_when_terms_were_dropped(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation", beam_width=25).fit(X, y)
+        if model.n_features_out_ >= model.selection_result_.n_selected:
+            pytest.skip("this fit pruned nothing, so there is no gap to mark")
+        equation = model.equation()
+        assert self.MARKER in equation
+        assert f"[{model.n_features_out_} of {model.selection_result_.n_selected}" in equation
+
+    def test_absent_when_parsimony_is_off(self, regression_data):
+        """The terms then are the certified set, so there is nothing to mark."""
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation",
+                      beam_width=25, parsimony=None).fit(X, y)
+        assert self.MARKER not in model.equation()
+
+    def test_absent_without_a_selector(self, regression_data):
+        """Nothing was certified, so no claim about a certified set is implied."""
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector=None).fit(X, y)
+        assert self.MARKER not in model.equation()
+
+    def test_absent_when_the_subset_was_re_certified(self, regression_data):
+        """``parsimony_holdout`` re-tests the subset on rows of its own, so the
+        guarantee does cover the printed terms and the note would be wrong."""
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation",
+                      parsimony_holdout=0.5).fit(X, y)
+        if model.certification_result_ is None:
+            pytest.skip("the rows did not support a second split")
+        assert self.MARKER not in model.equation()
+
+    def test_absent_when_nothing_passed_selection(self):
+        rng = np.random.default_rng(3)
+        X = rng.uniform(1, 6, (400, 4))
+        with pytest.warns(NoDiscoveriesWarning):
+            model = BeamFeatRegressor(
+                max_depth=2, beam_width=15, target_fdr=0.05, random_state=3
+            ).fit(X, rng.standard_normal(400))
+        assert self.MARKER not in model.equation()
+
+    def test_does_not_disturb_the_equation_itself(self, regression_data):
+        """The note is appended; the coefficients and formulas are untouched."""
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation", beam_width=25).fit(X, y)
+        head = model.equation().split("   [")[0]
+        assert head.startswith("y = ")
+        assert any(formula in head for formula in model.formulas())
+
+    def test_classifier_marks_the_block_once(self, rng):
+        """The terms are shared across a multiclass equation's lines, so one
+        note belongs at the end of the block rather than on every line."""
+        X = rng.uniform(1.0, 6.0, (400, 4))
+        score = X[:, 0] * X[:, 1]
+        y = np.digitize(score, np.quantile(score, [1 / 3, 2 / 3]))
+        model = _fast(BeamFeatClassifier, selector="permutation", beam_width=25).fit(X, y)
+        equation = model.equation()
+        if self.MARKER in equation:
+            assert equation.count(self.MARKER) == 1
+
+
+class TestFdrScope:
+    """``fdr_controlled_`` says whether there is a guarantee; ``fdr_scope_``
+    says what it is over.
+
+    The flag is ``True`` whenever the returned features came from the screened
+    set, which is not the same as the guarantee covering those features. A
+    caller branching on the flag in a script never sees the note
+    ``equation()`` prints, so the distinction is an attribute too."""
+
+    def test_screened_set_when_terms_were_dropped(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation", beam_width=25).fit(X, y)
+        if model.n_features_out_ >= model.selection_result_.n_selected:
+            pytest.skip("this fit pruned nothing, so the scope is the printed set")
+        assert model.fdr_controlled_ is True
+        assert model.fdr_scope_ == "screened set"
+
+    def test_printed_equation_when_parsimony_is_off(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation",
+                      beam_width=25, parsimony=None).fit(X, y)
+        assert model.fdr_controlled_ is True
+        assert model.fdr_scope_ == "printed equation"
+
+    def test_printed_equation_when_re_certified(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation",
+                      parsimony_holdout=0.5).fit(X, y)
+        if model.certification_result_ is None:
+            pytest.skip("the rows did not support a second split")
+        assert model.fdr_scope_ == "printed equation"
+
+    def test_none_without_a_selector(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector=None).fit(X, y)
+        assert model.fdr_controlled_ is None
+        assert model.fdr_scope_ is None
+
+    def test_none_when_nothing_passed_selection(self):
+        rng = np.random.default_rng(3)
+        X = rng.uniform(1, 6, (400, 4))
+        with pytest.warns(NoDiscoveriesWarning):
+            model = BeamFeatRegressor(
+                max_depth=2, beam_width=15, target_fdr=0.05, random_state=3
+            ).fit(X, rng.standard_normal(400))
+        assert model.fdr_controlled_ is False
+        assert model.fdr_scope_ is None
+
+    def test_transformer_reports_it_too(self, regression_data):
+        """The transformer has no equation() to carry the note, so the
+        attribute is the only signal it can give."""
+        X, y = regression_data
+        model = _fast(BeamFeatTransformer, selector="permutation", beam_width=25).fit(X, y)
+        assert model.fdr_scope_ in ("screened set", "printed equation")
+
+    def test_scope_and_note_agree(self, regression_data):
+        X, y = regression_data
+        model = _fast(BeamFeatRegressor, selector="permutation", beam_width=25).fit(X, y)
+        marked = "certified terms" in model.equation()
+        assert marked == (model.fdr_scope_ == "screened set")
 
 
 class TestParsimonyHoldout:
@@ -854,7 +1018,7 @@ class TestParsimonyHoldout:
             assert fallback.n_features_out_ > pruned.n_features_out_
 
     def test_unpruned_equation_is_the_certified_set(self, regression_data):
-        """`parsimony=None` already gives a printed equation that carries the
+        """`parsimony=None` gives a printed equation that carries the
         guarantee, at no cost in rows. It is the free corner of the trade-off
         and the fallback the split degrades to."""
         X, y = regression_data
