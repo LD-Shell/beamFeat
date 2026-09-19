@@ -322,6 +322,7 @@ def run_beamfeat(dataset: Dataset, X_train, X_test, y_train, y_test, **kwargs) -
         max_depth=kwargs.get("max_depth", 2),
         beam_width=kwargs.get("beam_width", 40),
         selector=kwargs.get("selector", "permutation"),
+        parsimony=kwargs.get("parsimony", "forward"),
         target_fdr=0.1,
         random_state=0,
     )
@@ -570,10 +571,16 @@ METHODS = {
 # --------------------------------------------------------------------------- #
 
 
-def evaluate(datasets: list[Dataset], methods: list[str], test_size: float = 0.3) -> list[Outcome]:
-    """Run every method on every dataset with a common train/test split."""
+def evaluate(datasets: list[Dataset], methods: list[str], test_size: float = 0.3,
+             beamfeat_kwargs: dict | None = None) -> list[Outcome]:
+    """Run every method on every dataset with a common train/test split.
+
+    ``beamfeat_kwargs`` reaches ``run_beamfeat`` only, so a caller comparing
+    two beamfeat settings gets identical splits and identical baselines.
+    """
     from sklearn.model_selection import train_test_split
 
+    beamfeat_kwargs = beamfeat_kwargs or {}
     outcomes: list[Outcome] = []
     for dataset in datasets:
         X_train, X_test, y_train, y_test = train_test_split(
@@ -585,7 +592,8 @@ def evaluate(datasets: list[Dataset], methods: list[str], test_size: float = 0.3
 
         for method in methods:
             try:
-                outcome = METHODS[method](dataset, X_train, X_test, y_train, y_test)
+                extra = beamfeat_kwargs if method == "beamfeat" else {}
+                outcome = METHODS[method](dataset, X_train, X_test, y_train, y_test, **extra)
             except Exception as exc:  # noqa: BLE001 - a failing method must not sink the run
                 outcome = Outcome(
                     dataset=dataset.name, method=method, r2=float("nan"),

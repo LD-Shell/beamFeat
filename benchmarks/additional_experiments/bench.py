@@ -208,11 +208,17 @@ def run_openfe(Xtr, ytr, Xte):
     m = ridge().fit(Mtr, ytr)
     return m.predict(Mte), {"n_new": ttr.shape[1] - Xtr.shape[1], "n_jobs": N_JOBS}
 
+# Unset reproduces the library default exactly; set BEAMFEAT_PARSIMONY=none to
+# keep the whole screened set instead. Recorded per row as `parsimony`.
+PARSIMONY = os.environ.get("BEAMFEAT_PARSIMONY") or "forward"
+PARSIMONY = None if PARSIMONY == "none" else PARSIMONY
+
 def run_beamfeat(Xtr, ytr, Xte):
     """beamfeat as shipped: its own estimator, an internal ridge at alpha=1."""
     from beamfeat import BeamFeatRegressor
-    m = BeamFeatRegressor(random_state=0).fit(Xtr, ytr)
+    m = BeamFeatRegressor(random_state=0, parsimony=PARSIMONY).fit(Xtr, ytr)
     info = {"n_new": len(m.formulas()), "formulas": m.formulas(),
+            "parsimony": PARSIMONY,
             "fdr": bool(getattr(m, "fdr_controlled_", False))}
     return m.predict(Xte), info
 
@@ -221,9 +227,10 @@ def run_beamfeat_ridge(Xtr, ytr, Xte):
     featuretools and OpenFE are run. This is the like-for-like row: the only
     thing that differs from those three is which features were constructed."""
     from beamfeat import BeamFeatTransformer
-    t = BeamFeatTransformer(random_state=0).fit(Xtr, ytr)
+    t = BeamFeatTransformer(random_state=0, parsimony=PARSIMONY).fit(Xtr, ytr)
     m = ridge().fit(t.transform(Xtr), ytr)
     info = {"n_new": len(t.formulas()), "formulas": t.formulas(),
+            "parsimony": PARSIMONY,
             "fdr": bool(getattr(t, "fdr_controlled_", False))}
     return m.predict(t.transform(Xte)), info
 
@@ -316,6 +323,7 @@ def main(which, methods, n_splits, out):
                     rows.append(dict(dataset=name, method=mname, split=split, r2=r2,
                                      seconds=dt, n_new=info.get("n_new"), n_jobs=info.get("n_jobs"),
                                      recovered=rec, fdr=info.get("fdr"),
+                                     parsimony=info.get("parsimony"),
                                      formulas=info.get("formulas"), error=None))
                     print(f"{name:16s} {mname:13s} s{split} R2={r2:+.4f} {dt:7.1f}s n_new={info.get('n_new')}", flush=True)
                 except Exception as e:

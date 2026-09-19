@@ -116,7 +116,7 @@ def main(a):
                             kw["binary_ops"] = tuple(a.binary.split(","))
                         m = BeamFeatTransformer(
                             scorer=scorer, beam_width=beam, max_depth=max_depth,
-                            random_state=seed, **kw,
+                            random_state=seed, parsimony=a.parsimony, **kw,
                         ).fit(X, y)
                         dt = time.perf_counter() - t0
                         rec = [equivalent(m, X_probe, fn) for fn in truth_fns]
@@ -124,6 +124,7 @@ def main(a):
                             problem=name, depth=depth, scorer=scorer, beam=beam,
                             seed=seed, seconds=round(dt, 2),
                             n_selected=len(m.formulas()),
+                            parsimony=a.parsimony,
                             fdr=bool(getattr(m, "fdr_controlled_", False)),
                             recovered_all=all(rec), recovered_any=any(rec),
                             error=None,
@@ -154,5 +155,9 @@ if __name__ == "__main__":
     ap.add_argument("--binary", default="", help="comma list to restrict binary ops, e.g. 'mul,div'")
     ap.add_argument("--problems", default="", help="comma list to run a subset of the ladder")
     ap.add_argument("--scorers", default="", help="comma list to restrict scorers, e.g. 'correlation'")
+    ap.add_argument("--parsimony", default="forward", choices=["forward", "none"],
+                    help="'forward' is the library default, the compact greedy subset; "
+                         "'none' keeps the whole screened set")
     a = ap.parse_args()
+    a.parsimony = None if a.parsimony == "none" else a.parsimony
     main(a)

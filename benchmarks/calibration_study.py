@@ -25,18 +25,30 @@ def _upper_bound(successes: int, trials: int) -> float:
 TARGET_FDR = 0.1
 
 
-def main(n_signal: int = 200, n_null: int = 60) -> dict:
+def main(n_signal: int = 200, n_null: int = 60, parsimony: str | None = "forward") -> dict:
     from beamfeat import BeamFeatRegressor
 
     fdps, recovered, fallbacks = [], 0, 0
+    per_fit = []
     for trial in range(n_signal):
         rng = np.random.default_rng(10_000 + trial)
         X = rng.uniform(1, 6, (500, 6))
         signal = X[:, 0] * X[:, 1]
         y = signal + rng.normal(0, 0.05 * np.std(signal), 500)
         model = BeamFeatRegressor(
-            max_depth=2, beam_width=25, target_fdr=TARGET_FDR, random_state=trial
+            max_depth=2, beam_width=25, target_fdr=TARGET_FDR, random_state=trial,
+            parsimony=parsimony,
         ).fit(X, y)
+        per_fit.append({
+            "arm": "signal", "trial": trial,
+            "score": float(model.score(X, y)),
+            "n_terms": model.n_features_out_,
+            "fdr_controlled": model.fdr_controlled_,
+            "n_screened": (
+                None if model.selection_result_ is None
+                else int(model.selection_result_.n_selected)
+            ),
+        })
         if not model.fdr_controlled_:
             fallbacks += 1
             continue
@@ -53,8 +65,19 @@ def main(n_signal: int = 200, n_null: int = 60) -> dict:
         X = rng.uniform(1, 6, (500, 6))
         y = rng.normal(0, 1, 500)
         model = BeamFeatRegressor(
-            max_depth=2, beam_width=25, target_fdr=TARGET_FDR, random_state=trial
+            max_depth=2, beam_width=25, target_fdr=TARGET_FDR, random_state=trial,
+            parsimony=parsimony,
         ).fit(X, y)
+        per_fit.append({
+            "arm": "null", "trial": trial,
+            "score": float(model.score(X, y)),
+            "n_terms": model.n_features_out_,
+            "fdr_controlled": model.fdr_controlled_,
+            "n_screened": (
+                None if model.selection_result_ is None
+                else int(model.selection_result_.n_selected)
+            ),
+        })
         null_selected += model.n_features_out_ if model.fdr_controlled_ else 0
 
     # A run of zeros is exact as an observation but still bounds the underlying
@@ -70,6 +93,8 @@ def main(n_signal: int = 200, n_null: int = 60) -> dict:
         "fallbacks": fallbacks,
         "null_selections": null_selected,
         "null_upper_95": _upper_bound(null_selected, n_null),
+        "parsimony": parsimony,
+        "per_fit": per_fit,
     }
     print(
         f"SIGNAL ({n_signal} replicates, nominal 0.10): "

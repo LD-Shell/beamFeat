@@ -44,7 +44,7 @@ def _basis(A: np.ndarray) -> np.ndarray:
     return np.column_stack([u, u**2, A[:, 2], A[:, 2] ** 2, A[:, 3], A[:, 4]])
 
 
-def _decompose(train_seed: int, test_seed: int) -> dict:
+def _decompose(train_seed: int, test_seed: int, parsimony: str | None = "forward") -> dict:
     from beamfeat import BeamFeatRegressor
     from beamfeat.selection import PermutationSelector
 
@@ -65,21 +65,22 @@ def _decompose(train_seed: int, test_seed: int) -> dict:
         .select(F[holdout], y[holdout])
         .selected.tolist()
     )
-    achieved = (
-        BeamFeatRegressor(max_depth=2, beam_width=40, random_state=0)
-        .fit(X, y)
-        .score(X_test, y_test)
-    )
+    model = BeamFeatRegressor(
+        max_depth=2, beam_width=40, random_state=0, parsimony=parsimony
+    ).fit(X, y)
+    achieved = model.score(X_test, y_test)
     return {
         "oracle": fit_r2(range(6)),
         "ceiling": fit_r2(admitted),
         "achieved": float(achieved),
         "admitted": [NAMES[i] for i in admitted],
+        "n_terms": model.n_features_out_,
+        "fdr_controlled": model.fdr_controlled_,
     }
 
 
-def main(n_draws: int = N_DRAWS) -> dict:
-    draws = [_decompose(2 * k, 2 * k + 1) for k in range(n_draws)]
+def main(n_draws: int = N_DRAWS, parsimony: str | None = "forward") -> dict:
+    draws = [_decompose(2 * k, 2 * k + 1, parsimony) for k in range(n_draws)]
 
     print(f"Friedman #1 decomposition over {n_draws} independent draws")
     print(f"  {'draw':>5} {'oracle':>8} {'ceiling':>8} {'achieved':>9}  admitted by the marginal null")
@@ -113,6 +114,7 @@ def main(n_draws: int = N_DRAWS) -> dict:
     print(f"  admitted at least once: {', '.join(never)}")
 
     summary["draws"] = draws
+    summary["parsimony"] = parsimony
     return summary
 
 

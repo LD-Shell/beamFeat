@@ -34,7 +34,7 @@ def draw(rng, n, p, regime):
     return np.sqrt(0.5) * z + np.sqrt(0.5) * rng.uniform(1, 6, (n, p))
 
 
-def _cell(target, regime, p, n, noise, seed, q):
+def _cell(target, regime, p, n, noise, seed, q, parsimony="forward"):
     """Child process: one fit, reporting metrics through the queue."""
     from beamfeat import BeamFeatTransformer
 
@@ -44,7 +44,7 @@ def _cell(target, regime, p, n, noise, seed, q):
     y = fn(X)
     y = y + rng.normal(0, noise * y.std(), n)
     t0 = time.perf_counter()
-    m = BeamFeatTransformer(random_state=seed).fit(X, y)
+    m = BeamFeatTransformer(random_state=seed, parsimony=parsimony).fit(X, y)
     dt = time.perf_counter() - t0
     peak_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
 
@@ -73,16 +73,17 @@ def _cell(target, regime, p, n, noise, seed, q):
             false_feats += 1
     q.put(dict(seconds=round(dt, 2), peak_mb=round(peak_mb, 1),
                recovered=rec, n_selected=len(m.formulas()),
-               false_features=false_feats,
+               false_features=false_feats, parsimony=parsimony,
                fdr=bool(getattr(m, "fdr_controlled_", False))))
 
 
-def run_cell(target, regime, p, n, noise, seed, budget_s):
+def run_cell(target, regime, p, n, noise, seed, budget_s, parsimony="forward"):
     import multiprocessing as mp
 
     ctx = mp.get_context("spawn")
     q = ctx.Queue()
-    proc = ctx.Process(target=_cell, args=(target, regime, p, n, noise, seed, q))
+    proc = ctx.Process(target=_cell,
+                       args=(target, regime, p, n, noise, seed, q, parsimony))
     proc.start()
     proc.join(budget_s)
     if proc.is_alive():
@@ -103,7 +104,8 @@ def main(a):
         for regime in regimes:
             for p in grid:
                 for seed in range(a.seeds):
-                    out = run_cell(target, regime, p, a.n, a.noise, seed, a.budget)
+                    out = run_cell(target, regime, p, a.n, a.noise, seed, a.budget,
+                                   a.parsimony)
                     out.update(target=target, regime=regime, p=p, n=a.n, seed=seed)
                     rows.append(out)
                     msg = out.get("error") or (
@@ -125,5 +127,9 @@ if __name__ == "__main__":
     ap.add_argument("--budget", type=float, default=1800.0)
     ap.add_argument("--out", default="results/scalability.json")
     ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--parsimony", default="forward", choices=["forward", "none"],
+                    help="'forward' is the library default, the compact greedy subset; "
+                         "'none' keeps the whole screened set")
     a = ap.parse_args()
+    a.parsimony = None if a.parsimony == "none" else a.parsimony
     main(a)

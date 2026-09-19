@@ -131,9 +131,9 @@ def main(a):
     for name, (X, y) in ds.items():
         Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.25, random_state=42)
         probe = Xtr[np.random.default_rng(1).choice(len(Xtr), min(len(Xtr), 1500), replace=False)]
-        models, scores, nsel = [], [], []
+        models, scores, nsel, flags = [], [], [], []
         for s in range(a.splits):
-            m = BeamFeatTransformer(random_state=s).fit(Xtr, ytr)
+            m = BeamFeatTransformer(random_state=s, parsimony=a.parsimony).fit(Xtr, ytr)
             Ftr, Fte = m.transform(Xtr), m.transform(Xte)
             if Ftr is None or Ftr.size == 0:      # no discoveries: mean predictor
                 r2 = 1.0 - np.sum((yte - ytr.mean()) ** 2) / np.sum((yte - yte.mean()) ** 2)
@@ -143,15 +143,17 @@ def main(a):
             models.append(m)
             scores.append(r2)
             nsel.append(len(m.formulas()))
+            flags.append(bool(getattr(m, "fdr_controlled_", False)))
             print(f"{name:14s} split {s:2d} R2={scores[-1]:+.3f} n={nsel[-1]}", flush=True)
         per_model, freq = equivalence_classes(models, probe)
         jac = [len(p & q_) / max(len(p | q_), 1)
                for p, q_ in itertools.combinations(per_model, 2)] or [1.0]
         out[name] = dict(
-            splits=a.splits,
+            splits=a.splits, parsimony=a.parsimony,
             r2_mean=float(np.mean(scores)), r2_std=float(np.std(scores)),
             r2_min=float(np.min(scores)), r2_max=float(np.max(scores)),
-            n_selected=nsel,
+            r2_per_split=[float(v) for v in scores],
+            n_selected=nsel, fdr_controlled=flags,
             jaccard_mean=float(np.mean(jac)), jaccard_min=float(np.min(jac)),
             n_classes=len(freq),
             stable_features={k: v for k, v in sorted(freq.items(), key=lambda kv: -kv[1])
@@ -173,5 +175,9 @@ if __name__ == "__main__":
     ap.add_argument("--splits", type=int, default=30)
     ap.add_argument("--datasets", default="", help="comma list; empty = all present")
     ap.add_argument("--out", default="results/split_stability.json")
+    ap.add_argument("--parsimony", default="forward", choices=["forward", "none"],
+                    help="'forward' is the library default, the compact greedy subset; "
+                         "'none' keeps the whole screened set")
     a = ap.parse_args()
+    a.parsimony = None if a.parsimony == "none" else a.parsimony
     main(a)
