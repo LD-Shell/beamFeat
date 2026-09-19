@@ -45,10 +45,23 @@ venv/
 verify-*.txt
 .vscode/
 *.zip
-.ipynb_checkpoints/
 beamfeat-paper-build/
 beamfeat_v0.3.0.patch
 beamfeat.zip
 .ruff_cache/
 benchmarks/results_reproduce/
+benchmarks/pysr_panel/results/*.log
 paper/figures_reproduce/
+
+# Assistant and editor tooling
+.aider*
+.claude/
+.codeium/
+.continue/
+.cursor/
+.cursorrules
+.specstory/
+.windsurfrules
+AGENTS.md
+CLAUDE.md
+.github/copilot-instructions.md
