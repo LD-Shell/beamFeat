@@ -1,0 +1,110 @@
+{
+  "study": "friedman",
+  "parsimony": "forward",
+  "summary": {
+    "oracle": {
+      "mean": 0.9599684665865439,
+      "sd": 0.002617193087956236,
+      "values": [
+        0.9643936773677497,
+        0.9586599898943174,
+        0.9595542645189782,
+        0.9564538786679269,
+        0.9601505664155702,
+        0.9605984226547212
+      ]
+    },
+    "ceiling": {
+      "mean": 0.8737145711729638,
+      "sd": 0.006237062997442483,
+      "values": [
+        0.8750347036779539,
+        0.8771822713985641,
+        0.8730511032614544,
+        0.8639391269797473,
+        0.8824039931744326,
+        0.870676228545631
+      ]
+    },
+    "achieved": {
+      "mean": 0.7800001842463563,
+      "sd": 0.01304110224098191,
+      "values": [
+        0.7898027896455544,
+        0.7826240933241744,
+        0.7818030000784633,
+        0.7946032693749223,
+        0.7579938040441195,
+        0.7731741490109042
+      ]
+    },
+    "parsimony": "forward"
+  },
+  "fits": [
+    {
+      "study": "friedman",
+      "case": "draw0",
+      "score": 0.7898027896455544,
+      "n_terms": 10,
+      "fdr_controlled": true,
+      "oracle": 0.9643936773677497,
+      "ceiling": 0.8750347036779539
+    },
+    {
+      "study": "friedman",
+      "case": "draw1",
+      "score": 0.7826240933241744,
+      "n_terms": 10,
+      "fdr_controlled": true,
+      "oracle": 0.9586599898943174,
+      "ceiling": 0.8771822713985641
+    },
+    {
+      "study": "friedman",
+      "case": "draw2",
+      "score": 0.7818030000784633,
+      "n_terms": 9,
+      "fdr_controlled": true,
+      "oracle": 0.9595542645189782,
+      "ceiling": 0.8730511032614544
+    },
+    {
+      "study": "friedman",
+      "case": "draw3",
+      "score": 0.7946032693749223,
+      "n_terms": 14,
+      "fdr_controlled": true,
+      "oracle": 0.9564538786679269,
+      "ceiling": 0.8639391269797473
+    },
+    {
+      "study": "friedman",
+      "case": "draw4",
+      "score": 0.7579938040441195,
+      "n_terms": 11,
+      "fdr_controlled": true,
+      "oracle": 0.9601505664155702,
+      "ceiling": 0.8824039931744326
+    },
+    {
+      "study": "friedman",
+      "case": "draw5",
+      "score": 0.7731741490109042,
+      "n_terms": 16,
+      "fdr_controlled": true,
+      "oracle": 0.9605984226547212,
+      "ceiling": 0.870676228545631
+    }
+  ],
+  "aggregate": {
+    "n_fits": 6,
+    "mean_score": 0.7800001842463563,
+    "median_score": 0.7822135467013188,
+    "min_score": 0.7579938040441195,
+    "mean_terms": 11.666666666666666,
+    "median_terms": 10.5,
+    "max_terms": 16,
+    "fdr_controlled_true": 6,
+    "fdr_controlled_total": 6
+  }
+}

@@ -1,0 +1,2106 @@
+{
+  "study": "calibration",
+  "parsimony": null,
+  "summary": {
+    "empirical_fdr": 0.0,
+    "fdr_upper_95": 0.014867039231272054,
+    "power": 1.0,
+    "fallbacks": 0,
+    "null_selections": 0,
+    "null_upper_95": 0.04870291331009749,
+    "parsimony": null
+  },
+  "fits": [
+    {
+      "study": "calibration",
+      "case": "signal0",
+      "score": 0.9975853478996606,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal1",
+      "score": 0.9978140334672534,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal2",
+      "score": 0.9977915625013082,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal3",
+      "score": 0.997641681404058,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal4",
+      "score": 0.9975146818602302,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal5",
+      "score": 0.9974168373191383,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal6",
+      "score": 0.997776041289935,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal7",
+      "score": 0.997594391319278,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal8",
+      "score": 0.9976305602280059,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal9",
+      "score": 0.9974085061764272,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal10",
+      "score": 0.9976808770742294,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal11",
+      "score": 0.9976659852428504,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal12",
+      "score": 0.9974204500180648,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal13",
+      "score": 0.9978737321998653,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal14",
+      "score": 0.9974342434473169,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal15",
+      "score": 0.9976445151771957,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal16",
+      "score": 0.9974587111320159,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal17",
+      "score": 0.9975928024778844,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal18",
+      "score": 0.997636486560299,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal19",
+      "score": 0.9973871427102423,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal20",
+      "score": 0.9974671852062613,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal21",
+      "score": 0.9975989823465549,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal22",
+      "score": 0.9974963374316446,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal23",
+      "score": 0.9976234297007491,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal24",
+      "score": 0.9976684718556389,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal25",
+      "score": 0.9974568950395886,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal26",
+      "score": 0.997475437389602,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal27",
+      "score": 0.9977328025479362,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal28",
+      "score": 0.9975495231021068,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal29",
+      "score": 0.9977617560739724,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal30",
+      "score": 0.9975576208086447,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal31",
+      "score": 0.9978129362919197,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal32",
+      "score": 0.9978706761987327,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal33",
+      "score": 0.9975944716370947,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal34",
+      "score": 0.9978271001448792,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal35",
+      "score": 0.9975067346147664,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal36",
+      "score": 0.9976100077536906,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal37",
+      "score": 0.9974625084511426,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal38",
+      "score": 0.9976886070145445,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal39",
+      "score": 0.997905567497456,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal40",
+      "score": 0.9978789821275041,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal41",
+      "score": 0.997494977645351,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal42",
+      "score": 0.9974301199969283,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal43",
+      "score": 0.9976870850943328,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal44",
+      "score": 0.9973568580607377,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal45",
+      "score": 0.997820833878646,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal46",
+      "score": 0.9976265969443028,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal47",
+      "score": 0.9977659476186489,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal48",
+      "score": 0.9975620667159109,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal49",
+      "score": 0.9977959680393957,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal50",
+      "score": 0.9977860122442017,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal51",
+      "score": 0.9975560609944054,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal52",
+      "score": 0.997657667346326,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal53",
+      "score": 0.9974761680119982,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal54",
+      "score": 0.9970705093973864,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal55",
+      "score": 0.9976322933397301,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal56",
+      "score": 0.9975699484501516,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal57",
+      "score": 0.9973964370091422,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal58",
+      "score": 0.9975832836233853,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal59",
+      "score": 0.9976465592588261,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal60",
+      "score": 0.9977464546183598,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal61",
+      "score": 0.9976779114995368,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal62",
+      "score": 0.9975817731957034,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal63",
+      "score": 0.9977390310690336,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal64",
+      "score": 0.9979235188050846,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal65",
+      "score": 0.9976793160093971,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal66",
+      "score": 0.9979142666076843,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal67",
+      "score": 0.9976103717849771,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal68",
+      "score": 0.9977924079405753,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal69",
+      "score": 0.9973629039197044,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal70",
+      "score": 0.9976047702681027,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal71",
+      "score": 0.9976711440772849,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal72",
+      "score": 0.9978449774136389,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal73",
+      "score": 0.997604779499168,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal74",
+      "score": 0.9975368381805009,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal75",
+      "score": 0.9977077959545818,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal76",
+      "score": 0.997526256647502,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal77",
+      "score": 0.9978668915366256,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal78",
+      "score": 0.9977817213989495,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal79",
+      "score": 0.9977430591007326,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal80",
+      "score": 0.9978475709143083,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal81",
+      "score": 0.9977114258939562,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal82",
+      "score": 0.997878383564081,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal83",
+      "score": 0.9975901541938051,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal84",
+      "score": 0.9977266546916838,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal85",
+      "score": 0.9975323135757825,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal86",
+      "score": 0.9975735657795287,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal87",
+      "score": 0.9975432258444544,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal88",
+      "score": 0.9977168948423871,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal89",
+      "score": 0.9974170135905999,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal90",
+      "score": 0.997471547955447,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal91",
+      "score": 0.9977311301461428,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal92",
+      "score": 0.9976585592221636,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal93",
+      "score": 0.997622929993151,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal94",
+      "score": 0.9975849438829646,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal95",
+      "score": 0.9975310454733549,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal96",
+      "score": 0.9980900175172924,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal97",
+      "score": 0.9978045949635439,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal98",
+      "score": 0.997576911311766,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal99",
+      "score": 0.9976619790591452,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal100",
+      "score": 0.9979640006457737,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal101",
+      "score": 0.9975208886932141,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal102",
+      "score": 0.9974842966331864,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal103",
+      "score": 0.9976163804677508,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal104",
+      "score": 0.9974744574785027,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal105",
+      "score": 0.997733656059033,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal106",
+      "score": 0.9977386167455186,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal107",
+      "score": 0.9975489302857469,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal108",
+      "score": 0.9975001000104546,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal109",
+      "score": 0.9975872681750897,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal110",
+      "score": 0.9974661814446476,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal111",
+      "score": 0.9977117316286603,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal112",
+      "score": 0.9978472102650209,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal113",
+      "score": 0.997839561453664,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal114",
+      "score": 0.9975314038841979,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal115",
+      "score": 0.9974217835855449,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal116",
+      "score": 0.9976409391269004,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal117",
+      "score": 0.9979667372492106,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal118",
+      "score": 0.9979328909961797,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal119",
+      "score": 0.997773091357078,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal120",
+      "score": 0.9974300656224595,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal121",
+      "score": 0.9975510509413973,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal122",
+      "score": 0.9977248596436536,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal123",
+      "score": 0.997712373170235,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal124",
+      "score": 0.9974381032785964,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal125",
+      "score": 0.9975204084646434,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal126",
+      "score": 0.9975286067705573,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal127",
+      "score": 0.997571545070599,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal128",
+      "score": 0.9975941300611938,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal129",
+      "score": 0.9976356528793534,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal130",
+      "score": 0.9977956794317253,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal131",
+      "score": 0.9975862537575255,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal132",
+      "score": 0.9976278287132903,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal133",
+      "score": 0.9978228682293474,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal134",
+      "score": 0.9975832518860053,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal135",
+      "score": 0.9974866713703505,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal136",
+      "score": 0.997544677966877,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal137",
+      "score": 0.9979324928730731,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal138",
+      "score": 0.9973405924590434,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal139",
+      "score": 0.9977252589756229,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal140",
+      "score": 0.9979307273079648,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal141",
+      "score": 0.9976091010853128,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal142",
+      "score": 0.9975583216041534,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal143",
+      "score": 0.9975679044529914,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal144",
+      "score": 0.99758321282082,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal145",
+      "score": 0.9974596847909258,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal146",
+      "score": 0.9976822243694359,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal147",
+      "score": 0.9975470673212729,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal148",
+      "score": 0.9977836866144972,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal149",
+      "score": 0.9978115708900445,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal150",
+      "score": 0.997487969255707,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal151",
+      "score": 0.9980085907710299,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal152",
+      "score": 0.9976134324060902,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal153",
+      "score": 0.9974152017543294,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal154",
+      "score": 0.9975446254800967,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal155",
+      "score": 0.9974738702838878,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal156",
+      "score": 0.9973085430048095,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal157",
+      "score": 0.997806490574952,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal158",
+      "score": 0.997772859670999,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal159",
+      "score": 0.9976057567764061,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal160",
+      "score": 0.99751532136423,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal161",
+      "score": 0.9973203010340911,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal162",
+      "score": 0.9975189416741921,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal163",
+      "score": 0.9977599963782058,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal164",
+      "score": 0.9975429274131574,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal165",
+      "score": 0.9974664025290032,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal166",
+      "score": 0.9974434589448495,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal167",
+      "score": 0.9974826431266053,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal168",
+      "score": 0.9975829274312709,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal169",
+      "score": 0.998000870193518,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal170",
+      "score": 0.9975513780926827,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal171",
+      "score": 0.9974586264276947,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal172",
+      "score": 0.9975605168460756,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal173",
+      "score": 0.9977111494956387,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal174",
+      "score": 0.9977372438694759,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal175",
+      "score": 0.9976260717705027,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal176",
+      "score": 0.9977190429007389,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal177",
+      "score": 0.997516759166482,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal178",
+      "score": 0.9976751828993375,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal179",
+      "score": 0.9978313873078178,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal180",
+      "score": 0.9975609620769846,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal181",
+      "score": 0.9974088304409189,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal182",
+      "score": 0.9976815376337118,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal183",
+      "score": 0.9977290441370643,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal184",
+      "score": 0.9978081666240387,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal185",
+      "score": 0.9973491421892318,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal186",
+      "score": 0.9978511574964894,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal187",
+      "score": 0.9976042910009276,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal188",
+      "score": 0.9975769271929971,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal189",
+      "score": 0.9974847683595238,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal190",
+      "score": 0.9975968076082221,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal191",
+      "score": 0.9977001538213304,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal192",
+      "score": 0.997485516781712,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal193",
+      "score": 0.9978961214522071,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal194",
+      "score": 0.9975863687898383,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal195",
+      "score": 0.9979307707271755,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal196",
+      "score": 0.9976834700126993,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal197",
+      "score": 0.9973089069005612,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal198",
+      "score": 0.9975710315119459,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "signal199",
+      "score": 0.9973228177116623,
+      "n_terms": 25,
+      "fdr_controlled": true,
+      "n_screened": 25
+    },
+    {
+      "study": "calibration",
+      "case": "null0",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null1",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null2",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null3",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null4",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null5",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null6",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null7",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null8",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null9",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null10",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null11",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null12",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null13",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null14",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null15",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null16",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null17",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null18",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null19",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null20",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null21",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null22",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null23",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null24",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null25",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null26",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null27",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null28",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null29",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null30",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null31",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null32",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null33",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null34",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null35",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null36",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null37",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null38",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null39",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null40",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null41",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null42",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null43",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null44",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null45",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null46",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null47",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null48",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null49",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null50",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null51",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null52",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null53",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null54",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null55",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null56",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null57",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null58",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    },
+    {
+      "study": "calibration",
+      "case": "null59",
+      "score": 0.0,
+      "n_terms": 0,
+      "fdr_controlled": false,
+      "n_screened": 0
+    }
+  ],
+  "aggregate": {
+    "n_fits": 260,
+    "mean_score": 0.767406916725668,
+    "median_score": 0.9975594192251145,
+    "min_score": 0.0,
+    "mean_terms": 19.23076923076923,
+    "median_terms": 25.0,
+    "max_terms": 25,
+    "fdr_controlled_true": 200,
+    "fdr_controlled_total": 260
+  }
+}
