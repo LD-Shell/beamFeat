@@ -1,13 +1,17 @@
 """Build the tutorial notebooks.
 
 Notebooks are generated from source rather than hand-edited so that their code
-stays in sync with the library and can be executed in CI. Run this script, then
-execute the notebooks to populate outputs.
+stays in sync with the library and can be executed in CI. Run this script,
+execute the notebooks to populate outputs, then run it again with --sync-docs
+to copy the executed notebooks into docs/notebooks/, which is the copy the
+documentation site publishes.
 """
 
 from __future__ import annotations
 
+import argparse
 import pathlib
+import shutil
 
 import nbformat as nbf
 
@@ -40,6 +44,20 @@ def build(path: pathlib.Path, cells: list[nbf.NotebookNode], title: str) -> None
 
 
 HERE = pathlib.Path(__file__).parent
+
+
+def sync_docs() -> None:
+    """Copy the executed notebooks over the documentation site's copies.
+
+    Run after executing, not after building: the copies are wanted with their
+    outputs. Keeping this in the build script is what stops the two trees
+    drifting apart, which they have.
+    """
+    target = HERE.parent / "docs" / "notebooks"
+    target.mkdir(parents=True, exist_ok=True)
+    for path in sorted(HERE.glob("[0-9][0-9]_*.ipynb")):
+        shutil.copyfile(path, target / path.name)
+        print(f"copied {path.name} to docs/notebooks")
 
 
 # --------------------------------------------------------------------------- #
@@ -158,13 +176,18 @@ for formula in model.formulas()[:5]:
     ),
     code(
         """
-print(model.equation(max_terms=3))
+print(model.equation())
         """
     ),
     markdown(
         """
 The true generating expression should appear among the selected features. Note
-that `x3` — the irrelevant column — should be largely absent.
+that `d` — the irrelevant column — should be largely absent.
+
+The bracketed suffix is the equation telling you that it is a subset. Screening
+certified a larger set; the parsimony step kept the compact predictive part of
+it and fitted that, so the guarantee covers the set the terms came from rather
+than the terms themselves. Notebook 04 takes that apart.
 
 ## Comparing against a linear baseline
 
@@ -787,8 +810,9 @@ Mass plus length never appears, because it was never constructible.
 The same constraint is available on the estimators via the `units` argument.
 The fitted equation is compact because, after FDR screening, the estimator
 keeps a parsimonious forward-selected subset of the screened features by
-default (`parsimony="forward"`); the full screened set with per-candidate
-p- and q-values is available in `selection_report_`.
+default (`parsimony="forward"`); the equation's suffix records how many of the
+certified terms it printed, and the full screened set with per-candidate p- and
+q-values is available in `selection_report_`.
         """
     ),
     code(
@@ -851,12 +875,15 @@ one of them has a fix.
     ),
     code(
         """
+import re
 import warnings
 
 import numpy as np
 import pandas as pd
 
-warnings.filterwarnings("default")  # we want to see beamfeat's warnings here
+# beamfeat's warnings, formatted without this machine's file paths
+warnings.filterwarnings("default")
+warnings.formatwarning = lambda message, category, *_: f"{category.__name__}: {message}\\n"
 
 from beamfeat import BeamFeatRegressor
 
@@ -915,13 +942,23 @@ print(f"R^2: {model.score(X, y):.4f}")
 `(H / eta) * (Q * rho)` is `rho * Q * H / eta` — the physics, exactly, with
 none of the eight noise columns in it.
 
+The suffix is the equation being honest about its own scope: screening
+certified fifty formulas, most of them pairing the physics core with a noise
+column, and the parsimony step kept the one that carries the model. Those
+fifty are the set the guarantee covers. `parsimony=None` prints them all, and
+the section below on the marginal null explains why the noisy ones are there
+and why certifying them is not an error.
+
 ### Where did gravity go?
 
 It is in the coefficient. `g` never varies, so no expression containing it can
 be distinguished from the same expression without it: `rho * g` is just
 `9.81 * rho`, perfectly collinear with `rho`, and the redundancy pass keeps one
 representative of the pair. The scaling then lands in the linear model, which
-is why the fitted coefficient reads 9.79 rather than 1.
+is why the fitted coefficient reads 9.80 rather than 1. Under
+`parsimony=None` the same scaling is shared across fifty collinear terms and
+the leading coefficient reads lower, which is why a constant is easiest to
+read off the compact fit.
 
 This generalises. A multiplicative constant is absorbed into the coefficient
 rather than recovered as a symbol, so its absence from the formula is not a
@@ -1004,7 +1041,7 @@ rejects such expressions at construction, before they are ever scored.
         """
     ),
     code(
-        """
+        r"""
 units = {
     "rho": "kg/m**3", "g": "m/s**2", "Q": "m**3/s", "H": "m",
     "eta": "dimensionless",
@@ -1017,19 +1054,44 @@ gated = BeamFeatRegressor(
 
 print(gated.equation())
 print(f"R^2: {gated.score(X, y):.4f}")
+
+
+# Formulas that add or subtract a noise column outright, across the whole
+# certified set rather than the pruned equation.
+ADDED_NOISE = re.compile(r"(noise_\d+ [+-]|[+-] noise_\d+)")
+
+
+def added_noise(model):
+    full = BeamFeatRegressor(**{**model.get_params(), "parsimony": None}).fit(X, y)
+    return [f for f in full.formulas() if ADDED_NOISE.search(f)], full.n_features_out_
+
+
+for label, m in (("no units", deep), ("units", gated)):
+    hits, total = added_noise(m)
+    print(f"certified formulas adding a noise column, {label:8s}: {len(hits)} of {total}")
         """
     ),
     markdown(
         """
 The same over-deep search now returns the clean core. Identical R^2, no
-parasites — and this is the general lesson: where a statistical criterion
-cannot separate two candidates, a structural constraint often can, and it costs
-nothing because it applies before any numerical work.
+parasites — and the effect is not just in the pruned equation: across the whole
+certified set, not one formula adds a noise column to a dimensioned quantity,
+against almost all of them before. That is the general lesson — where a
+statistical criterion cannot separate two candidates, a structural constraint
+often can, and it costs nothing because it applies before any numerical work.
 
-A caution about what units check. They enforce that an expression is internally
-coherent, not that it matches the target's dimension. `rho * Q * H / eta` is
-kg·m/s while power is watts, and nothing objects, because `g` was absorbed.
-Units reject nonsense; they will not tell you a factor is missing.
+Two cautions about what units check.
+
+They enforce that an expression is internally coherent, not that it matches the
+target's dimension. `rho * Q * H / eta` is kg·m/s while power is watts, and
+nothing objects, because `g` was absorbed. Units reject nonsense; they will not
+tell you a factor is missing.
+
+And a *dimensionless* column is legal almost everywhere. `Q / noise_7` is still
+m³/s, so noise can ride in multiplicatively even under a full labelling, and
+some of the certified set still mentions one. What units removed is the whole
+class of violations — adding a bare number to a physical quantity — not every
+appearance of an irrelevant column.
         """
     ),
     markdown(
@@ -1075,9 +1137,9 @@ nothing; give the genuinely unitless columns `"dimensionless"`.
         """
 ## The equation is not the certified set
 
-`equation()` prints the parsimony subset. The guarantee covers the larger
-screened set, which `selection_report_` holds in full, with an exact p- and
-q-value per candidate.
+`equation()` prints the parsimony subset, and its suffix says so. The guarantee
+covers the larger screened set, which `selection_report_` holds in full, with
+an exact p- and q-value per candidate.
         """
     ),
     code(
@@ -1089,6 +1151,8 @@ printed = [row for row in report if row["kept"]]
 print(f"candidates screened: {len(report)}")
 print(f"certified (guarantee applies here): {len(screened)}")
 print(f"terms in equation(): {len(printed)}")
+print(f"|S|/|S'|: {deep.fdp_inflation_:.2f}")
+print(f"fdr_controlled_: {deep.fdr_controlled_}   fdr_scope_: {deep.fdr_scope_!r}")
 print()
 for row in sorted(screened, key=lambda r: r["p_value"])[:3]:
     formula = row["formula"]
@@ -1102,8 +1166,12 @@ The gap matters. Parsimony picks a subset by greedy forward selection on the
 same rows, and a data-dependent subset of an FDR-controlled set does not
 inherit the guarantee: pruning cannot add false selections, but it can raise
 the false discovery *proportion*, because the denominator shrinks faster than
-the numerator. Report the screened set when you need the guarantee; use the
-equation when you need something to read.
+the numerator, and `fdp_inflation_` reports by how much. This is why
+`fdr_controlled_` and `fdr_scope_` are two attributes rather than one: the
+flag is `True` and the scope is the screened set, not the printed equation. What that costs in
+fit is small and has been measured — about a thousandth of held-out R^2 across
+308 paired fits, in `benchmarks/PARSIMONY_COST.md`. Report the screened set
+when you need the guarantee; use the equation when you need something to read.
         """
     ),
     markdown(
@@ -1176,7 +1244,13 @@ the test could not fire, not that the data are silent.
 
 
 if __name__ == "__main__":
-    build(HERE / "01_getting_started.ipynb", getting_started, "Getting started with beamfeat")
-    build(HERE / "02_search_and_scoring.ipynb", search_and_scoring, "Search and scoring")
-    build(HERE / "03_selection_and_units.ipynb", selection_and_units, "Selection and units")
-    build(HERE / "04_reading_a_fit.ipynb", reading_a_fit, "Reading a fit")
+    ap = argparse.ArgumentParser(description="Build the tutorial notebooks.")
+    ap.add_argument("--sync-docs", action="store_true",
+                    help="copy the executed notebooks into docs/notebooks/ instead of building")
+    if ap.parse_args().sync_docs:
+        sync_docs()
+    else:
+        build(HERE / "01_getting_started.ipynb", getting_started, "Getting started with beamfeat")
+        build(HERE / "02_search_and_scoring.ipynb", search_and_scoring, "Search and scoring")
+        build(HERE / "03_selection_and_units.ipynb", selection_and_units, "Selection and units")
+        build(HERE / "04_reading_a_fit.ipynb", reading_a_fit, "Reading a fit")
