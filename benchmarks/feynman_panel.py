@@ -166,25 +166,38 @@ def equations():
     ]
 
 
-def run_panel(unary_ops=None, label="default operators"):
+def make_data(name, generator, n_cols):
+    """Training and probe draws for one law: ``(X, X_test, y, y_test)``.
+
+    Separated from the fit loop so that a comparison harness scores its method
+    on the same rows rather than on a copy of this code that can drift from
+    it (see ``benchmarks/pysr_panel/``).
+    """
+    # crc32 rather than hash(): Python randomises string hashing per
+    # process, so hash(name) would reseed the data on every run and the
+    # panel would not be reproducible.
+    rng = np.random.default_rng(zlib.crc32(name.encode()))
+    low, high = (0.1, 1.0) if name in ("gaussian", "relativistic_velocity") else (1.0, 5.0)
+    X = rng.uniform(low, high, (500, n_cols))
+    X_test = rng.uniform(low, high, (500, n_cols))
+    signal = generator(X)
+    y = signal + rng.normal(0, 1e-3 * np.std(signal), 500)
+    y_test = generator(X_test)
+    return X, X_test, y, y_test
+
+
+def run_panel(unary_ops=None, label="default operators", parsimony="forward"):
     from beamfeat import BeamFeatRegressor
 
     rows = []
     for name, generator, n_cols, expected_terms, note in equations():
-        # crc32 rather than hash(): Python randomises string hashing per
-        # process, so hash(name) would reseed the data on every run and the
-        # panel would not be reproducible.
-        rng = np.random.default_rng(zlib.crc32(name.encode()))
-        low, high = (0.1, 1.0) if name in ("gaussian", "relativistic_velocity") else (1.0, 5.0)
-        X = rng.uniform(low, high, (500, n_cols))
-        X_test = rng.uniform(low, high, (500, n_cols))
-        signal = generator(X)
-        y = signal + rng.normal(0, 1e-3 * np.std(signal), 500)
-        y_test = generator(X_test)
+        X, X_test, y, y_test = make_data(name, generator, n_cols)
 
         kwargs = {"unary_ops": unary_ops} if unary_ops is not None else {}
         started = time.perf_counter()
-        model = BeamFeatRegressor(max_depth=3, beam_width=40, random_state=0, **kwargs).fit(X, y)
+        model = BeamFeatRegressor(
+            max_depth=3, beam_width=40, random_state=0, parsimony=parsimony, **kwargs
+        ).fit(X, y)
         elapsed = time.perf_counter() - started
         r2 = float(model.score(X_test, y_test))
 
@@ -192,6 +205,8 @@ def run_panel(unary_ops=None, label="default operators"):
         rows.append({
             "equation": name, "note": note, "r2": r2, "seconds": elapsed,
             "solved": r2 > 0.999, "exact_form": exact,
+            "n_terms": model.n_features_out_,
+            "fdr_controlled": model.fdr_controlled_,
             "top_formula": model.formulas()[0] if model.formulas() else "",
         })
     solved = sum(r["solved"] for r in rows)
@@ -202,13 +217,15 @@ def run_panel(unary_ops=None, label="default operators"):
         mark = "SOLVED" if r["solved"] else "  --  "
         ef = {True: " exact", False: "", None: ""}[r["exact_form"]]
         print(f"  {mark}{ef:>6}  {r['equation']:<22} R2 {r['r2']:.4f}  {r['seconds']:4.1f}s  {r['top_formula'][:44]}")
-    return {"label": label, "solved": solved, "exact_form": exact, "mean_seconds": mean_t, "rows": rows}
+    return {"label": label, "solved": solved, "exact_form": exact,
+            "parsimony": parsimony, "mean_seconds": mean_t, "rows": rows}
 
 
-def main():
+def main(parsimony="forward"):
     results = [
-        run_panel(),
-        run_panel(unary_ops=("log", "sqrt", "reciprocal", "square", "abs", "exp"), label="with exp enabled"),
+        run_panel(parsimony=parsimony),
+        run_panel(unary_ops=("log", "sqrt", "reciprocal", "square", "abs", "exp"),
+                  label="with exp enabled", parsimony=parsimony),
     ]
     with (HERE / "feynman_results.json").open("w") as fh:
         json.dump(results, fh, indent=2)
