@@ -4,7 +4,16 @@ Notable changes to `beamfeat`. Format follows
 [Keep a Changelog](https://keepachangelog.com/); versions follow
 [Semantic Versioning](https://semver.org/).
 
-## [0.4.0] - 2026-09-17
+## [0.4.1] - 2026-09-20
+
+### Fixed
+
+- `CITATION.cff` shipped in 0.4.0 with unresolved merge-conflict markers, so it
+  was not valid YAML and Zenodo could not archive the release. The 0.4.0 source
+  distribution carries the invalid file; the wheel never contained it. No code
+  changed.
+
+## [0.4.0] - 2026-09-19
 
 `equation()` now says when the equation it prints is a subset of the certified
 set. The default is unchanged -- `parsimony="forward"` still keeps the compact

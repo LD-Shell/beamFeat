@@ -2,15 +2,9 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
 title: "beamfeat: beam-search feature construction with FDR-controlled selection"
-<<<<<<< HEAD
-version: 0.4.0
+version: 0.4.1
 doi: 10.5281/zenodo.21853249
-date-released: 2026-09-19
-=======
-version: 1
-doi: 10.5281/zenodo.21853249
-date-released: 2026-08-23
->>>>>>> 7dae55b9d0e0737265c068d27301f46c37ed2413
+date-released: 2026-09-20
 license: MIT
 authors:
   - family-names: "Daramola"
