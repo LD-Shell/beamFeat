@@ -4,7 +4,7 @@
 [![PyPI](https://img.shields.io/pypi/v/beamfeat)](https://pypi.org/project/beamfeat/)
 [![Python](https://img.shields.io/badge/python-3.10%E2%80%933.13-blue)](https://github.com/LD-Shell/beamFeat)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/LD-Shell/beamFeat/blob/main/LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21677596.svg)](https://doi.org/10.5281/zenodo.21677596)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22867108.svg)](https://doi.org/10.5281/zenodo.22867108)
 [![Docs](https://img.shields.io/badge/docs-ld--shell.github.io-blue)](https://ld-shell.github.io/beamFeat/)
 
 Beam-search feature construction with false-discovery-rate (FDR) controlled

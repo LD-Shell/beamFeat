@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 type: software
 title: "beamfeat: beam-search feature construction with FDR-controlled selection"
 version: 0.4.1
-doi: 10.5281/zenodo.21853249
+doi: 10.5281/zenodo.22867108
 date-released: 2026-09-20
 license: MIT
 authors:
